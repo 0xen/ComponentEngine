@@ -1,0 +1,9 @@
+.codeblocks/*
+.vs*/
+bin/
+*.filters
+build/
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
