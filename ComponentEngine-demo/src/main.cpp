@@ -2,17 +2,29 @@
 #include <iostream>
 #include <vector>
 
+using namespace ComponentEngine;
+using namespace enteez;
+using namespace Renderer;
 
-ComponentEngine::Engine* engine;
+Engine* engine;
 
 
 int main(int argc, char **argv)
 {
-	engine = new ComponentEngine::Engine();
+	engine = new Engine();
 
-	bool running = true;
-	while (running)
+	EntityManager& em = engine->GetEntityManager();
+
+	Entity* entity = em.CreateEntity();
+	entity->AddComponent<Transformation>();
+
+
+	while (engine->Running())
 	{
+
+
+
+		engine->Update();
 
 	}
 

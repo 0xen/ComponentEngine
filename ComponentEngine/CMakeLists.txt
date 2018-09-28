@@ -5,10 +5,12 @@ project(${project_name})
 
 set(common_headers
     include/ComponentEngine/Engine.hpp
+    include/ComponentEngine/Components/Transformation.hpp
 )
 
 set(common_source
     src/Engine.cpp
+    src/Components/Transformation.cpp
 )
 
 include_directories(include)
