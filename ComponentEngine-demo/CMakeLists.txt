@@ -12,8 +12,12 @@ set(headers
 
 include_directories(include)
 include_directories(../ComponentEngine/include)
+include_directories(../../Renderer/renderer/include)
+include_directories(../../EnteeZ/EnteeZ/include)
 
 
 add_executable(${project_name} ${src} ${headers})
 
 target_link_libraries(${project_name} ComponentEngine)
+target_link_libraries(${project_name} ../../../Renderer/build/renderer/Debug/Renderer)
+target_link_libraries(${project_name} ../../../EnteeZ/build/EnteeZ/Debug/EnteeZ)

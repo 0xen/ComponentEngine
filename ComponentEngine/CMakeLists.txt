@@ -21,4 +21,18 @@ set(headers
     ${common_headers}
 )
 
+include_directories(../../Renderer/renderer/include)
+include_directories(../../EnteeZ/EnteeZ/include)
+
 add_library(${project_name} STATIC ${source} ${headers})
+
+target_link_libraries(${project_name} ../../../Renderer/build/renderer/Debug/Renderer)
+target_link_libraries(${project_name} ../../../EnteeZ/build/EnteeZ/Debug/EnteeZ)
+
+
+find_package(Vulkan)
+
+if(Vulkan_FOUND)
+	target_include_directories(${project_name} PRIVATE Vulkan::Vulkan)
+	target_link_libraries(${project_name} Vulkan::Vulkan)
+endif()
