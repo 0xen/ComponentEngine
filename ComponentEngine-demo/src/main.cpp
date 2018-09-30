@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 
 
 		engine->Update();
+		engine->Render();
 
 	}
 

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 2.6)
 set(project_name demo)
 project(${project_name})
 
+set(HAVE_LIBC TRUE)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(third_party/SDL2)
