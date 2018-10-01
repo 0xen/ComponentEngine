@@ -32,14 +32,16 @@ int main(int argc, char **argv)
 		0,1,2,
 		0,2,3
 	};
+	// Create buffers for both the index and vertex buggers
 	IVertexBuffer* vertex_buffer = renderer->CreateVertexBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size());
 	IIndexBuffer* index_buffer = renderer->CreateIndexBuffer(index_data.data(), sizeof(uint16_t), index_data.size());
 
+	// Set the vertex data for the model
 	vertex_buffer->SetData();
 	index_buffer->SetData();
 
 
-
+	// Define and creae a model pool
 	IModelPool* model_pool = renderer->CreateModelPool(vertex_buffer, index_buffer);
 
 	// Create a position buffer for the model pool
