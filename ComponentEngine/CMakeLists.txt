@@ -7,6 +7,7 @@ set(HAVE_LIBC TRUE)
 
 set(common_headers
     include/ComponentEngine/Engine.hpp
+    include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/Components/Camera.hpp
     include/ComponentEngine/Components/Transformation.hpp
 )

@@ -5,6 +5,15 @@
 
 #include <ComponentEngine\Components\Transformation.hpp>
 #include <ComponentEngine\Components\Camera.hpp>
+#include <ComponentEngine\DefaultMeshVertex.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -22,6 +31,8 @@ namespace ComponentEngine
 		bool Running();
 		void Update();
 		void Render();
+		IGraphicsPipeline* GetDefaultGraphicsPipeline();
+		IRenderer* GetRenderer();
 	private:
 		Uint32 GetWindowFlags(RenderingAPI api);
 		void InitWindow();

@@ -1,13 +1,5 @@
 #include <ComponentEngine\Engine.hpp>
 
-#define GLM_ENABLE_EXPERIMENTAL
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-
 #include <assert.h>
 
 using namespace ComponentEngine;
@@ -46,6 +38,16 @@ void ComponentEngine::Engine::Render()
 {
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
+}
+
+IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
+{
+	return m_default_pipeline;
+}
+
+IRenderer * ComponentEngine::Engine::GetRenderer()
+{
+	return m_renderer;
 }
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
@@ -149,6 +151,25 @@ void ComponentEngine::Engine::InitRenderer()
 	m_default_pipeline = m_renderer->CreateGraphicsPipeline({
 		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Default/vert.spv" },
 		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Default/frag.spv" }
+		});
+
+	// Tell the pipeline what data is should expect in the forum of Vertex input
+	m_default_pipeline->AttachVertexBinding({
+		VertexInputRate::INPUT_RATE_VERTEX,
+		{
+			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(DefaultMeshVertex,position) }
+		},
+		sizeof(DefaultMeshVertex),
+		0
+		});
+
+	m_default_pipeline->AttachVertexBinding({
+		VertexInputRate::INPUT_RATE_INSTANCE,
+		{
+			{ 1, DataFormat::MAT4_FLOAT,0 }
+		},
+		sizeof(glm::mat4),
+		1
 		});
 
 	// Tell the pipeline what the input data will be payed out like
