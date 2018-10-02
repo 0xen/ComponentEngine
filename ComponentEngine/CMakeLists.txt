@@ -32,8 +32,11 @@ include_directories(../../EnteeZ/EnteeZ/include)
 
 add_library(${project_name} STATIC ${source} ${headers})
 
-target_link_libraries(${project_name} ../../../Renderer/build/renderer/Debug/Renderer)
-target_link_libraries(${project_name} ../../../EnteeZ/build/EnteeZ/Debug/EnteeZ)
+target_link_libraries( ${project_name} debug ../../../Renderer/build/renderer/Debug/Renderer)
+target_link_libraries( ${project_name} optimized ../../../Renderer/build/renderer/Release/Renderer)
+
+target_link_libraries(${project_name} ../../../Renderer/build/renderer/Release/Renderer)
+target_link_libraries(${project_name} ../../../EnteeZ/build/EnteeZ/Release/EnteeZ)
 
 
 find_package(Vulkan)

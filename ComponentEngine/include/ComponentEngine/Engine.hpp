@@ -60,6 +60,11 @@ namespace ComponentEngine
 		IUniformBuffer* m_camera_buffer;
 		IDescriptorPool* m_camera_pool;
 
+		// FPS
+		int m_delta_time = 0;
+		int m_start_time = 0;
+		unsigned int m_delta_fps = 0;
+		unsigned int m_fps = 0;
 
 
 	};

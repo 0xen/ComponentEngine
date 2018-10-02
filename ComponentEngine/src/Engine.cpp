@@ -1,6 +1,7 @@
 #include <ComponentEngine\Engine.hpp>
 
 #include <assert.h>
+#include <sstream>
 
 using namespace ComponentEngine;
 using namespace enteez;
@@ -81,6 +82,21 @@ void ComponentEngine::Engine::InitWindow()
 
 void ComponentEngine::Engine::UpdateWindow()
 {
+
+
+	m_delta_time -= SDL_GetTicks() - m_start_time;
+	m_start_time = SDL_GetTicks();
+	m_delta_fps++;
+	if (m_delta_time <= 0)
+	{
+		m_fps = m_delta_fps;
+		m_delta_fps = 0;
+		m_delta_time = 1000;
+		std::stringstream ss;
+		ss << m_title << " FPS:" << m_fps;
+		SDL_SetWindowTitle(m_window, ss.str().c_str());
+	}
+
 	SDL_Event event;
 	while (SDL_PollEvent(&event) > 0)
 	{
@@ -89,6 +105,17 @@ void ComponentEngine::Engine::UpdateWindow()
 		case SDL_QUIT:
 			if (Running())
 				m_renderer->Stop();
+			break;
+		case SDL_WINDOWEVENT:
+			switch (event.window.event)
+			{
+				//Get new dimensions and repaint on window size change
+			case SDL_WINDOWEVENT_SIZE_CHANGED:
+				m_window_handle->width = event.window.data1;
+				m_window_handle->height = event.window.data2;
+				m_renderer->Rebuild();
+				break;
+			}
 			break;
 		}
 	}
@@ -117,10 +144,13 @@ void ComponentEngine::Engine::InitRenderer()
 	// If the rendering was not fully created, error out
 	assert(m_renderer != nullptr && "Error, renderer instance could not be created");
 
+
+
+
 	// Create camera
 	m_camera.view = glm::mat4(1.0f);
 	m_camera.view = glm::scale(m_camera.view, glm::vec3(1.0f, 1.0f, 1.0f));
-	m_camera.view = glm::translate(m_camera.view, glm::vec3(0.0f, 0.0f, 15.0f));
+	m_camera.view = glm::translate(m_camera.view, glm::vec3(0.0f, 0.0f, 0.0f));
 
 	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
 	m_camera.projection = glm::perspective(

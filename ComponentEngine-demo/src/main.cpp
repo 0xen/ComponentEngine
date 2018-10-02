@@ -8,17 +8,45 @@ using namespace Renderer;
 
 Engine* engine;
 
+class ProcessTask
+{
+public:
+	virtual void Update() = 0;
+};
+
+
+class Model : public ProcessTask
+{
+public:
+	Model(Entity* entity, IModelPool* model_pool) : m_entity(entity), m_model(model_pool->CreateModel())
+	{
+	}
+	~Model()
+	{
+		delete m_model;
+	}
+	virtual void Update()
+	{
+		if (m_entity->HasComponent<Transformation>())
+		{
+			// Set the data to buffer index 0
+			m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+		}
+	}
+private:
+	Entity * m_entity;
+	IModel * m_model;
+};
+
+
 
 int main(int argc, char **argv)
 {
 	engine = new Engine();
+	engine->RegisterBase<Model, ProcessTask>();
 
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
-
-	Entity* entity = em.CreateEntity();
-	entity->AddComponent<Transformation>();
-
 
 
 	std::vector<DefaultMeshVertex> vertex_data = {
@@ -32,6 +60,7 @@ int main(int argc, char **argv)
 		0,1,2,
 		0,2,3
 	};
+
 	// Create buffers for both the index and vertex buggers
 	IVertexBuffer* vertex_buffer = renderer->CreateVertexBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size());
 	IIndexBuffer* index_buffer = renderer->CreateIndexBuffer(index_data.data(), sizeof(uint16_t), index_data.size());
@@ -45,34 +74,64 @@ int main(int argc, char **argv)
 	IModelPool* model_pool = renderer->CreateModelPool(vertex_buffer, index_buffer);
 
 	// Create a position buffer for the model pool
-	glm::mat4* model_position_array = new glm::mat4[10];
-	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), 1);
+	unsigned int model_array_size = 4;
+	glm::mat4* model_position_array = new glm::mat4[model_array_size];
+	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
 
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
 
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(-2.0f, 0.0f, -5.0f));
+		entity->AddComponent<Model>(entity, model_pool);
+	}
 
-	IModel* model = model_pool->CreateModel();
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(2.0f, 0.0f, -5.0f));
+		entity->AddComponent<Model>(entity, model_pool);
+	}
 
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(0.0f, 2.0f, -5.0f));
+		entity->AddComponent<Model>(entity, model_pool);
+	}
 
-	// Create the model position data
-	glm::mat4 model_pos = glm::mat4(1.0f);
-	model_pos = glm::translate(model_pos, glm::vec3(2, 0, -20));
-	model_pos = glm::scale(model_pos, glm::vec3(1.0f, 1.0f, 1.0f));
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(0.0f, -2.0f, -5.0f));
+		entity->AddComponent<Model>(entity, model_pool);
+	}
 
-	// Set the data to buffer index 0
-	model->SetData(0, model_pos);
-
-	// Update all model positions
-	model_position_buffer->SetData();
 
 	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
 
 
+
+
 	while (engine->Running())
 	{
+		em.ForEach<Transformation>([](enteez::Entity* entity, Transformation& transformation)
+		{
+			transformation.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 0.001f);
+		}, true);
 
+		for (auto e : em.GetEntitys())
+		{
+			e->ForEach<ProcessTask>([](enteez::Entity* entity, ProcessTask& process_task)
+			{
+				process_task.Update();
+			});
+		}
 
+		// Update all model positions
+		model_position_buffer->SetData();
 
 		engine->Update();
 		engine->Render();
