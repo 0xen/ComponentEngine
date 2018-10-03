@@ -15,6 +15,7 @@ namespace ComponentEngine
 	public:
 		Transformation() { m_mat4 = glm::mat4(1.0f); }
 		void Translate(glm::vec3 translation);
+		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);
 		glm::mat4& Get();
 	private:

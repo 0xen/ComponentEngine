@@ -49,6 +49,68 @@ int main(int argc, char **argv)
 	IRenderer* renderer = engine->GetRenderer();
 
 
+
+	int compute_size = 100;
+	float* data = new float[compute_size];
+
+	for (int i = 0; i < compute_size; i++)
+	{
+		data[i] = 2 + i;
+	}
+
+	IUniformBuffer* buffer = renderer->CreateUniformBuffer(data, sizeof(float), compute_size);
+	buffer->SetData();
+
+	// Create camera pool
+	// This is a layout for the camera input data
+	IDescriptorPool* example_pool = renderer->CreateDescriptorPool({
+		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 0),
+		});
+
+	// Create camera descriptor set from the tempalte
+	IDescriptorSet* example_descriptor_set = example_pool->CreateDescriptorSet();
+	// Attach the buffer
+	example_descriptor_set->AttachBuffer(0, buffer);
+	example_descriptor_set->UpdateSet();
+
+
+	IComputePipeline* pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/comp.spv", compute_size, 1, 1);
+
+
+	// Tell the pipeline what the input data will be payed out like
+	pipeline->AttachDescriptorPool(example_pool);
+	// Attach the camera descriptor set to the pipeline
+	pipeline->AttachDescriptorSet(0, example_descriptor_set);
+
+
+
+	assert(pipeline->Build() && "Unable to build pipeline");
+
+	IComputeProgram* program = renderer->CreateComputeProgram();
+	program->AttachPipeline(pipeline);
+	program->Build();
+	program->Run();
+
+	buffer->GetData();
+
+
+	/*for (int i = 0; i < compute_size; i++)
+	{
+		std::cout << data[i] << std::endl;
+	}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 	std::vector<DefaultMeshVertex> vertex_data = {
 		DefaultMeshVertex(glm::vec3(1.0f,1.0f,0.0f)),
 		DefaultMeshVertex(glm::vec3(1.0f,-1.0f,0.0f)),
@@ -81,6 +143,7 @@ int main(int argc, char **argv)
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
 
+
 	{
 		Entity* entity = em.CreateEntity();
 		Transformation* transform = entity->AddComponent<Transformation>();
@@ -111,8 +174,6 @@ int main(int argc, char **argv)
 
 
 	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
-
-
 
 
 	while (engine->Running())

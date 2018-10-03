@@ -10,6 +10,10 @@ void Transformation::Translate(glm::vec3 translation)
 {
 	m_mat4 = glm::translate(m_mat4, translation);
 }
+void Transformation::Scale(glm::vec3 scale)
+{
+	m_mat4 = glm::scale(m_mat4, scale);
+}
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 {
