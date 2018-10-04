@@ -7,7 +7,8 @@ namespace ComponentEngine
 	struct DefaultMeshVertex
 	{
 	public:
-		DefaultMeshVertex(glm::vec3 position) : position(position) {}
-		glm::vec3 position;
+		DefaultMeshVertex() {}
+		DefaultMeshVertex(glm::vec4 position) : position(position) {}
+		glm::vec4 position;
 	};
 }

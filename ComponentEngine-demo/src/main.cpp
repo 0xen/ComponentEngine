@@ -50,31 +50,43 @@ int main(int argc, char **argv)
 
 
 
-	int compute_size = 100;
-	float* data = new float[compute_size];
 
-	for (int i = 0; i < compute_size; i++)
-	{
-		data[i] = 2 + i;
-	}
 
-	IUniformBuffer* buffer = renderer->CreateUniformBuffer(data, sizeof(float), compute_size);
+	std::vector<DefaultMeshVertex> vertex_data = {
+		DefaultMeshVertex(glm::vec4(1.0f,1.0f,0.0f,0.0f)),
+		DefaultMeshVertex(glm::vec4(1.0f,-1.0f,0.0f,0.0f)),
+		DefaultMeshVertex(glm::vec4(-1.0f,-1.0f,0.0f,0.0f)),
+		DefaultMeshVertex(glm::vec4(-1.0f,1.0f,0.0f,0.0f))
+	};
+
+	std::vector<uint16_t> index_data{
+		0,1,2,
+		0,2,3
+	};
+
+	IUniformBuffer* buffer = renderer->CreateUniformBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size(), true);
 	buffer->SetData();
+
+	float new_model_scale = 0.75f;
+	IUniformBuffer* scale_buffer = renderer->CreateUniformBuffer(&new_model_scale, sizeof(float), 1);
+	scale_buffer->SetData();
 
 	// Create camera pool
 	// This is a layout for the camera input data
 	IDescriptorPool* example_pool = renderer->CreateDescriptorPool({
 		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 0),
+		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 1),
 		});
 
 	// Create camera descriptor set from the tempalte
 	IDescriptorSet* example_descriptor_set = example_pool->CreateDescriptorSet();
 	// Attach the buffer
 	example_descriptor_set->AttachBuffer(0, buffer);
+	example_descriptor_set->AttachBuffer(1, scale_buffer);
 	example_descriptor_set->UpdateSet();
 
 
-	IComputePipeline* pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/comp.spv", compute_size, 1, 1);
+	IComputePipeline* pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/Vec4Scale/comp.spv", vertex_data.size(), 1, 1);
 
 
 	// Tell the pipeline what the input data will be payed out like
@@ -94,34 +106,14 @@ int main(int argc, char **argv)
 	buffer->GetData();
 
 
-	/*for (int i = 0; i < compute_size; i++)
+	for (int i = 0; i < vertex_data.size(); i++)
 	{
-		std::cout << data[i] << std::endl;
-	}*/
+		std::cout << vertex_data[i].position.x << " " << vertex_data[i].position.y << " " << vertex_data[i].position.z << " " << vertex_data[i].position.w << std::endl;
+}
 
 
 
 
-
-
-
-
-
-
-
-
-
-	std::vector<DefaultMeshVertex> vertex_data = {
-		DefaultMeshVertex(glm::vec3(1.0f,1.0f,0.0f)),
-		DefaultMeshVertex(glm::vec3(1.0f,-1.0f,0.0f)),
-		DefaultMeshVertex(glm::vec3(-1.0f,-1.0f,0.0f)),
-		DefaultMeshVertex(glm::vec3(-1.0f,1.0f,0.0f))
-	};
-
-	std::vector<uint16_t> index_data{
-		0,1,2,
-		0,2,3
-	};
 
 	// Create buffers for both the index and vertex buggers
 	IVertexBuffer* vertex_buffer = renderer->CreateVertexBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size());
