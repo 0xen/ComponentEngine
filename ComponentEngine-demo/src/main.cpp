@@ -63,11 +63,21 @@ int main(int argc, char **argv)
 		0,1,2,
 		0,2,3
 	};
+	// Create buffers for both the index and vertex buggers
+	IVertexBuffer* vertex_buffer = renderer->CreateVertexBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size());
+	IIndexBuffer* index_buffer = renderer->CreateIndexBuffer(index_data.data(), sizeof(uint16_t), index_data.size());
 
-	IUniformBuffer* buffer = renderer->CreateUniformBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size(), true);
-	buffer->SetData();
+	// Set the vertex data for the model
+	vertex_buffer->SetData();
+	index_buffer->SetData();
 
-	float new_model_scale = 0.75f;
+
+
+
+
+
+
+	float new_model_scale = 2.0f;
 	IUniformBuffer* scale_buffer = renderer->CreateUniformBuffer(&new_model_scale, sizeof(float), 1);
 	scale_buffer->SetData();
 
@@ -81,7 +91,7 @@ int main(int argc, char **argv)
 	// Create camera descriptor set from the tempalte
 	IDescriptorSet* example_descriptor_set = example_pool->CreateDescriptorSet();
 	// Attach the buffer
-	example_descriptor_set->AttachBuffer(0, buffer);
+	example_descriptor_set->AttachBuffer(0, vertex_buffer);
 	example_descriptor_set->AttachBuffer(1, scale_buffer);
 	example_descriptor_set->UpdateSet();
 
@@ -103,25 +113,11 @@ int main(int argc, char **argv)
 	program->Build();
 	program->Run();
 
-	buffer->GetData();
-
-
-	for (int i = 0; i < vertex_data.size(); i++)
-	{
-		std::cout << vertex_data[i].position.x << " " << vertex_data[i].position.y << " " << vertex_data[i].position.z << " " << vertex_data[i].position.w << std::endl;
-}
 
 
 
 
 
-	// Create buffers for both the index and vertex buggers
-	IVertexBuffer* vertex_buffer = renderer->CreateVertexBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size());
-	IIndexBuffer* index_buffer = renderer->CreateIndexBuffer(index_data.data(), sizeof(uint16_t), index_data.size());
-
-	// Set the vertex data for the model
-	vertex_buffer->SetData();
-	index_buffer->SetData();
 
 
 	// Define and creae a model pool
