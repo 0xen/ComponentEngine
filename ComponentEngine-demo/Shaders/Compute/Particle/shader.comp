@@ -1,0 +1,50 @@
+#version 460
+
+#extension GL_KHR_shader_subgroup_ballot: enable
+
+struct particle_system_instance{
+	vec4 emitter_location;
+	//float start_life;
+};
+
+layout(std430, set=0, binding=0) buffer particle_system_buffer {
+  particle_system_instance particle_system_data;
+};
+
+struct particle_data_instance{
+	vec4 position;
+	vec4 vel;
+	//float life;
+};
+
+layout(std430, set=0, binding=1) buffer particle_buffer {
+  particle_data_instance particle_data[];
+};
+
+
+struct vertex_instance{
+	vec3 vertex;
+};
+
+layout(std430, set=0, binding=2) buffer vertex_buffer {
+  vertex_instance vertex_data[];
+};
+
+
+void main(){
+	uint ParticleIndex = gl_GlobalInvocationID.x;
+
+	particle_data[ParticleIndex].position += particle_data[ParticleIndex].vel;
+
+	vertex_data[ParticleIndex].vertex = particle_data[ParticleIndex].position.xyz + vec3(0.5f,0.0f,0.0f);
+	vertex_data[ParticleIndex + 1].vertex = particle_data[ParticleIndex].position.xyz + vec3(-0.5f,0.0f,0.0f);
+	vertex_data[ParticleIndex + 2].vertex = particle_data[ParticleIndex].position.xyz + vec3(0.0f,-0.5f,0.0f);
+
+	/*particle_data[ParticleIndex].life -= 0.05f;
+
+	if(particle_data[ParticleIndex].life<0.0f)
+	{
+		particle_data[ParticleIndex].life = particle_system_data.start_life;
+		particle_data[ParticleIndex].position = particle_system_data.emitter_location;
+	}*/
+}

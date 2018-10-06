@@ -14,7 +14,6 @@ public:
 	virtual void Update() = 0;
 };
 
-
 class Model : public ProcessTask
 {
 public:
@@ -38,7 +37,18 @@ private:
 	IModel * m_model;
 };
 
+struct ParticalSystemDefintion
+{
+	glm::vec4 emiter_location;
+	//float start_life;
+};
 
+struct ParticalData
+{
+	glm::vec4 position;
+	glm::vec4 velocity;
+	//float life;
+};
 
 int main(int argc, char **argv)
 {
@@ -49,54 +59,73 @@ int main(int argc, char **argv)
 	IRenderer* renderer = engine->GetRenderer();
 
 
+	unsigned int partical_count = 1;
 
+	std::vector<DefaultMeshVertex> vertex_data;
+	vertex_data.resize(partical_count * 3);
 
-
-	std::vector<DefaultMeshVertex> vertex_data = {
-		DefaultMeshVertex(glm::vec4(1.0f,1.0f,0.0f,0.0f)),
-		DefaultMeshVertex(glm::vec4(1.0f,-1.0f,0.0f,0.0f)),
-		DefaultMeshVertex(glm::vec4(-1.0f,-1.0f,0.0f,0.0f)),
-		DefaultMeshVertex(glm::vec4(-1.0f,1.0f,0.0f,0.0f))
-	};
-
-	std::vector<uint16_t> index_data{
-		0,1,2,
-		0,2,3
-	};
 	// Create buffers for both the index and vertex buggers
 	IVertexBuffer* vertex_buffer = renderer->CreateVertexBuffer(vertex_data.data(), sizeof(DefaultMeshVertex), vertex_data.size());
-	IIndexBuffer* index_buffer = renderer->CreateIndexBuffer(index_data.data(), sizeof(uint16_t), index_data.size());
 
 	// Set the vertex data for the model
 	vertex_buffer->SetData();
-	index_buffer->SetData();
 
 
 
 
 
+	ParticalSystemDefintion partical_system;
+	partical_system.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	//partical_system.start_life = 3.0f;
+
+	// Create buffers for both the index and vertex buggers
+	IUniformBuffer* partical_system_buffer = renderer->CreateUniformBuffer(&partical_system, sizeof(ParticalSystemDefintion), 1);
+
+	// Set the vertex data for the model
+	partical_system_buffer->SetData();
 
 
-	float new_model_scale = 2.0f;
-	IUniformBuffer* scale_buffer = renderer->CreateUniformBuffer(&new_model_scale, sizeof(float), 1);
-	scale_buffer->SetData();
+
+
+	std::vector<ParticalData> partical_data;
+
+	for (int i = 0; i < partical_count; i++)
+	{
+		ParticalData data;
+		data.position = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+		data.velocity = glm::vec4(0.0f, 0.05f, 0.0f, 0.0f);
+		//data.life = partical_system.start_life;
+		partical_data.push_back(data);
+	}
+
+	// Create buffers for both the index and vertex buggers
+	IVertexBuffer* partical_buffer = renderer->CreateVertexBuffer(partical_data.data(), sizeof(ParticalData), partical_data.size());
+
+	// Set the vertex data for the model
+	partical_buffer->SetData();
+
+
+
 
 	// Create camera pool
 	// This is a layout for the camera input data
 	IDescriptorPool* example_pool = renderer->CreateDescriptorPool({
-		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 0),
+		renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::COMPUTE_SHADER, 0),
 		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 1),
+		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 2)
 		});
 
 	// Create camera descriptor set from the tempalte
 	IDescriptorSet* example_descriptor_set = example_pool->CreateDescriptorSet();
 	// Attach the buffer
-	example_descriptor_set->AttachBuffer(0, vertex_buffer);
-	example_descriptor_set->AttachBuffer(1, scale_buffer);
+	
+	example_descriptor_set->AttachBuffer(0, partical_system_buffer);
+	example_descriptor_set->AttachBuffer(1, partical_buffer);
+	example_descriptor_set->AttachBuffer(2, vertex_buffer);
 	example_descriptor_set->UpdateSet();
 
 
-	IComputePipeline* pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/Vec4Scale/comp.spv", vertex_data.size(), 1, 1);
+	IComputePipeline* pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/Particle/comp.spv", partical_count, 1, 1);
 
 
 	// Tell the pipeline what the input data will be payed out like
@@ -115,16 +144,11 @@ int main(int argc, char **argv)
 
 
 
-
-
-
-
-
 	// Define and creae a model pool
-	IModelPool* model_pool = renderer->CreateModelPool(vertex_buffer, index_buffer);
+	IModelPool* model_pool = renderer->CreateModelPool(vertex_buffer);
 
 	// Create a position buffer for the model pool
-	unsigned int model_array_size = 4;
+	unsigned int model_array_size = 5;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
 	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
 
@@ -135,28 +159,7 @@ int main(int argc, char **argv)
 	{
 		Entity* entity = em.CreateEntity();
 		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(-2.0f, 0.0f, -5.0f));
-		entity->AddComponent<Model>(entity, model_pool);
-	}
-
-	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(2.0f, 0.0f, -5.0f));
-		entity->AddComponent<Model>(entity, model_pool);
-	}
-
-	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(0.0f, 2.0f, -5.0f));
-		entity->AddComponent<Model>(entity, model_pool);
-	}
-
-	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(0.0f, -2.0f, -5.0f));
+		transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
 		entity->AddComponent<Model>(entity, model_pool);
 	}
 
@@ -164,24 +167,21 @@ int main(int argc, char **argv)
 	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
 
 
+	for (auto e : em.GetEntitys())
+	{
+		e->ForEach<ProcessTask>([](enteez::Entity* entity, ProcessTask& process_task)
+		{
+			process_task.Update();
+		});
+	}
+
+	// Update all model positions
+	model_position_buffer->SetData();
+
 	while (engine->Running())
 	{
-		em.ForEach<Transformation>([](enteez::Entity* entity, Transformation& transformation)
-		{
-			transformation.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 0.001f);
-		}, true);
 
-		for (auto e : em.GetEntitys())
-		{
-			e->ForEach<ProcessTask>([](enteez::Entity* entity, ProcessTask& process_task)
-			{
-				process_task.Update();
-			});
-		}
-
-		// Update all model positions
-		model_position_buffer->SetData();
-
+		//program->Run();
 		engine->Update();
 		engine->Render();
 
