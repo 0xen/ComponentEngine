@@ -51,6 +51,11 @@ IRenderer * ComponentEngine::Engine::GetRenderer()
 	return m_renderer;
 }
 
+float ComponentEngine::Engine::GetFrameTime()
+{
+	return m_frame_time;
+}
+
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
 {
 	switch (api)
@@ -83,19 +88,26 @@ void ComponentEngine::Engine::InitWindow()
 void ComponentEngine::Engine::UpdateWindow()
 {
 
+	m_delta_time = m_now_delta_time;
+	m_now_delta_time = SDL_GetPerformanceCounter();
+	m_frame_time = (float)(m_now_delta_time - m_delta_time) / SDL_GetPerformanceFrequency();
 
-	m_delta_time -= SDL_GetTicks() - m_start_time;
-	m_start_time = SDL_GetTicks();
+
+
+
+	/*m_frame_time = 1000.0f / (SDL_GetPerformanceCounter() - m_now_delta_time);
+	m_delta_time -= m_frame_time;
+	m_now_delta_time = SDL_GetPerformanceCounter();
 	m_delta_fps++;
 	if (m_delta_time <= 0)
 	{
 		m_fps = m_delta_fps;
 		m_delta_fps = 0;
-		m_delta_time = 1000;
+		m_delta_time = 1000.0f;
 		std::stringstream ss;
 		ss << m_title << " FPS:" << m_fps;
 		SDL_SetWindowTitle(m_window, ss.str().c_str());
-	}
+	}*/
 
 	SDL_Event event;
 	while (SDL_PollEvent(&event) > 0)

@@ -40,14 +40,20 @@ private:
 struct ParticalSystemDefintion
 {
 	glm::vec4 emiter_location;
-	//float start_life;
+};
+
+struct ParticalSystemTimers
+{
+	// timers.x = Life Time
+	// timers.y = Frame Time
+	glm::vec4 timers;
 };
 
 struct ParticalData
 {
 	glm::vec4 position;
 	glm::vec4 velocity;
-	//float life;
+	float life;
 };
 
 int main(int argc, char **argv)
@@ -75,14 +81,26 @@ int main(int argc, char **argv)
 
 
 	ParticalSystemDefintion partical_system;
-	partical_system.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-	//partical_system.start_life = 3.0f;
+	partical_system.emiter_location = glm::vec4(0.01f, 0.02f, 0.03f, 0.04f);
 
 	// Create buffers for both the index and vertex buggers
-	IUniformBuffer* partical_system_buffer = renderer->CreateUniformBuffer(&partical_system, sizeof(ParticalSystemDefintion), 1);
+	IUniformBuffer* partical_system_buffer = renderer->CreateUniformBuffer(&partical_system, sizeof(ParticalSystemDefintion), 1, true);
 
 	// Set the vertex data for the model
 	partical_system_buffer->SetData();
+
+
+
+
+	ParticalSystemTimers partical_system_timers;
+	partical_system_timers.timers.x = 1.5f;
+	partical_system_timers.timers.y = 0.001f;
+
+	// Create buffers for both the index and vertex buggers
+	IUniformBuffer* partical_system_timers_buffer = renderer->CreateUniformBuffer(&partical_system_timers, sizeof(ParticalSystemTimers), 1, true);
+
+	// Set the vertex data for the model
+	partical_system_timers_buffer->SetData();
 
 
 
@@ -92,14 +110,14 @@ int main(int argc, char **argv)
 	for (int i = 0; i < partical_count; i++)
 	{
 		ParticalData data;
-		data.position = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-		data.velocity = glm::vec4(0.0f, 0.05f, 0.0f, 0.0f);
-		//data.life = partical_system.start_life;
+		data.position = partical_system.emiter_location;
+		data.velocity = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+		data.life = 1.0f;
 		partical_data.push_back(data);
 	}
 
 	// Create buffers for both the index and vertex buggers
-	IVertexBuffer* partical_buffer = renderer->CreateVertexBuffer(partical_data.data(), sizeof(ParticalData), partical_data.size());
+	IUniformBuffer* partical_buffer = renderer->CreateUniformBuffer(partical_data.data(), sizeof(ParticalData), partical_data.size(), true);
 
 	// Set the vertex data for the model
 	partical_buffer->SetData();
@@ -112,7 +130,8 @@ int main(int argc, char **argv)
 	IDescriptorPool* example_pool = renderer->CreateDescriptorPool({
 		renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::COMPUTE_SHADER, 0),
 		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 1),
-		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 2)
+		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 2),
+		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 3)
 		});
 
 	// Create camera descriptor set from the tempalte
@@ -122,6 +141,7 @@ int main(int argc, char **argv)
 	example_descriptor_set->AttachBuffer(0, partical_system_buffer);
 	example_descriptor_set->AttachBuffer(1, partical_buffer);
 	example_descriptor_set->AttachBuffer(2, vertex_buffer);
+	example_descriptor_set->AttachBuffer(3, partical_system_timers_buffer);
 	example_descriptor_set->UpdateSet();
 
 
@@ -181,7 +201,10 @@ int main(int argc, char **argv)
 	while (engine->Running())
 	{
 
-		//program->Run();
+		partical_system_timers.timers.y = engine->GetFrameTime();
+		partical_system_timers_buffer->SetData();
+
+		program->Run();
 		engine->Update();
 		engine->Render();
 

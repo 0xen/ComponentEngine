@@ -33,6 +33,7 @@ namespace ComponentEngine
 		void Render();
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
+		float GetFrameTime();
 	private:
 		Uint32 GetWindowFlags(RenderingAPI api);
 		void InitWindow();
@@ -61,8 +62,9 @@ namespace ComponentEngine
 		IDescriptorPool* m_camera_pool;
 
 		// FPS
-		int m_delta_time = 0;
-		int m_start_time = 0;
+		float m_delta_time = 0;
+		float m_now_delta_time = 0;
+		float m_frame_time = 0;
 		unsigned int m_delta_fps = 0;
 		unsigned int m_fps = 0;
 
