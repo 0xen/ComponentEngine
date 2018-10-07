@@ -42,18 +42,20 @@ struct ParticalSystemDefintion
 	glm::vec4 emiter_location;
 };
 
-struct ParticalSystemTimers
+struct ParticalSystemValues
 {
-	// timers.x = Life Time
-	// timers.y = Frame Time
-	glm::vec4 timers;
+	// values.x = Life Time
+	// values.y = Frame Time
+	// values.z = Scale
+	glm::vec4 values;
 };
 
 struct ParticalData
 {
 	glm::vec4 position;
 	glm::vec4 velocity;
-	float life;
+	// data.x = Life
+	glm::vec4 data;
 };
 
 int main(int argc, char **argv)
@@ -65,7 +67,7 @@ int main(int argc, char **argv)
 	IRenderer* renderer = engine->GetRenderer();
 
 
-	unsigned int partical_count = 1;
+	unsigned int partical_count = 10000;
 
 	std::vector<DefaultMeshVertex> vertex_data;
 	vertex_data.resize(partical_count * 3);
@@ -81,7 +83,7 @@ int main(int argc, char **argv)
 
 
 	ParticalSystemDefintion partical_system;
-	partical_system.emiter_location = glm::vec4(0.01f, 0.02f, 0.03f, 0.04f);
+	partical_system.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Create buffers for both the index and vertex buggers
 	IUniformBuffer* partical_system_buffer = renderer->CreateUniformBuffer(&partical_system, sizeof(ParticalSystemDefintion), 1, true);
@@ -92,15 +94,16 @@ int main(int argc, char **argv)
 
 
 
-	ParticalSystemTimers partical_system_timers;
-	partical_system_timers.timers.x = 1.5f;
-	partical_system_timers.timers.y = 0.001f;
+	ParticalSystemValues partical_system_values;
+	partical_system_values.values.x = 3.0f;
+	partical_system_values.values.y = 0.001f;
+	partical_system_values.values.z = 0.02f;
 
 	// Create buffers for both the index and vertex buggers
-	IUniformBuffer* partical_system_timers_buffer = renderer->CreateUniformBuffer(&partical_system_timers, sizeof(ParticalSystemTimers), 1, true);
+	IUniformBuffer* partical_system_values_buffer = renderer->CreateUniformBuffer(&partical_system_values, sizeof(ParticalSystemValues), 1, true);
 
 	// Set the vertex data for the model
-	partical_system_timers_buffer->SetData();
+	partical_system_values_buffer->SetData();
 
 
 
@@ -111,8 +114,11 @@ int main(int argc, char **argv)
 	{
 		ParticalData data;
 		data.position = partical_system.emiter_location;
-		data.velocity = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-		data.life = 1.0f;
+		data.data.x = 1.0f * (i + 1);
+		//data.velocity = glm::vec4(-2.0f + ((4.0f / partical_count) * i), i % 2 == 0 ? 1.0f : -1.0f, 0.0f, 0.0f);
+
+		data.velocity = glm::vec4(sin((float)i), cos((float)i), 0.0f, 0.0f);
+
 		partical_data.push_back(data);
 	}
 
@@ -122,6 +128,7 @@ int main(int argc, char **argv)
 	// Set the vertex data for the model
 	partical_buffer->SetData();
 
+	float a = 2.1f;
 
 
 
@@ -139,9 +146,9 @@ int main(int argc, char **argv)
 	// Attach the buffer
 	
 	example_descriptor_set->AttachBuffer(0, partical_system_buffer);
-	example_descriptor_set->AttachBuffer(1, partical_buffer);
-	example_descriptor_set->AttachBuffer(2, vertex_buffer);
-	example_descriptor_set->AttachBuffer(3, partical_system_timers_buffer);
+	example_descriptor_set->AttachBuffer(1, partical_system_values_buffer);
+	example_descriptor_set->AttachBuffer(2, partical_buffer);
+	example_descriptor_set->AttachBuffer(3, vertex_buffer);
 	example_descriptor_set->UpdateSet();
 
 
@@ -201,8 +208,8 @@ int main(int argc, char **argv)
 	while (engine->Running())
 	{
 
-		partical_system_timers.timers.y = engine->GetFrameTime();
-		partical_system_timers_buffer->SetData();
+		partical_system_values.values.y = engine->GetFrameTime();
+		partical_system_values_buffer->SetData();
 
 		program->Run();
 		engine->Update();

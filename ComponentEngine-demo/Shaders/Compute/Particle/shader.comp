@@ -10,13 +10,25 @@ layout(std430, set=0, binding=0) buffer particle_system_buffer {
   particle_system_instance particle_system_data;
 };
 
+struct particle_system_values_instance{
+	// values.x = Life Time
+	// values.y = Frame Time
+	// values.z = Scale
+	vec4 values;
+};
+
+layout(std430, set=0, binding=1) buffer particle_system_timers_buffer {
+  particle_system_values_instance particle_system_values_data;
+};
+
 struct particle_data_instance{
 	vec4 position;
 	vec4 vel;
-	float life;
+	// data.x = Life
+	vec4 data;
 };
 
-layout(std430, set=0, binding=1) buffer particle_buffer {
+layout(std430, set=0, binding=2) buffer particle_buffer {
   particle_data_instance particle_data[];
 };
 
@@ -25,35 +37,39 @@ struct vertex_instance{
 	vec4 vertex;
 };
 
-layout(std430, set=0, binding=2) buffer vertex_buffer {
+layout(std430, set=0, binding=3) buffer vertex_buffer {
   vertex_instance vertex_data[];
 };
 
-struct particle_system_timers_instance{
-	// timers.x = Life Time
-	// timers.y = Frame Time
-	vec4 timers;
-};
-
-layout(std430, set=0, binding=3) buffer particle_system_timers_buffer {
-  particle_system_timers_instance particle_system_timers_data;
-};
-
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 
 void main(){
 	uint ParticleIndex = gl_GlobalInvocationID.x;
 
-	particle_data[ParticleIndex].position += particle_data[ParticleIndex].vel * particle_system_timers_data.timers.y;
+	particle_data[ParticleIndex].position += particle_data[ParticleIndex].vel * particle_system_values_data.values.y;
 
-	vertex_data[ParticleIndex * 3].vertex = particle_data[ParticleIndex].position + vec4(0.5f,0.0f,0.0f,0.0f);
-	vertex_data[ParticleIndex * 3 + 1].vertex = particle_data[ParticleIndex].position + vec4(-0.5f,0.0f,0.0f,0.0f);
-	vertex_data[ParticleIndex * 3 + 2].vertex = particle_data[ParticleIndex].position + vec4(0.0f,-0.5f,0.0f,0.0f);
 
-	particle_data[ParticleIndex].life -= particle_system_timers_data.timers.y;
+	float radians = (120.0f / 180.0f) * 3.14f;
+	float radians_double = radians * 2;
+	float radians_tripple = radians * 3;
 
-	if(particle_data[ParticleIndex].life<0.0f)
+	vertex_data[(ParticleIndex * 3)    ].vertex = particle_data[ParticleIndex].position + -vec4(
+		sin(radians) * particle_system_values_data.values.z,cos(radians) * particle_system_values_data.values.z,0.0f,0.0f);
+
+	vertex_data[(ParticleIndex * 3) + 1].vertex = particle_data[ParticleIndex].position + -vec4(
+		sin(radians_double) * particle_system_values_data.values.z,cos(radians_double) * particle_system_values_data.values.z,0.0f,0.0f);
+
+	vertex_data[(ParticleIndex * 3) + 2].vertex = particle_data[ParticleIndex].position + -vec4(
+		sin(radians_tripple) * particle_system_values_data.values.z,cos(radians_tripple) * particle_system_values_data.values.z,0.0f,0.0f);
+
+
+	particle_data[ParticleIndex].data.x -= particle_system_values_data.values.y;
+
+	if(particle_data[ParticleIndex].data.x<0.0f)
 	{
-		particle_data[ParticleIndex].life = 1.5; //particle_system_timers_instance.timers.x;
+		particle_data[ParticleIndex].data.x = rand(particle_data[ParticleIndex].position.xy) * particle_system_values_data.values.x;
 		particle_data[ParticleIndex].position = particle_system_data.emitter_location;
 	}
 }
