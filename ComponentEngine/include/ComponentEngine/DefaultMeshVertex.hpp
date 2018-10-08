@@ -8,7 +8,8 @@ namespace ComponentEngine
 	{
 	public:
 		DefaultMeshVertex() {}
-		DefaultMeshVertex(glm::vec4 position) : position(position) {}
+		DefaultMeshVertex(glm::vec4 position, glm::vec4 color) : position(position), color(color) {}
 		glm::vec4 position;
+		glm::vec4 color;
 	};
 }
