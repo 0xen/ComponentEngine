@@ -40,23 +40,21 @@ private:
 struct ParticalSystemDefintion
 {
 	glm::vec4 emiter_location;
+	glm::vec4 start_color;
+	glm::vec4 end_color;
+	glm::vec4 data;
 };
 
 struct ParticalSystemValues
 {
-	// values.x = Life Time
-	// values.y = Frame Time
-	// values.z = Scale
-	glm::vec4 values;
-};
-
-struct ParticalData
-{
-	glm::vec4 position;
+	glm::vec4 start_position;
 	glm::vec4 velocity;
-	// data.x = Life
+	// data.x = Start Life
+	// data.y = Life
+	// data.z = Scale
 	glm::vec4 data;
 };
+
 
 int main(int argc, char **argv)
 {
@@ -67,7 +65,7 @@ int main(int argc, char **argv)
 	IRenderer* renderer = engine->GetRenderer();
 
 
-	unsigned int partical_count = 10000;
+	unsigned int partical_count = 100;
 
 	std::vector<DefaultMeshVertex> vertex_data;
 	vertex_data.resize(partical_count * 3);
@@ -83,7 +81,10 @@ int main(int argc, char **argv)
 
 
 	ParticalSystemDefintion partical_system;
-	partical_system.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	partical_system.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	partical_system.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 0.6f);
+	partical_system.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 0.2f);
+	partical_system.data.x = 0.0f;
 
 	// Create buffers for both the index and vertex buggers
 	IUniformBuffer* partical_system_buffer = renderer->CreateUniformBuffer(&partical_system, sizeof(ParticalSystemDefintion), 1, true);
@@ -92,15 +93,23 @@ int main(int argc, char **argv)
 	partical_system_buffer->SetData();
 
 
+	std::vector<ParticalSystemValues> partical_system_values;
 
+	for (int i = 0; i < partical_count; i++)
+	{
+		ParticalSystemValues partical_system_value;
+		float speed = ((rand() % 100)*0.005f);
+		partical_system_value.data.x = 2.0f + ((rand()%10000)*0.0001f);
+		partical_system_value.data.y = partical_system_value.data.x / 2;
+		partical_system_value.data.z = 0.015f;
+		partical_system_value.start_position = partical_system.emiter_location;
+		partical_system_value.velocity = glm::vec4(sin(i)*speed * 0.5f, cos(i)*speed - 0.5f, 0.0f, 0.0f);
 
-	ParticalSystemValues partical_system_values;
-	partical_system_values.values.x = 3.0f;
-	partical_system_values.values.y = 0.001f;
-	partical_system_values.values.z = 0.02f;
+		partical_system_values.push_back(partical_system_value);
+	}
 
 	// Create buffers for both the index and vertex buggers
-	IUniformBuffer* partical_system_values_buffer = renderer->CreateUniformBuffer(&partical_system_values, sizeof(ParticalSystemValues), 1, true);
+	IUniformBuffer* partical_system_values_buffer = renderer->CreateUniformBuffer(partical_system_values.data(), sizeof(ParticalSystemValues), partical_system_values.size(), true);
 
 	// Set the vertex data for the model
 	partical_system_values_buffer->SetData();
@@ -108,58 +117,57 @@ int main(int argc, char **argv)
 
 
 
-	std::vector<ParticalData> partical_data;
-
-	for (int i = 0; i < partical_count; i++)
-	{
-		ParticalData data;
-		data.position = partical_system.emiter_location;
-		data.data.x = 1.0f * (i + 1);
-		//data.velocity = glm::vec4(-2.0f + ((4.0f / partical_count) * i), i % 2 == 0 ? 1.0f : -1.0f, 0.0f, 0.0f);
-
-		data.velocity = glm::vec4(sin((float)i), cos((float)i), 0.0f, 0.0f);
-
-		partical_data.push_back(data);
-	}
-
-	// Create buffers for both the index and vertex buggers
-	IUniformBuffer* partical_buffer = renderer->CreateUniformBuffer(partical_data.data(), sizeof(ParticalData), partical_data.size(), true);
-
-	// Set the vertex data for the model
-	partical_buffer->SetData();
-
-	float a = 2.1f;
-
-
-
-	// Create camera pool
-	// This is a layout for the camera input data
-	IDescriptorPool* example_pool = renderer->CreateDescriptorPool({
-		renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::COMPUTE_SHADER, 0),
-		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 1),
-		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 2),
-		renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 3)
-		});
-
-	// Create camera descriptor set from the tempalte
-	IDescriptorSet* example_descriptor_set = example_pool->CreateDescriptorSet();
-	// Attach the buffer
-	
-	example_descriptor_set->AttachBuffer(0, partical_system_buffer);
-	example_descriptor_set->AttachBuffer(1, partical_system_values_buffer);
-	example_descriptor_set->AttachBuffer(2, partical_buffer);
-	example_descriptor_set->AttachBuffer(3, vertex_buffer);
-	example_descriptor_set->UpdateSet();
-
 
 	IComputePipeline* pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/Particle/comp.spv", partical_count, 1, 1);
 
 
-	// Tell the pipeline what the input data will be payed out like
-	pipeline->AttachDescriptorPool(example_pool);
-	// Attach the camera descriptor set to the pipeline
-	pipeline->AttachDescriptorSet(0, example_descriptor_set);
+	{
+		IDescriptorPool* partical_system_pool = renderer->CreateDescriptorPool({
+			renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 0),
+			});
 
+		// Create camera descriptor set from the tempalte
+		IDescriptorSet* partical_system_set = partical_system_pool->CreateDescriptorSet();
+		// Attach the buffer
+
+		partical_system_set->AttachBuffer(0, partical_system_buffer);
+		partical_system_set->UpdateSet();
+
+		pipeline->AttachDescriptorPool(partical_system_pool);
+		pipeline->AttachDescriptorSet(0, partical_system_set);
+	}
+
+	{
+		IDescriptorPool* partical_system_values_pool = renderer->CreateDescriptorPool({
+			renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 0),
+			});
+
+		// Create camera descriptor set from the tempalte
+		IDescriptorSet* partical_system_values_set = partical_system_values_pool->CreateDescriptorSet();
+		// Attach the buffer
+
+		partical_system_values_set->AttachBuffer(0, partical_system_values_buffer);
+		partical_system_values_set->UpdateSet();
+
+		pipeline->AttachDescriptorPool(partical_system_values_pool);
+		pipeline->AttachDescriptorSet(1, partical_system_values_set);
+	}
+
+	{
+		IDescriptorPool* partical_vertex_pool = renderer->CreateDescriptorPool({
+			renderer->CreateDescriptor(Renderer::DescriptorType::STORAGE_BUFFER, Renderer::ShaderStage::COMPUTE_SHADER, 0)
+			});
+
+		// Create camera descriptor set from the tempalte
+		IDescriptorSet* partical_vertex_set = partical_vertex_pool->CreateDescriptorSet();
+		// Attach the buffer
+
+		partical_vertex_set->AttachBuffer(0, vertex_buffer);
+		partical_vertex_set->UpdateSet();
+
+		pipeline->AttachDescriptorPool(partical_vertex_pool);
+		pipeline->AttachDescriptorSet(2, partical_vertex_set);
+	}
 
 
 	assert(pipeline->Build() && "Unable to build pipeline");
@@ -168,6 +176,13 @@ int main(int argc, char **argv)
 	program->AttachPipeline(pipeline);
 	program->Build();
 	program->Run();
+
+
+
+
+
+
+
 
 
 
@@ -207,9 +222,8 @@ int main(int argc, char **argv)
 
 	while (engine->Running())
 	{
-
-		partical_system_values.values.y = engine->GetFrameTime();
-		partical_system_values_buffer->SetData();
+		partical_system.data.x = engine->GetFrameTime();
+		partical_system_buffer->SetData();
 
 		program->Run();
 		engine->Update();

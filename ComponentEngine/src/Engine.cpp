@@ -199,7 +199,8 @@ void ComponentEngine::Engine::InitRenderer()
 	m_default_pipeline->AttachVertexBinding({
 		VertexInputRate::INPUT_RATE_VERTEX,
 		{
-			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(DefaultMeshVertex,position) }
+			{ 0, DataFormat::R32G32B32A32_FLOAT,offsetof(DefaultMeshVertex,position) },
+			{ 1, DataFormat::R32G32B32A32_FLOAT,offsetof(DefaultMeshVertex,color) }
 		},
 		sizeof(DefaultMeshVertex),
 		0
@@ -208,7 +209,7 @@ void ComponentEngine::Engine::InitRenderer()
 	m_default_pipeline->AttachVertexBinding({
 		VertexInputRate::INPUT_RATE_INSTANCE,
 		{
-			{ 1, DataFormat::MAT4_FLOAT,0 }
+			{ 2, DataFormat::MAT4_FLOAT,0 }
 		},
 		sizeof(glm::mat4),
 		1
