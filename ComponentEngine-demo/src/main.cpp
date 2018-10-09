@@ -48,40 +48,72 @@ int main(int argc, char **argv)
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
 
-	//{
+	ParticalSystemConfiguration ps_config;
+	ps_config.data.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	ps_config.data.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+	ps_config.data.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
+	ps_config.data.frame_time = 0.0f;
+	ps_config.data.partical_count = 5000;
+
+	{
 		Entity* entity = em.CreateEntity();
 		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
-		//entity->AddComponent<Model>(entity, model_pool);
-
-
-
-		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(engine);
-		ParticalSystemConfiguration& ps_config = ps->GetConfig();
-		ps_config.data.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		ps_config.data.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		ps_config.data.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
-		ps_config.data.frame_time = 0.0f;
-		ps_config.data.partical_count = 10000;
-
+		transform->Translate(glm::vec3(-1.0f, 1.0f, -5.0f));
+		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+		ps->GetConfig() = ps_config;
 		ps->Build();
-
-	//}
-
-
-	for (auto e : em.GetEntitys())
-	{
-		e->ForEach<ProcessTask>([](enteez::Entity* entity, ProcessTask& process_task)
-		{
-			process_task.Update();
-		});
 	}
 
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(1.0f, 1.0f, -5.0f));
+		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+		ps->GetConfig() = ps_config;
+		ps->Build();
+	}
+
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(-1.0f, -1.0f, -5.0f));
+		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+		ps->GetConfig() = ps_config;
+		ps->Build();
+	}
+
+	{
+		Entity* entity = em.CreateEntity();
+		Transformation* transform = entity->AddComponent<Transformation>();
+		transform->Translate(glm::vec3(1.0f, -1.0f, -5.0f));
+		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+		ps->GetConfig() = ps_config;
+		ps->Build();
+	}
+
+	int tick = 0;
+	float rotation = 0.01f;
 	while (engine->Running())
 	{
+		tick++;
 
-		
-		ps->Update();
+
+
+		em.ForEach<ParticalSystem, Transformation>([rotation](enteez::Entity* entity, ParticalSystem& ps, Transformation& trans)
+		{
+			trans.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), rotation);
+			ps.Update();
+		}, true);
+
+
+
+		if (tick % 2 == 0)
+		{
+			em.ForEach<ParticalSystem>([](enteez::Entity* entity, ParticalSystem& ps)
+			{
+				ps.Rebuild();
+			}, true);
+		}
 
 
 		engine->Update();
@@ -90,8 +122,6 @@ int main(int argc, char **argv)
 	}
 
 
-
-	//delete model_position_buffer;
 	delete engine;
     return 0;
 }

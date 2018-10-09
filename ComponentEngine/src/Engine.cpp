@@ -93,8 +93,6 @@ void ComponentEngine::Engine::UpdateWindow()
 	m_frame_time = (float)(m_now_delta_time - m_delta_time) / SDL_GetPerformanceFrequency();
 
 
-
-
 	/*m_frame_time = 1000.0f / (SDL_GetPerformanceCounter() - m_now_delta_time);
 	m_delta_time -= m_frame_time;
 	m_now_delta_time = SDL_GetPerformanceCounter();
@@ -104,9 +102,6 @@ void ComponentEngine::Engine::UpdateWindow()
 		m_fps = m_delta_fps;
 		m_delta_fps = 0;
 		m_delta_time = 1000.0f;
-		std::stringstream ss;
-		ss << m_title << " FPS:" << m_fps;
-		SDL_SetWindowTitle(m_window, ss.str().c_str());
 	}*/
 
 	SDL_Event event;

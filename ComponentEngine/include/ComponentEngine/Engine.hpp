@@ -65,7 +65,7 @@ namespace ComponentEngine
 		float m_delta_time = 0;
 		float m_now_delta_time = 0;
 		float m_frame_time = 0;
-		unsigned int m_delta_fps = 0;
+		float m_fps_update = 0.0f;
 		unsigned int m_fps = 0;
 
 

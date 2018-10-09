@@ -21,6 +21,10 @@ namespace Renderer
 	class IDescriptorPool;
 	class IDescriptorSet;
 }
+namespace enteez
+{
+	class Entity;
+}
 namespace ComponentEngine
 {
 	struct ParticalSystemConfiguration
@@ -63,10 +67,11 @@ namespace ComponentEngine
 	class ParticalSystem
 	{
 	public:
-		ParticalSystem(Engine* engine);
+		ParticalSystem(enteez::Entity* entity, Engine* engine);
 		~ParticalSystem();
 		void Build();
 		void Update();
+		void Rebuild();
 		ParticalSystemConfiguration& GetConfig();
 	private:
 		std::vector<DefaultMeshVertex> m_vertex_data;
@@ -74,6 +79,7 @@ namespace ComponentEngine
 		std::vector<ParticalSystemInstanceValues> m_partical_system_instance_values;
 
 		Engine* m_engine;
+		enteez::Entity* m_entity;
 
 		Renderer::IComputePipeline* m_pipeline;
 		Renderer::IComputeProgram* m_program;

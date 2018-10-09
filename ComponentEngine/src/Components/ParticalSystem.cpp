@@ -2,7 +2,8 @@
 #include <ComponentEngine/DefaultMeshVertex.hpp>
 #include <ComponentEngine\Engine.hpp>
 
-ComponentEngine::ParticalSystem::ParticalSystem(Engine* engine) : m_engine(engine)
+
+ComponentEngine::ParticalSystem::ParticalSystem(enteez::Entity* entity, Engine* engine) : m_entity(entity), m_engine(engine)
 {
 
 }
@@ -52,9 +53,9 @@ void ComponentEngine::ParticalSystem::Build()
 		} while (speed < 0.025f);
 		instance_value.data.start_position = m_config.data.emiter_location;
 		instance_value.data.velocity = glm::vec4(sin(i)*speed, cos(i)*speed, 0.0f, 0.0f);
-		instance_value.data.start_life = 2.0f + ((rand() % 10000)*0.0001f);
-		instance_value.data.life = 2.0f + ((rand() % 10000)*0.0001f);
-		instance_value.data.scale = 0.015f;
+		instance_value.data.start_life = 0.5f + ((rand() % 100000)*0.00001f);
+		instance_value.data.life = 0.5f + ((rand() % 100000)*0.00001f);
+		instance_value.data.scale = 0.01f;
 
 		m_partical_system_instance_values.push_back(instance_value);
 	}
@@ -125,8 +126,7 @@ void ComponentEngine::ParticalSystem::Build()
 
 	m_model_pool = renderer->CreateModelPool(m_vertex_buffer);
 
-	m_model_position = glm::mat4(1.0f);
-	m_model_position = glm::translate(m_model_position, glm::vec3(0.0f, 0.0f, -5.0f));
+	m_model_position = m_entity->GetComponent<Transformation>().Get();
 	m_model_position_buffer = renderer->CreateUniformBuffer(&m_model_position, sizeof(glm::mat4), 1);
 
 	// Attach the buffer to buffer index 0
@@ -145,9 +145,18 @@ void ComponentEngine::ParticalSystem::Build()
 
 void ComponentEngine::ParticalSystem::Update()
 {
-	m_config.data.frame_time = m_engine->GetFrameTime();
+	m_config.data.frame_time += m_engine->GetFrameTime();
+	m_model_position = m_entity->GetComponent<Transformation>().Get();
+	m_model->SetData(0, m_model_position);
+	m_model_position_buffer->SetData();
+}
+
+void ComponentEngine::ParticalSystem::Rebuild()
+{
 	m_partical_system_configuration_buffer->SetData();
 	m_program->Run();
+
+	m_config.data.frame_time = 0.001f;// m_engine->GetFrameTime();
 }
 
 ComponentEngine::ParticalSystemConfiguration & ComponentEngine::ParticalSystem::GetConfig()

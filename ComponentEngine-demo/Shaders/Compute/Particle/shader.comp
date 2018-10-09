@@ -51,8 +51,17 @@ void main(){
 
 	if(particle_system_value_data[ParticleIndex].life<0.0f)
 	{
-		// Reset but leave extra time data
-		particle_system_value_data[ParticleIndex].life = particle_system_value_data[ParticleIndex].start_life;
+		if(particle_system_value_data[ParticleIndex].life + particle_system_value_data[ParticleIndex].start_life < 0.0f)
+		{
+			// Reset but leave extra time data
+			particle_system_value_data[ParticleIndex].life = particle_system_value_data[ParticleIndex].start_life;
+		}
+		else
+		{
+			// Reset but leave extra time data
+			particle_system_value_data[ParticleIndex].life += particle_system_value_data[ParticleIndex].start_life;
+		}
+		
 	}
 	else
 	{
