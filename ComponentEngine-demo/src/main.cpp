@@ -1,4 +1,5 @@
 #include <ComponentEngine\Engine.hpp>
+#include <ComponentEngine\Components\ParticalSystem.hpp>
 #include <iostream>
 #include <vector>
 
@@ -42,7 +43,7 @@ struct ParticalSystemDefintion
 	glm::vec4 emiter_location;
 	glm::vec4 start_color;
 	glm::vec4 end_color;
-	glm::vec4 data;
+	float data[4];
 };
 
 struct ParticalSystemValues
@@ -65,7 +66,7 @@ int main(int argc, char **argv)
 	IRenderer* renderer = engine->GetRenderer();
 
 
-	unsigned int partical_count = 50000;
+	/*unsigned int partical_count = 50000;
 
 	std::vector<DefaultMeshVertex> vertex_data;
 	vertex_data.resize(partical_count * 3);
@@ -84,7 +85,7 @@ int main(int argc, char **argv)
 	partical_system.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	partical_system.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
 	partical_system.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
-	partical_system.data.x = 0.0f;
+	partical_system.data[ComponentEngine::FRAME_TIME] = 0.0f;
 
 	// Create buffers for both the index and vertex buggers
 	IUniformBuffer* partical_system_buffer = renderer->CreateUniformBuffer(&partical_system, sizeof(ParticalSystemDefintion), 1, true);
@@ -198,15 +199,32 @@ int main(int argc, char **argv)
 	model_pool->AttachBuffer(0, model_position_buffer);
 
 
-	{
+
+	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
+
+
+	*/
+
+	//{
 		Entity* entity = em.CreateEntity();
 		Transformation* transform = entity->AddComponent<Transformation>();
 		transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
-		entity->AddComponent<Model>(entity, model_pool);
-	}
+		//entity->AddComponent<Model>(entity, model_pool);
 
 
-	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
+
+		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(engine);
+		ParticalSystemConfiguration& ps_config = ps->GetConfig();
+		ps_config.data.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		ps_config.data.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		ps_config.data.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
+		ps_config.data.frame_time = 0.0f;
+		ps_config.data.partical_count = 100;
+
+		ps->Build();
+
+	//}
+
 
 
 	for (auto e : em.GetEntitys())
@@ -218,14 +236,18 @@ int main(int argc, char **argv)
 	}
 
 	// Update all model positions
-	model_position_buffer->SetData();
+	//model_position_buffer->SetData();
 
 	while (engine->Running())
 	{
-		partical_system.data.x = engine->GetFrameTime();
-		partical_system_buffer->SetData();
 
-		program->Run();
+		ps_config.data.frame_time = engine->GetFrameTime();
+		ps->Update();
+
+		//partical_system.data[ComponentEngine::FRAME_TIME] = engine->GetFrameTime();
+		//partical_system_buffer->SetData();
+
+		//program->Run();
 		engine->Update();
 		engine->Render();
 
@@ -233,7 +255,7 @@ int main(int argc, char **argv)
 
 
 
-	delete model_position_buffer;
+	//delete model_position_buffer;
 	delete engine;
     return 0;
 }

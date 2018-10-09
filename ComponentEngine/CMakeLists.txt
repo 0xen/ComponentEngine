@@ -10,11 +10,13 @@ set(common_headers
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/Components/Camera.hpp
     include/ComponentEngine/Components/Transformation.hpp
+    include/ComponentEngine/Components/ParticalSystem.hpp
 )
 
 set(common_source
     src/Engine.cpp
     src/Components/Transformation.cpp
+    src/Components/ParticalSystem.cpp
 )
 
 include_directories(include)

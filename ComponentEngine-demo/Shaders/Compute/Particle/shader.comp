@@ -1,12 +1,14 @@
 #version 460
 
+#define FRAME_TIME 0
+
 #extension GL_KHR_shader_subgroup_ballot: enable
 
 struct particle_system_instance{
 	vec4 emitter_location;
 	vec4 start_color;
 	vec4 end_color;
-	vec4 data;
+	float data[4];
 };
 
 layout(std430, set=0, binding=0) buffer particle_system_buffer {
@@ -45,7 +47,7 @@ void main(){
 	uint ParticleIndex = gl_GlobalInvocationID.x;
 
 
-	particle_system_value_data[ParticleIndex].data.y -= particle_system_data.data.x;
+	particle_system_value_data[ParticleIndex].data.y -= particle_system_data.data[FRAME_TIME];
 
 	vec4 position = particle_system_value_data[ParticleIndex].start_position;
 
