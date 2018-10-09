@@ -45,7 +45,11 @@ void ComponentEngine::ParticalSystem::Build()
 	for (int i = 0; i < m_config.data.partical_count; i++)
 	{
 		ParticalSystemInstanceValues instance_value;
-		float speed = ((rand() % 100)*0.01f);
+		float speed;
+		do
+		{
+			speed = ((rand() % 100)*0.01f);
+		} while (speed < 0.025f);
 		instance_value.data.start_position = m_config.data.emiter_location;
 		instance_value.data.velocity = glm::vec4(sin(i)*speed, cos(i)*speed, 0.0f, 0.0f);
 		instance_value.data.start_life = 2.0f + ((rand() % 10000)*0.0001f);
@@ -141,6 +145,7 @@ void ComponentEngine::ParticalSystem::Build()
 
 void ComponentEngine::ParticalSystem::Update()
 {
+	m_config.data.frame_time = m_engine->GetFrameTime();
 	m_partical_system_configuration_buffer->SetData();
 	m_program->Run();
 }
