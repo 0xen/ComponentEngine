@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 	IRenderer* renderer = engine->GetRenderer();
 
 
-	/*unsigned int partical_count = 50000;
+	unsigned int partical_count = 50000;
 
 	std::vector<DefaultMeshVertex> vertex_data;
 	vertex_data.resize(partical_count * 3);
@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
 
 
-	*/
+	
 
 	//{
 		Entity* entity = em.CreateEntity();
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 	}
 
 	// Update all model positions
-	//model_position_buffer->SetData();
+	model_position_buffer->SetData();
 
 	while (engine->Running())
 	{
@@ -244,10 +244,10 @@ int main(int argc, char **argv)
 		ps_config.data.frame_time = engine->GetFrameTime();
 		ps->Update();
 
-		//partical_system.data[ComponentEngine::FRAME_TIME] = engine->GetFrameTime();
-		//partical_system_buffer->SetData();
+		partical_system.data[ComponentEngine::FRAME_TIME] = engine->GetFrameTime();
+		partical_system_buffer->SetData();
 
-		//program->Run();
+		program->Run();
 		engine->Update();
 		engine->Render();
 

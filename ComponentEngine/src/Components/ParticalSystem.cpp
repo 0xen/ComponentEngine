@@ -45,10 +45,11 @@ void ComponentEngine::ParticalSystem::Build()
 	for (int i = 0; i < m_config.data.partical_count; i++)
 	{
 		ParticalSystemInstanceValues instance_value;
+		float speed = ((rand() % 100)*0.01f);
 		instance_value.data.start_position = m_config.data.emiter_location;
-		instance_value.data.velocity = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-		instance_value.data.start_life = 2.0f;
-		instance_value.data.life = 2.0f;
+		instance_value.data.velocity = glm::vec4(sin(i)*speed, cos(i)*speed, 0.0f, 0.0f);
+		instance_value.data.start_life = 2.0f + ((rand() % 10000)*0.0001f);
+		instance_value.data.life = 2.0f + ((rand() % 10000)*0.0001f);
 		instance_value.data.scale = 0.015f;
 
 		m_partical_system_instance_values.push_back(instance_value);
@@ -121,6 +122,7 @@ void ComponentEngine::ParticalSystem::Build()
 	m_model_pool = renderer->CreateModelPool(m_vertex_buffer);
 
 	m_model_position = glm::mat4(1.0f);
+	m_model_position = glm::translate(m_model_position, glm::vec3(0.0f, 0.0f, -5.0f));
 	m_model_position_buffer = renderer->CreateUniformBuffer(&m_model_position, sizeof(glm::mat4), 1);
 
 	// Attach the buffer to buffer index 0
