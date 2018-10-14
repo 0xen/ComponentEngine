@@ -34,6 +34,7 @@ namespace ComponentEngine
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
 		Entity* GetCameraEntity();
+		Transformation* GetCameraTransformation();
 		float GetFrameTime();
 	private:
 		Uint32 GetWindowFlags(RenderingAPI api);

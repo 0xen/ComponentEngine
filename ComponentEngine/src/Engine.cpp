@@ -33,6 +33,11 @@ bool ComponentEngine::Engine::Running()
 
 void ComponentEngine::Engine::Update()
 {
+	m_camera_component.view = glm::inverse(m_camera_component.view);
+	m_camera_component.view = m_camera_entity->GetComponent<Transformation>().Get();
+	m_camera_component.view = glm::inverse(m_camera_component.view);
+	m_camera_buffer->SetData();
+
 	UpdateWindow();
 }
 
@@ -55,6 +60,11 @@ IRenderer * ComponentEngine::Engine::GetRenderer()
 Entity * ComponentEngine::Engine::GetCameraEntity()
 {
 	return m_camera_entity;
+}
+
+Transformation * ComponentEngine::Engine::GetCameraTransformation()
+{
+	return &m_camera_entity->GetComponent<Transformation>();
 }
 
 float ComponentEngine::Engine::GetFrameTime()
@@ -160,7 +170,6 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Create camera
 	m_camera_component.view = glm::mat4(1.0f);
-	m_camera_component.view = glm::scale(m_camera_component.view, glm::vec3(1.0f, 1.0f, 1.0f));
 	m_camera_component.view = glm::translate(m_camera_component.view, glm::vec3(0.0f, 0.0f, 0.0f));
 
 	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
@@ -170,11 +179,18 @@ void ComponentEngine::Engine::InitRenderer()
 		0.1f,
 		200.0f
 	);
+	// Need to flip the projection as GLM was made for OpenGL
+	m_camera_component.projection[1][1] *= -1;
 
 
 	m_camera_entity = this->GetEntityManager().CreateEntity();
-	m_camera_entity->AddComponent<Transformation>();
+	//m_camera_entity->AddComponent(&m_camera_component);
+	Transformation* camera_transformation = m_camera_entity->AddComponent<Transformation>();
+	camera_transformation->Translate(glm::vec3(0.0f, 0.0f, 0.0f));
 	m_camera_entity->AddComponent(&m_camera_component);
+
+
+
 
 
 	// Create camera buffer

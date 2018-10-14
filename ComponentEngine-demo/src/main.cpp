@@ -11,46 +11,14 @@ using namespace Renderer;
 
 Engine* engine;
 
-class ProcessTask
-{
-public:
-	virtual void Update() = 0;
-};
-
-class Model : public ProcessTask
-{
-public:
-	Model(Entity* entity, IModelPool* model_pool) : m_entity(entity), m_model(model_pool->CreateModel())
-	{
-	}
-
-	~Model()
-	{
-		delete m_model;
-	}
-
-	virtual void Update()
-	{
-		if (m_entity->HasComponent<Transformation>())
-		{
-			// Set the data to buffer index 0
-			m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
-		}
-	}
-private:
-	Entity * m_entity;
-	IModel * m_model;
-};
-
-
 int main(int argc, char **argv)
 {
 	engine = new Engine();
-	engine->RegisterBase<Model, ProcessTask>();
 
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
 
+	engine->GetCameraTransformation()->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
 
 	std::vector<DefaultMeshVertex> vertexData = {
 		DefaultMeshVertex(glm::vec4(1.0f,1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
@@ -68,20 +36,18 @@ int main(int argc, char **argv)
 	IIndexBuffer* indexBuffer = renderer->CreateIndexBuffer(indexData.data(), sizeof(uint16_t), indexData.size());
 	indexBuffer->SetData();
 
-
 	IModelPool* model_pool = renderer->CreateModelPool(vertexBuffer, indexBuffer);
 
-	unsigned int model_array_size = 2;
+	unsigned int model_array_size = 10;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
+	for (int i = 0; i < model_array_size; i++)
+	{
+		model_position_array[i] = glm::mat4(1.0f);
+	}
 	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
 
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
-
-
-
-
-
 
 
 
@@ -92,32 +58,78 @@ int main(int argc, char **argv)
 	ps_config.data.frame_time = 0.0f;
 	ps_config.data.partical_count = 50000;
 
+	// Particles
 	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
-		entity->AddComponent<Model>(entity, model_pool);
-		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
-		ps->GetConfig() = ps_config;
-		ps->Build();
-	}
-
-	
-	Entity* moving_camera_block = em.CreateEntity();
-	Transformation* moving_camera_block_transform = moving_camera_block->AddComponent<Transformation>();
-	moving_camera_block_transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
-	moving_camera_block->AddComponent<Model>(moving_camera_block, model_pool);
-	
-
-	for (auto e : em.GetEntitys())
-	{
-		e->ForEach<ProcessTask>([](enteez::Entity* entity, ProcessTask& process_task)
 		{
-			process_task.Update();
-		});
+			Entity* entity = em.CreateEntity();
+			Transformation* transform = entity->AddComponent<Transformation>();
+			transform->Translate(glm::vec3(2.5f, 2.5f, 0.0f));
+			ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+			ps->GetConfig() = ps_config;
+			ps->Build();
+		}
+		{
+			Entity* entity = em.CreateEntity();
+			Transformation* transform = entity->AddComponent<Transformation>();
+			transform->Translate(glm::vec3(-2.5f, 2.5f, 0.0f));
+			ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+			ps->GetConfig() = ps_config;
+			ps->Build();
+		}
+		{
+			Entity* entity = em.CreateEntity();
+			Transformation* transform = entity->AddComponent<Transformation>();
+			transform->Translate(glm::vec3(-2.5f, -2.5f, 0.0f));
+			ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+			ps->GetConfig() = ps_config;
+			ps->Build();
+		}
+		{
+			Entity* entity = em.CreateEntity();
+			Transformation* transform = entity->AddComponent<Transformation>();
+			transform->Translate(glm::vec3(2.5f, -2.5f, 0.0f));
+			ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
+			ps->GetConfig() = ps_config;
+			ps->Build();
+		}
 	}
 
-	model_position_buffer->SetData();
+	{ // Blocks
+		{
+			Entity* entity = em.CreateEntity();
+			IModel * model = entity->AddComponent(model_pool->CreateModel());
+			Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
+			transform->Translate(glm::vec3(2.5f, 0.0f, 0.0f));
+		}
+		{
+			Entity* entity = em.CreateEntity();
+			IModel * model = entity->AddComponent(model_pool->CreateModel());
+			Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
+			transform->Translate(glm::vec3(-2.5f, 0.0f, 0.0f));
+		}
+		{
+			Entity* entity = em.CreateEntity();
+			IModel * model = entity->AddComponent(model_pool->CreateModel());
+			Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
+			transform->Translate(glm::vec3(0.0f, 2.5f, 0.0f));
+		}
+		{
+			Entity* entity = em.CreateEntity();
+			IModel * model = entity->AddComponent(model_pool->CreateModel());
+			Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
+			transform->Translate(glm::vec3(0.0f, -2.5f, 0.0f));
+		}
+	}
+	
+
+	 // Moving block /w Camera
+	Entity* moving_camera_block = em.CreateEntity();
+	IModel * model = moving_camera_block->AddComponent(model_pool->CreateModel());
+	Transformation* moving_camera_block_transform = moving_camera_block->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
+	moving_camera_block_transform->Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+
+	engine->GetCameraTransformation()->SetParent(moving_camera_block_transform);
+
 
 	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
 
@@ -126,7 +138,7 @@ int main(int argc, char **argv)
 	while (engine->Running())
 	{
 
-		moving_camera_block_transform->Translate(glm::vec3(speed * engine->GetFrameTime(), 0.0f, 0.0f));
+		moving_camera_block_transform->Rotate(glm::vec3(0.0f, 0.0f, 1.0f), speed * 0.005f);
 
 		em.ForEach<ParticalSystem>([](enteez::Entity* entity, ParticalSystem& ps)
 		{

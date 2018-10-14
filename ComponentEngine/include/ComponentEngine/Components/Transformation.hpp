@@ -13,7 +13,20 @@ namespace ComponentEngine
 	class Transformation
 	{
 	public:
-		Transformation() { m_mat4 = glm::mat4(1.0f); }
+		Transformation()
+		{
+			m_mat4 = new glm::mat4(1.0f);
+			m_origional = true;
+		}
+		Transformation(glm::mat4* mat4)
+		{
+			m_mat4 = mat4;
+			m_origional = false;
+		}
+		~Transformation()
+		{
+			if (m_origional)delete m_mat4;
+		}
 		void Translate(glm::vec3 translation);
 		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);
@@ -21,7 +34,8 @@ namespace ComponentEngine
 		glm::mat4& Get();
 		Transformation* GetParent();
 	private:
-		glm::mat4 m_mat4;
-		Transformation* m_parent;
+		glm::mat4* m_mat4;
+		Transformation* m_parent = nullptr;
+		bool m_origional;
 	};
 }
