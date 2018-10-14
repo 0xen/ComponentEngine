@@ -33,6 +33,7 @@ namespace ComponentEngine
 		void Render();
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
+		Entity* GetCameraEntity();
 		float GetFrameTime();
 	private:
 		Uint32 GetWindowFlags(RenderingAPI api);
@@ -57,7 +58,8 @@ namespace ComponentEngine
 
 		// Default pipeline data
 		IGraphicsPipeline* m_default_pipeline = nullptr;
-		Camera m_camera;
+		Entity* m_camera_entity;
+		Camera m_camera_component;
 		IUniformBuffer* m_camera_buffer;
 		IDescriptorPool* m_camera_pool;
 

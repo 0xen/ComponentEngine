@@ -6,6 +6,10 @@ project(${project_name})
 set(HAVE_LIBC TRUE)
 
 set(common_headers
+    # External
+    include/ComponentEngine/pugixml.hpp
+    include/ComponentEngine/pugiconfig.hpp
+
     include/ComponentEngine/Engine.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/Components/Camera.hpp
@@ -14,6 +18,9 @@ set(common_headers
 )
 
 set(common_source
+    # External
+    src/pugixml.cpp
+
     src/Engine.cpp
     src/Components/Transformation.cpp
     src/Components/ParticalSystem.cpp

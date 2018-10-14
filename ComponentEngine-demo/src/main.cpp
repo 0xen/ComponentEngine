@@ -1,7 +1,9 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\ParticalSystem.hpp>
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <sstream>
 
 using namespace ComponentEngine;
 using namespace enteez;
@@ -21,10 +23,12 @@ public:
 	Model(Entity* entity, IModelPool* model_pool) : m_entity(entity), m_model(model_pool->CreateModel())
 	{
 	}
+
 	~Model()
 	{
 		delete m_model;
 	}
+
 	virtual void Update()
 	{
 		if (m_entity->HasComponent<Transformation>())
@@ -39,7 +43,6 @@ private:
 };
 
 
-
 int main(int argc, char **argv)
 {
 	engine = new Engine();
@@ -48,77 +51,94 @@ int main(int argc, char **argv)
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
 
+
+	std::vector<DefaultMeshVertex> vertexData = {
+		DefaultMeshVertex(glm::vec4(1.0f,1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
+		DefaultMeshVertex(glm::vec4(1.0f,-1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
+		DefaultMeshVertex(glm::vec4(-1.0f,-1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
+		DefaultMeshVertex(glm::vec4(-1.0f,1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f))
+	};
+	IVertexBuffer* vertexBuffer = renderer->CreateVertexBuffer(vertexData.data(), sizeof(DefaultMeshVertex), vertexData.size());
+	vertexBuffer->SetData();
+
+	std::vector<uint16_t> indexData{
+		0,1,2,
+		0,2,3
+	};
+	IIndexBuffer* indexBuffer = renderer->CreateIndexBuffer(indexData.data(), sizeof(uint16_t), indexData.size());
+	indexBuffer->SetData();
+
+
+	IModelPool* model_pool = renderer->CreateModelPool(vertexBuffer, indexBuffer);
+
+	unsigned int model_array_size = 2;
+	glm::mat4* model_position_array = new glm::mat4[model_array_size];
+	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
+
+	// Attach the buffer to buffer index 0
+	model_pool->AttachBuffer(0, model_position_buffer);
+
+
+
+
+
+
+
+
 	ParticalSystemConfiguration ps_config;
-	ps_config.data.emiter_location = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	ps_config.data.emiter_location = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	ps_config.data.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
 	ps_config.data.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
 	ps_config.data.frame_time = 0.0f;
-	ps_config.data.partical_count = 5000;
+	ps_config.data.partical_count = 50000;
 
 	{
 		Entity* entity = em.CreateEntity();
 		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(-1.0f, 1.0f, -5.0f));
+		transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
+		entity->AddComponent<Model>(entity, model_pool);
 		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
 		ps->GetConfig() = ps_config;
 		ps->Build();
 	}
 
+	
+	Entity* moving_camera_block = em.CreateEntity();
+	Transformation* moving_camera_block_transform = moving_camera_block->AddComponent<Transformation>();
+	moving_camera_block_transform->Translate(glm::vec3(0.0f, 0.0f, -5.0f));
+	moving_camera_block->AddComponent<Model>(moving_camera_block, model_pool);
+	
+
+	for (auto e : em.GetEntitys())
 	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(1.0f, 1.0f, -5.0f));
-		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
-		ps->GetConfig() = ps_config;
-		ps->Build();
+		e->ForEach<ProcessTask>([](enteez::Entity* entity, ProcessTask& process_task)
+		{
+			process_task.Update();
+		});
 	}
 
-	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(-1.0f, -1.0f, -5.0f));
-		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
-		ps->GetConfig() = ps_config;
-		ps->Build();
-	}
+	model_position_buffer->SetData();
 
-	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(1.0f, -1.0f, -5.0f));
-		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
-		ps->GetConfig() = ps_config;
-		ps->Build();
-	}
+	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
 
-	int tick = 0;
-	float rotation = 0.01f;
+	float speed = 1.0f;
+
 	while (engine->Running())
 	{
-		tick++;
 
+		moving_camera_block_transform->Translate(glm::vec3(speed * engine->GetFrameTime(), 0.0f, 0.0f));
 
-
-		em.ForEach<ParticalSystem, Transformation>([rotation](enteez::Entity* entity, ParticalSystem& ps, Transformation& trans)
+		em.ForEach<ParticalSystem>([](enteez::Entity* entity, ParticalSystem& ps)
 		{
-			trans.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), rotation);
 			ps.Update();
+			ps.Rebuild();
 		}, true);
-
-
-
-		if (tick % 2 == 0)
-		{
-			em.ForEach<ParticalSystem>([](enteez::Entity* entity, ParticalSystem& ps)
-			{
-				ps.Rebuild();
-			}, true);
-		}
 
 
 		engine->Update();
 		engine->Render();
 
+		model_position_buffer->SetData();
 	}
 
 

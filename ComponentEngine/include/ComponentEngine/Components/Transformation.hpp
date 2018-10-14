@@ -17,8 +17,11 @@ namespace ComponentEngine
 		void Translate(glm::vec3 translation);
 		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);
+		void SetParent(Transformation* parent);
 		glm::mat4& Get();
+		Transformation* GetParent();
 	private:
 		glm::mat4 m_mat4;
+		Transformation* m_parent;
 	};
 }

@@ -1,4 +1,5 @@
 #include <ComponentEngine\Engine.hpp>
+#include <ComponentEngine/pugixml.hpp>
 
 #include <assert.h>
 #include <sstream>
@@ -49,6 +50,11 @@ IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
 IRenderer * ComponentEngine::Engine::GetRenderer()
 {
 	return m_renderer;
+}
+
+Entity * ComponentEngine::Engine::GetCameraEntity()
+{
+	return m_camera_entity;
 }
 
 float ComponentEngine::Engine::GetFrameTime()
@@ -140,6 +146,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 
 void ComponentEngine::Engine::DeInitEnteeZ()
 {
+	this->GetEntityManager().DestroyEntity(m_camera_entity);
 }
 
 void ComponentEngine::Engine::InitRenderer()
@@ -151,24 +158,27 @@ void ComponentEngine::Engine::InitRenderer()
 	// If the rendering was not fully created, error out
 	assert(m_renderer != nullptr && "Error, renderer instance could not be created");
 
-
-
-
 	// Create camera
-	m_camera.view = glm::mat4(1.0f);
-	m_camera.view = glm::scale(m_camera.view, glm::vec3(1.0f, 1.0f, 1.0f));
-	m_camera.view = glm::translate(m_camera.view, glm::vec3(0.0f, 0.0f, 0.0f));
+	m_camera_component.view = glm::mat4(1.0f);
+	m_camera_component.view = glm::scale(m_camera_component.view, glm::vec3(1.0f, 1.0f, 1.0f));
+	m_camera_component.view = glm::translate(m_camera_component.view, glm::vec3(0.0f, 0.0f, 0.0f));
 
 	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
-	m_camera.projection = glm::perspective(
+	m_camera_component.projection = glm::perspective(
 		glm::radians(45.0f),
 		aspectRatio,
 		0.1f,
 		200.0f
 	);
 
+
+	m_camera_entity = this->GetEntityManager().CreateEntity();
+	m_camera_entity->AddComponent<Transformation>();
+	m_camera_entity->AddComponent(&m_camera_component);
+
+
 	// Create camera buffer
-	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera, sizeof(Camera), 1);
+	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera_component, sizeof(Camera), 1);
 	m_camera_buffer->SetData();
 
 	// Create camera pool
