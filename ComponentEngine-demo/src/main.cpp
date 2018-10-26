@@ -12,9 +12,6 @@ using namespace Renderer;
 Engine* engine;
 
 
-#include <thread>
-#include <mutex>
-
 std::mutex mtx;
 
 
@@ -38,24 +35,54 @@ public:
 
 
 
-
-
-
-
-int main(int argc, char **argv)
+class ThreadingManager
 {
+public:
 
-	/*std::thread threadObj1(ThreadTestA);
-	std::thread threadObj2(ThreadTestB);
+private:
+
+};
+
+ThreadHandler* render_thread = nullptr;
+ThreadHandler* logic_thread = nullptr;
+
+int main_data = 0;
+int seccondery_data = 0;
+
+/*void RenderThread()
+{
+	while (true)
+	{
+		if (render_thread == nullptr)continue;
+		std::lock_guard<std::mutex> render_lock(render_thread->ThreadLock());
+		std::cout << main_data << std::endl;
+	}
+}
 
 
-	threadObj1.join();
-	threadObj2.join();*/
+void LogicThread()
+{
+	while (true)
+	{
+		if (render_thread == nullptr || logic_thread == nullptr)continue;
+		// On Update
+		std::lock_guard<std::mutex> thread_lock(logic_thread->ThreadLock());
+		seccondery_data++;
+		if (seccondery_data % 10 == 0) // Need to update renderer
+		{
+			int temp;
+			{
+				std::lock_guard<std::mutex> render_lock(render_thread->ThreadLock());
+				temp = main_data;
+				main_data = seccondery_data;
+			}
+			// Do something...like deletion of old main data
+		}
+	}
+}*/
 
-	exit(0);
-
-	engine = new Engine();
-
+void LogicThread()
+{
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
 
@@ -79,7 +106,7 @@ int main(int argc, char **argv)
 
 	IModelPool* model_pool = renderer->CreateModelPool(vertexBuffer, indexBuffer);
 
-	unsigned int model_array_size = 10;
+	unsigned int model_array_size = 100;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
 	for (int i = 0; i < model_array_size; i++)
 	{
@@ -89,66 +116,65 @@ int main(int argc, char **argv)
 
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
-
-
-
-	/*ParticalSystemConfiguration ps_config;
-	ps_config.data.emiter_location = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	ps_config.data.start_color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-	ps_config.data.end_color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
-	ps_config.data.frame_time = 0.0f;
-	ps_config.data.partical_count = 50000;
+	float padding_scale = 1.3f;
+	int width = 10;
+	int height = 10;
+	for (int x = 0; x < width; x++)
 	{
-		Entity* entity = em.CreateEntity();
-		Transformation* transform = entity->AddComponent<Transformation>();
-		transform->Translate(glm::vec3(2.5f, 2.5f, 0.0f));
-		ParticalSystem* ps = entity->AddComponent<ParticalSystem>(entity, engine);
-		ps->GetConfig() = ps_config;
-		ps->Build();
-	}*/
-
-
-	{
-		Entity* entity = em.CreateEntity();
-		IModel * model = entity->AddComponent(model_pool->CreateModel());
-		Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
-		transform->Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+		for (int y = 0; y < height; y++)
+		{
+			Entity* entity = em.CreateEntity();
+			IModel * model = entity->AddComponent(model_pool->CreateModel());
+			Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
+			transform->Translate(glm::vec3(
+				-(width * padding_scale / 2) + (x * padding_scale),
+				-(height * padding_scale / 2) + (y * padding_scale),
+				0.0f
+				));
+			transform->Scale(glm::vec3(0.3f, 0.3f, 0.3f));
+		}
 	}
-
-
-	
-	Entity* entity = em.CreateEntity();
-	IModel * model = entity->AddComponent(model_pool->CreateModel());
-	Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
-	transform->Translate(glm::vec3(2.5f, 0.0f, 0.0f));
-	
-
 
 
 	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
 
-	float speed = 1.0f;
-
+	// Logic Updating
 	while (engine->Running())
 	{
 
-		/*em.ForEach<ParticalSystem>([](enteez::Entity* entity, ParticalSystem& ps)
+
+		engine->GetRendererMutex().lock();
+		em.ForEach<Transformation>([](enteez::Entity* entity, Transformation& transformation)
 		{
-		ps.Update();
-		ps.Rebuild();
-		}, true);*/
-
-		transform->Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 0.001f);
-		
-
-
-		engine->Update();
-		engine->Render();
-
+			if (entity != engine->GetCameraEntity())
+			{
+				transformation.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 1.0f * engine->GetFrameTime());
+			}
+		}, true);
 		model_pool->Update();
+		engine->GetRendererMutex().unlock();
 	}
 
+}
 
+int main(int argc, char **argv)
+{
+
+	engine = new Engine();
+
+	engine->Start(LogicThread);
+
+
+	// Rendering
+	while (engine->Running())
+	{
+
+		engine->Update();
+		engine->GetRendererMutex().lock();
+		engine->RenderFrame();
+		engine->GetRendererMutex().unlock();
+	}
 	delete engine;
+
     return 0;
 }

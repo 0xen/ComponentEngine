@@ -11,6 +11,7 @@ set(common_headers
     include/ComponentEngine/pugiconfig.hpp
 
     include/ComponentEngine/Engine.hpp
+    include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/Components/Camera.hpp
     include/ComponentEngine/Components/Transformation.hpp
@@ -22,6 +23,7 @@ set(common_source
     src/pugixml.cpp
 
     src/Engine.cpp
+    src/ThreadHandler.cpp
     src/Components/Transformation.cpp
     src/Components/ParticalSystem.cpp
 )

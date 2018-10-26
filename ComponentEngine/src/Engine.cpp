@@ -10,6 +10,19 @@ using namespace Renderer;
 
 ComponentEngine::Engine::Engine()
 {
+}
+
+ComponentEngine::Engine::~Engine()
+{
+	// Stop threads
+	m_logic_thread->join();
+	DeInitEnteeZ();
+	DeInitRenderer();
+	DeInitWindow();
+}
+
+void ComponentEngine::Engine::Start(void(*logic_function)())
+{
 	m_title = "Component Engine";
 	m_width = 1080;
 	m_height = 720;
@@ -17,13 +30,7 @@ ComponentEngine::Engine::Engine()
 	InitWindow();
 	InitRenderer();
 	InitEnteeZ();
-}
-
-ComponentEngine::Engine::~Engine()
-{
-	DeInitEnteeZ();
-	DeInitRenderer();
-	DeInitWindow();
+	m_logic_thread = new ThreadHandler(logic_function);
 }
 
 bool ComponentEngine::Engine::Running()
@@ -33,16 +40,17 @@ bool ComponentEngine::Engine::Running()
 
 void ComponentEngine::Engine::Update()
 {
+	UpdateWindow();
+}
+
+void ComponentEngine::Engine::RenderFrame()
+{
+	//Update camera
 	m_camera_component.view = glm::inverse(m_camera_component.view);
 	m_camera_component.view = m_camera_entity->GetComponent<Transformation>().Get();
 	m_camera_component.view = glm::inverse(m_camera_component.view);
 	m_camera_buffer->SetData();
 
-	UpdateWindow();
-}
-
-void ComponentEngine::Engine::Render()
-{
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
 }
@@ -70,6 +78,21 @@ Transformation * ComponentEngine::Engine::GetCameraTransformation()
 float ComponentEngine::Engine::GetFrameTime()
 {
 	return m_frame_time;
+}
+
+float ComponentEngine::Engine::GetFPS()
+{
+	return m_fps;
+}
+
+ordered_lock& ComponentEngine::Engine::GetLogicMutex()
+{
+	return m_logic_thread->ThreadLock();
+}
+
+ordered_lock& ComponentEngine::Engine::GetRendererMutex()
+{
+	return m_renderer_thread;
 }
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
@@ -106,19 +129,18 @@ void ComponentEngine::Engine::UpdateWindow()
 
 	m_delta_time = m_now_delta_time;
 	m_now_delta_time = SDL_GetPerformanceCounter();
-	m_frame_time = (float)(m_now_delta_time - m_delta_time) / SDL_GetPerformanceFrequency();
-
-
-	/*m_frame_time = 1000.0f / (SDL_GetPerformanceCounter() - m_now_delta_time);
-	m_delta_time -= m_frame_time;
-	m_now_delta_time = SDL_GetPerformanceCounter();
+	m_frame_time = static_cast<float>((m_now_delta_time - m_delta_time) / (float)SDL_GetPerformanceFrequency());
+	m_fps_update -= m_frame_time;
 	m_delta_fps++;
-	if (m_delta_time <= 0)
+	if (m_fps_update <= 0)
 	{
+		m_fps_update = 1.0f;
 		m_fps = m_delta_fps;
 		m_delta_fps = 0;
-		m_delta_time = 1000.0f;
-	}*/
+		std::stringstream ss;
+		ss << m_title << " FPS:" << m_fps;
+		SDL_SetWindowTitle(m_window, ss.str().c_str());
+	}
 
 	SDL_Event event;
 	while (SDL_PollEvent(&event) > 0)
@@ -134,9 +156,16 @@ void ComponentEngine::Engine::UpdateWindow()
 			{
 				//Get new dimensions and repaint on window size change
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
+				//GetRendererMutex().
+				GetRendererMutex().lock();
 				m_window_handle->width = event.window.data1;
 				m_window_handle->height = event.window.data2;
 				m_renderer->Rebuild();
+				GetRendererMutex().unlock();
+
+				// Update Camera
+				UpdateCameraProjection();
+				m_camera_buffer->SetData();
 				break;
 			}
 			break;
@@ -172,15 +201,7 @@ void ComponentEngine::Engine::InitRenderer()
 	m_camera_component.view = glm::mat4(1.0f);
 	m_camera_component.view = glm::translate(m_camera_component.view, glm::vec3(0.0f, 0.0f, 0.0f));
 
-	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
-	m_camera_component.projection = glm::perspective(
-		glm::radians(45.0f),
-		aspectRatio,
-		0.1f,
-		200.0f
-	);
-	// Need to flip the projection as GLM was made for OpenGL
-	m_camera_component.projection[1][1] *= -1;
+	UpdateCameraProjection(); 
 
 
 	m_camera_entity = this->GetEntityManager().CreateEntity();
@@ -251,4 +272,20 @@ void ComponentEngine::Engine::DeInitRenderer()
 	delete m_default_pipeline;
 	delete m_camera_buffer;
 	delete m_renderer;
+}
+
+void ComponentEngine::Engine::UpdateCameraProjection()
+{
+	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
+	m_camera_component.projection = glm::perspective(
+		glm::radians(45.0f),
+		aspectRatio,
+		0.1f,
+		200.0f
+	);
+	// Need to flip the projection as GLM was made for OpenGL
+	m_camera_component.projection[1][1] *= -1;
+
+
+
 }

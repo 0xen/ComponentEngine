@@ -6,6 +6,7 @@
 #include <ComponentEngine\Components\Transformation.hpp>
 #include <ComponentEngine\Components\Camera.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
+#include <ComponentEngine\ThreadHandler.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
@@ -28,14 +29,19 @@ namespace ComponentEngine
 	public:
 		Engine();
 		~Engine();
+		void Start(void(*logic_function)());
 		bool Running();
 		void Update();
-		void Render();
+		void RenderFrame();
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
 		Entity* GetCameraEntity();
 		Transformation* GetCameraTransformation();
 		float GetFrameTime();
+		float GetFPS();
+
+		ordered_lock& GetLogicMutex();
+		ordered_lock& GetRendererMutex();
 	private:
 		Uint32 GetWindowFlags(RenderingAPI api);
 		void InitWindow();
@@ -45,6 +51,8 @@ namespace ComponentEngine
 		void DeInitEnteeZ();
 		void InitRenderer();
 		void DeInitRenderer();
+
+		void UpdateCameraProjection();
 
 		// Windowing data
 		SDL_Window* m_window;
@@ -65,12 +73,15 @@ namespace ComponentEngine
 		IDescriptorPool* m_camera_pool;
 
 		// FPS
-		float m_delta_time = 0;
-		float m_now_delta_time = 0;
+		Uint64 m_delta_time = 0;
+		Uint64 m_now_delta_time = 0;
 		float m_frame_time = 0;
 		float m_fps_update = 0.0f;
-		unsigned int m_fps = 0;
+		unsigned int m_delta_fps = 0;
+		float m_fps = 0;
 
 
+		ThreadHandler* m_logic_thread;
+		ordered_lock m_renderer_thread;
 	};
 }
