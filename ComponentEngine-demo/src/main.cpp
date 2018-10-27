@@ -5,81 +5,26 @@
 #include <vector>
 #include <sstream>
 
+#include <lodepng.h>
+
 using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
 
 Engine* engine;
 
+IGraphicsPipeline* textured_pipeline = nullptr;
 
-std::mutex mtx;
-
-
-class ResourceBase
-{
-protected:
-	void* m_resource;
-};
-
-template <typename T>
-class Resource : public ResourceBase
+class MeshVertex
 {
 public:
-	Resource(T* data) : m_resource(data) {}
-	T& Get()
-	{
-		return *static_cast<T*>(m_resource);
-	}
-
+	MeshVertex(glm::vec3 position, glm::vec2 uv, glm::vec3 normal, glm::vec3 color) : position(position), uv(uv), normal(normal), color(color) {}
+	glm::vec3 position;
+	glm::vec2 uv;
+	glm::vec3 normal;
+	glm::vec3 color;
 };
 
-
-
-class ThreadingManager
-{
-public:
-
-private:
-
-};
-
-ThreadHandler* render_thread = nullptr;
-ThreadHandler* logic_thread = nullptr;
-
-int main_data = 0;
-int seccondery_data = 0;
-
-/*void RenderThread()
-{
-	while (true)
-	{
-		if (render_thread == nullptr)continue;
-		std::lock_guard<std::mutex> render_lock(render_thread->ThreadLock());
-		std::cout << main_data << std::endl;
-	}
-}
-
-
-void LogicThread()
-{
-	while (true)
-	{
-		if (render_thread == nullptr || logic_thread == nullptr)continue;
-		// On Update
-		std::lock_guard<std::mutex> thread_lock(logic_thread->ThreadLock());
-		seccondery_data++;
-		if (seccondery_data % 10 == 0) // Need to update renderer
-		{
-			int temp;
-			{
-				std::lock_guard<std::mutex> render_lock(render_thread->ThreadLock());
-				temp = main_data;
-				main_data = seccondery_data;
-			}
-			// Do something...like deletion of old main data
-		}
-	}
-}*/
 
 void LogicThread()
 {
@@ -88,13 +33,72 @@ void LogicThread()
 
 	engine->GetCameraTransformation()->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
 
-	std::vector<DefaultMeshVertex> vertexData = {
-		DefaultMeshVertex(glm::vec4(1.0f,1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
-		DefaultMeshVertex(glm::vec4(1.0f,-1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
-		DefaultMeshVertex(glm::vec4(-1.0f,-1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f)),
-		DefaultMeshVertex(glm::vec4(-1.0f,1.0f,0.0f,1.0f), glm::vec4(0.0f,1.0f,0.0f,1.0f))
+	// Create texture pipeline
+
+	IGraphicsPipeline* textured_pipeline = renderer->CreateGraphicsPipeline({
+		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
+		});
+
+	textured_pipeline->AttachVertexBinding({
+		VertexInputRate::INPUT_RATE_VERTEX,
+		{
+			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
+			{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
+			{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+			{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
+		},
+		sizeof(MeshVertex),
+		0
+		});
+
+	textured_pipeline->AttachVertexBinding({
+		VertexInputRate::INPUT_RATE_INSTANCE,
+		{
+			{ 4, DataFormat::MAT4_FLOAT,0 }
+		},
+		sizeof(glm::mat4),
+		1
+		});
+
+
+	// Tell the pipeline what the input data will be payed out like
+	textured_pipeline->AttachDescriptorPool(engine->GetCameraPool());
+	// Attach the camera descriptor set to the pipeline
+	textured_pipeline->AttachDescriptorSet(0, engine->GetCameraDescriptorSet());
+
+
+	IDescriptorPool* texture_pool = renderer->CreateDescriptorPool({
+		renderer->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+		});
+	textured_pipeline->AttachDescriptorPool(texture_pool);
+
+	textured_pipeline->Build();
+
+
+	std::vector<unsigned char> image; //the raw pixels
+	unsigned width;
+	unsigned height;
+	unsigned error = lodepng::decode(image, width, height, "../../ComponentEngine-demo/Images/cobble.png");
+	if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+
+	ITextureBuffer* texture = renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
+	texture->SetData();
+
+	IDescriptorSet* texture_descriptor_set1 = texture_pool->CreateDescriptorSet();
+	texture_descriptor_set1->AttachBuffer(0, texture);
+	texture_descriptor_set1->UpdateSet();
+
+
+
+	std::vector<MeshVertex> vertexData = {
+		MeshVertex(glm::vec3(1.0f,1.0f,0.0f), glm::vec2(0.0f,0.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(1.0f,1.0f,0.0f)),
+		MeshVertex(glm::vec3(1.0f,-1.0f,0.0f), glm::vec2(0.0f,1.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(0.0f,1.0f,0.0f)),
+		MeshVertex(glm::vec3(-1.0f,-1.0f,0.0f), glm::vec2(1.0f,1.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(.0f,1.0f,1.0f)),
+		MeshVertex(glm::vec3(-1.0f,1.0f,0.0f), glm::vec2(1.0f,0.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(1.0f,0.0f,1.0f))
 	};
-	IVertexBuffer* vertexBuffer = renderer->CreateVertexBuffer(vertexData.data(), sizeof(DefaultMeshVertex), vertexData.size());
+
+	IVertexBuffer* vertexBuffer = renderer->CreateVertexBuffer(vertexData.data(), sizeof(MeshVertex), vertexData.size());
 	vertexBuffer->SetData();
 
 	std::vector<uint16_t> indexData{
@@ -105,6 +109,10 @@ void LogicThread()
 	indexBuffer->SetData();
 
 	IModelPool* model_pool = renderer->CreateModelPool(vertexBuffer, indexBuffer);
+
+
+	model_pool->AttachDescriptorSet(1, texture_descriptor_set1);
+
 
 	unsigned int model_array_size = 100;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
@@ -117,26 +125,25 @@ void LogicThread()
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
 	float padding_scale = 1.3f;
-	int width = 10;
-	int height = 10;
-	for (int x = 0; x < width; x++)
+	int grid_width = 10;
+	int grid_height = 10;
+	for (int x = 0; x < grid_width; x++)
 	{
-		for (int y = 0; y < height; y++)
+		for (int y = 0; y < grid_height; y++)
 		{
 			Entity* entity = em.CreateEntity();
 			IModel * model = entity->AddComponent(model_pool->CreateModel());
 			Transformation* transform = entity->AddComponent<Transformation>(&model->GetData<glm::mat4>(0));
 			transform->Translate(glm::vec3(
-				-(width * padding_scale / 2) + (x * padding_scale),
-				-(height * padding_scale / 2) + (y * padding_scale),
+				-(grid_width * padding_scale / 2) + (x * padding_scale),
+				-(grid_height * padding_scale / 2) + (y * padding_scale),
 				0.0f
 				));
 			transform->Scale(glm::vec3(0.3f, 0.3f, 0.3f));
 		}
 	}
 
-
-	engine->GetDefaultGraphicsPipeline()->AttachModelPool(model_pool);
+	textured_pipeline->AttachModelPool(model_pool);
 
 	// Logic Updating
 	while (engine->Running())
@@ -154,6 +161,8 @@ void LogicThread()
 		model_pool->Update();
 		engine->GetRendererMutex().unlock();
 	}
+
+	delete texture;
 
 }
 

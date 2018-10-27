@@ -43,6 +43,13 @@ void ComponentEngine::Engine::Update()
 	UpdateWindow();
 }
 
+void ComponentEngine::Engine::Rebuild()
+{
+	GetRendererMutex().lock();
+	m_renderer->Rebuild();
+	GetRendererMutex().unlock();
+}
+
 void ComponentEngine::Engine::RenderFrame()
 {
 	//Update camera
@@ -73,6 +80,16 @@ Entity * ComponentEngine::Engine::GetCameraEntity()
 Transformation * ComponentEngine::Engine::GetCameraTransformation()
 {
 	return &m_camera_entity->GetComponent<Transformation>();
+}
+
+IDescriptorPool * ComponentEngine::Engine::GetCameraPool()
+{
+	return m_camera_pool;
+}
+
+IDescriptorSet * ComponentEngine::Engine::GetCameraDescriptorSet()
+{
+	return m_camera_descriptor_set;
 }
 
 float ComponentEngine::Engine::GetFrameTime()
@@ -156,11 +173,10 @@ void ComponentEngine::Engine::UpdateWindow()
 			{
 				//Get new dimensions and repaint on window size change
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
-				//GetRendererMutex().
 				GetRendererMutex().lock();
 				m_window_handle->width = event.window.data1;
 				m_window_handle->height = event.window.data2;
-				m_renderer->Rebuild();
+				Rebuild();
 				GetRendererMutex().unlock();
 
 				// Update Camera
@@ -225,10 +241,10 @@ void ComponentEngine::Engine::InitRenderer()
 		});
 
 	// Create camera descriptor set from the tempalte
-	IDescriptorSet* camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
+	m_camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
 	// Attach the buffer
-	camera_descriptor_set->AttachBuffer(0, m_camera_buffer);
-	camera_descriptor_set->UpdateSet();
+	m_camera_descriptor_set->AttachBuffer(0, m_camera_buffer);
+	m_camera_descriptor_set->UpdateSet();
 
 
 	// Create default pipeline
@@ -260,7 +276,7 @@ void ComponentEngine::Engine::InitRenderer()
 	// Tell the pipeline what the input data will be payed out like
 	m_default_pipeline->AttachDescriptorPool(m_camera_pool);
 	// Attach the camera descriptor set to the pipeline
-	m_default_pipeline->AttachDescriptorSet(0, camera_descriptor_set);
+	m_default_pipeline->AttachDescriptorSet(0, m_camera_descriptor_set);
 
 	// Build and check default pipeline
 	assert(m_default_pipeline->Build() && "Unable to build default pipeline");

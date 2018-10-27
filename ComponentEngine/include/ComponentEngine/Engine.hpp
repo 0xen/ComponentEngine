@@ -32,11 +32,14 @@ namespace ComponentEngine
 		void Start(void(*logic_function)());
 		bool Running();
 		void Update();
+		void Rebuild();
 		void RenderFrame();
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
 		Entity* GetCameraEntity();
 		Transformation* GetCameraTransformation();
+		IDescriptorPool* GetCameraPool();
+		IDescriptorSet* GetCameraDescriptorSet();;
 		float GetFrameTime();
 		float GetFPS();
 
@@ -71,6 +74,7 @@ namespace ComponentEngine
 		Camera m_camera_component;
 		IUniformBuffer* m_camera_buffer;
 		IDescriptorPool* m_camera_pool;
+		IDescriptorSet* m_camera_descriptor_set;
 
 		// FPS
 		Uint64 m_delta_time = 0;
