@@ -28,6 +28,7 @@ public:
 
 void LogicThread()
 {
+	engine->GetRendererMutex().lock();
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
 
@@ -114,19 +115,21 @@ void LogicThread()
 	model_pool->AttachDescriptorSet(1, texture_descriptor_set1);
 
 
-	unsigned int model_array_size = 100;
+	unsigned int model_array_size = 10000;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
+	float scale = 0.1f;
 	for (int i = 0; i < model_array_size; i++)
 	{
-		model_position_array[i] = glm::mat4(1.0f);
+		model_position_array[i] = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
+		
 	}
 	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
 
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
-	float padding_scale = 1.3f;
-	int grid_width = 10;
-	int grid_height = 10;
+	float padding_scale = 1.0f;
+	int grid_width = 100;
+	int grid_height = 100;
 	for (int x = 0; x < grid_width; x++)
 	{
 		for (int y = 0; y < grid_height; y++)
@@ -145,19 +148,20 @@ void LogicThread()
 
 	textured_pipeline->AttachModelPool(model_pool);
 
+	engine->GetRendererMutex().unlock();
 	// Logic Updating
 	while (engine->Running())
 	{
-
-
-		engine->GetRendererMutex().lock();
-		em.ForEach<Transformation>([](enteez::Entity* entity, Transformation& transformation)
+		float thread_time = engine->GetThreadTime();
+		em.ForEach<Transformation>([thread_time](enteez::Entity* entity, Transformation& transformation)
 		{
 			if (entity != engine->GetCameraEntity())
 			{
-				transformation.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 1.0f * engine->GetFrameTime());
+				transformation.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 1.0f * thread_time);
 			}
 		}, true);
+
+		engine->GetRendererMutex().lock();
 		model_pool->Update();
 		engine->GetRendererMutex().unlock();
 	}
@@ -172,7 +176,6 @@ int main(int argc, char **argv)
 	engine = new Engine();
 
 	engine->Start(LogicThread);
-
 
 	// Rendering
 	while (engine->Running())

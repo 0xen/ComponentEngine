@@ -8,6 +8,9 @@ using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
 
+const unsigned int Engine::IS_RUNNING_LOCK = 0;
+const unsigned int Engine::THREAD_TIME_LOCK = 1;
+
 ComponentEngine::Engine::Engine()
 {
 }
@@ -35,6 +38,7 @@ void ComponentEngine::Engine::Start(void(*logic_function)())
 
 bool ComponentEngine::Engine::Running()
 {
+	std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
 	return m_renderer != nullptr && m_renderer->IsRunning();
 }
 
@@ -97,6 +101,31 @@ float ComponentEngine::Engine::GetFrameTime()
 	return m_frame_time;
 }
 
+float ComponentEngine::Engine::GetThreadTime()
+{
+
+	/* = m_now_delta_time;
+	m_now_delta_time = SDL_GetPerformanceCounter();
+	m_frame_time = static_cast<float>((m_now_delta_time - m_delta_time) / (float)SDL_GetPerformanceFrequency());
+*/
+
+
+	std::thread::id id = std::this_thread::get_id();
+	Uint64 now = SDL_GetPerformanceCounter();
+	Uint64 last;
+	{
+		std::lock_guard<std::mutex> guard(m_locks[THREAD_TIME_LOCK]);
+		if (m_thread_time.find(id) == m_thread_time.end())
+		{
+			m_thread_time[id] = now;
+		}
+	}
+	last = m_thread_time[id];
+	m_thread_time[id] = now;
+	float temp = static_cast<float>((now - last) / (float)SDL_GetPerformanceFrequency());
+	return temp;
+}
+
 float ComponentEngine::Engine::GetFPS()
 {
 	return m_fps;
@@ -144,10 +173,10 @@ void ComponentEngine::Engine::InitWindow()
 void ComponentEngine::Engine::UpdateWindow()
 {
 
-	m_delta_time = m_now_delta_time;
-	m_now_delta_time = SDL_GetPerformanceCounter();
-	m_frame_time = static_cast<float>((m_now_delta_time - m_delta_time) / (float)SDL_GetPerformanceFrequency());
+	m_frame_time = GetThreadTime();
+
 	m_fps_update -= m_frame_time;
+	
 	m_delta_fps++;
 	if (m_fps_update <= 0)
 	{

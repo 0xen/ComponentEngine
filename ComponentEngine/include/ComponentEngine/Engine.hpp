@@ -41,6 +41,7 @@ namespace ComponentEngine
 		IDescriptorPool* GetCameraPool();
 		IDescriptorSet* GetCameraDescriptorSet();;
 		float GetFrameTime();
+		float GetThreadTime();
 		float GetFPS();
 
 		ordered_lock& GetLogicMutex();
@@ -87,5 +88,13 @@ namespace ComponentEngine
 
 		ThreadHandler* m_logic_thread;
 		ordered_lock m_renderer_thread;
+
+		std::map<std::thread::id, Uint64> m_thread_time;
+
+		static const unsigned int IS_RUNNING_LOCK;
+		static const unsigned int THREAD_TIME_LOCK;
+
+		// Store the various locks that will be needed
+		std::mutex m_locks[2];
 	};
 }
