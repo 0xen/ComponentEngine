@@ -6,6 +6,8 @@
 #include <sstream>
 
 #include <lodepng.h>
+#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+#include <ComponentEngine\tiny_obj_loader.h>
 
 using namespace ComponentEngine;
 using namespace enteez;
@@ -18,21 +20,30 @@ IGraphicsPipeline* textured_pipeline = nullptr;
 class MeshVertex
 {
 public:
+	MeshVertex() {};
 	MeshVertex(glm::vec3 position, glm::vec2 uv, glm::vec3 normal, glm::vec3 color) : position(position), uv(uv), normal(normal), color(color) {}
 	glm::vec3 position;
 	glm::vec2 uv;
 	glm::vec3 normal;
 	glm::vec3 color;
 };
-	
+
+
+
 void LogicThread()
 {
 	engine->GetRendererMutex().lock();
+
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
 
 
-	engine->GetCameraTransformation()->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
+	// Load the scene
+	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
+
+	Transformation* camera = engine->GetCameraTransformation();
+
+	camera->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
 
 	// Create texture pipeline
 
@@ -80,7 +91,7 @@ void LogicThread()
 	std::vector<unsigned char> image; //the raw pixels
 	unsigned width;
 	unsigned height;
-	unsigned error = lodepng::decode(image, width, height, "../../ComponentEngine-demo/Images/cobble.png");
+	unsigned error = lodepng::decode(image, width, height, "../../ComponentEngine-demo/Resources/Resources/cobble.png");
 	if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
 
 	ITextureBuffer* texture = renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
@@ -91,22 +102,68 @@ void LogicThread()
 	texture_descriptor_set1->UpdateSet();
 
 
+	// Test OBJ Loader
 
-	std::vector<MeshVertex> vertexData = {
-		MeshVertex(glm::vec3(1.0f,1.0f,0.0f), glm::vec2(0.0f,0.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(1.0f,1.0f,0.0f)),
-		MeshVertex(glm::vec3(1.0f,-1.0f,0.0f), glm::vec2(0.0f,1.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(0.0f,1.0f,0.0f)),
-		MeshVertex(glm::vec3(-1.0f,-1.0f,0.0f), glm::vec2(1.0f,1.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(.0f,1.0f,1.0f)),
-		MeshVertex(glm::vec3(-1.0f,1.0f,0.0f), glm::vec2(1.0f,0.0f) , glm::vec3(1.0f,1.0f,1.0f),glm::vec3(1.0f,0.0f,1.0f))
-	};
 
-	IVertexBuffer* vertexBuffer = renderer->CreateVertexBuffer(vertexData.data(), sizeof(MeshVertex), vertexData.size());
+
+	std::string inputfile = "../../ComponentEngine-demo/Resources/Models/cube.obj";
+	std::string material_base_dir = "../../ComponentEngine-demo/Resources/Resources/";
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string err;
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, inputfile.c_str(), material_base_dir.c_str());
+
+	if (!err.empty())
+	{ // `err` may contain warning message.
+		std::cerr << err << std::endl;
+	}
+
+	if (!ret)
+	{
+		exit(1);
+	}
+
+	std::vector<MeshVertex> testVertexData;
+	std::vector<uint16_t> testIndexData;
+
+	for (const auto& shape : shapes)
+	{
+		for (const auto& index : shape.mesh.indices)
+		{
+			MeshVertex vertex;
+			vertex.position = {
+				attrib.vertices[3 * index.vertex_index + 0],
+				attrib.vertices[3 * index.vertex_index + 1],
+				attrib.vertices[3 * index.vertex_index + 2]
+			};
+			if (index.normal_index >= 0)
+			{
+				vertex.normal = {
+					attrib.vertices[3 * index.normal_index + 0],
+					attrib.vertices[3 * index.normal_index + 1],
+					attrib.vertices[3 * index.normal_index + 2]
+				};
+			}
+			if (index.texcoord_index >= 0)
+			{
+				vertex.uv = {
+					attrib.texcoords[2 * index.texcoord_index + 0],
+					attrib.texcoords[2 * index.texcoord_index + 1]
+				};
+			}
+			testVertexData.push_back(vertex);
+			testIndexData.push_back(testIndexData.size());
+			//shape.mesh.material_ids[1];
+			//materials[1].
+		}
+	}
+
+	IVertexBuffer* vertexBuffer = renderer->CreateVertexBuffer(testVertexData.data(), sizeof(MeshVertex), testIndexData.size());
 	vertexBuffer->SetData();
 
-	std::vector<uint16_t> indexData{
-		0,1,2,
-		0,2,3
-	};
-	IIndexBuffer* indexBuffer = renderer->CreateIndexBuffer(indexData.data(), sizeof(uint16_t), indexData.size());
+	IIndexBuffer* indexBuffer = renderer->CreateIndexBuffer(testIndexData.data(), sizeof(uint16_t), testIndexData.size());
 	indexBuffer->SetData();
 
 	IModelPool* model_pool = renderer->CreateModelPool(vertexBuffer, indexBuffer);
@@ -115,13 +172,13 @@ void LogicThread()
 	model_pool->AttachDescriptorSet(1, texture_descriptor_set1);
 
 
-	unsigned int model_array_size = 10000;
+	unsigned int model_array_size = 40000;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
 	for (int i = 0; i < model_array_size; i++)
 	{
 		model_position_array[i] = glm::mat4(1.0f);
-		
 	}
+
 	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
 
 	// Attach the buffer to buffer index 0
@@ -129,7 +186,7 @@ void LogicThread()
 	float padding_scale = 2.0f;
 	int grid_width = 10;
 	int grid_height = 10;
-	float scale = 0.5f;
+	float scale = 1.0f;
 	for (int x = 0; x < grid_width; x++)
 	{
 		for (int y = 0; y < grid_height; y++)
@@ -153,9 +210,10 @@ void LogicThread()
 	while (engine->Running())
 	{
 		float thread_time = engine->GetThreadTime();
-		em.ForEach<Transformation>([thread_time](enteez::Entity* entity, Transformation& transformation)
+		camera->Translate(glm::vec3(0.0f, 0.0f, 1.0f*thread_time));
+		em.ForEach<Transformation>([thread_time, camera](enteez::Entity* entity, Transformation& transformation)
 		{
-			if (entity != engine->GetCameraEntity())
+			if (&transformation != camera)
 			{
 				transformation.Rotate(glm::vec3(0.0f, 0.0f, 1.0f), 1.0f * thread_time);
 			}
@@ -213,19 +271,18 @@ void TestXML()
 }
 
 
-
 int main(int argc, char **argv)
 {
 
 
-	TestXML();
+	//TestXML();
 
 
 
 
 
 
-	exit(0);
+	//exit(0);
 
 
 	engine = new Engine();
@@ -238,7 +295,7 @@ int main(int argc, char **argv)
 
 		engine->Update();
 		engine->GetRendererMutex().lock();
-		std::cout << "F:" << engine->GetFrameTime() << std::endl;
+		std::cout << "R:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
 		engine->GetRendererMutex().unlock();
 	}

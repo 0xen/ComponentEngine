@@ -1,6 +1,9 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine/pugixml.hpp>
 
+#include <ComponentEngine\Components\Mesh.hpp>
+#include <ComponentEngine\Components\Renderer.hpp>
+
 #include <assert.h>
 #include <sstream>
 
@@ -33,6 +36,7 @@ void ComponentEngine::Engine::Start(void(*logic_function)())
 	InitWindow();
 	InitRenderer();
 	InitEnteeZ();
+	InitComponentHooks();
 	m_logic_thread = new ThreadHandler(logic_function);
 }
 
@@ -68,7 +72,25 @@ void ComponentEngine::Engine::RenderFrame()
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 {
-	return false;
+
+	pugi::xml_document xml;
+	pugi::xml_parse_result result = xml.load_file(path);
+
+	pugi::xml_node game_node = xml.child("Game");
+	if (!game_node)return false;
+	pugi::xml_node scenes_node = game_node.child("Scenes");
+	if (!scenes_node)return false;
+	pugi::xml_node scene_node = scenes_node.child("Scene");
+	if (!scene_node)return false;
+
+
+	for (pugi::xml_node node : scene_node.children("GameObject"))
+	{
+		LoadXMLGameObject(node);
+	}
+
+
+	return true;
 }
 
 IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
@@ -144,6 +166,11 @@ ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 {
 	return m_renderer_thread;
+}
+
+void ComponentEngine::Engine::RegisterComponentInitilizer(const char * name, void(*fp)(enteez::Entity& entity, pugi::xml_node& component_data))
+{
+	m_component_initilizers[name] = fp;
 }
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
@@ -324,6 +351,13 @@ void ComponentEngine::Engine::DeInitRenderer()
 	delete m_renderer;
 }
 
+void ComponentEngine::Engine::InitComponentHooks()
+{
+	RegisterComponentInitilizer("Transformation", Transformation::EntityHook);
+	RegisterComponentInitilizer("Mesh", Mesh::EntityHook);
+	RegisterComponentInitilizer("Renderer", RendererComponent::EntityHook);
+}
+
 void ComponentEngine::Engine::UpdateCameraProjection()
 {
 	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
@@ -338,4 +372,27 @@ void ComponentEngine::Engine::UpdateCameraProjection()
 
 
 
+}
+
+void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity)
+{
+	enteez::Entity* entity = GetEntityManager().CreateEntity();
+	for (pugi::xml_node node : xml_entity.children("Component"))
+	{
+		AttachXMLComponent(node, entity);
+	}
+}
+
+void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component, enteez::Entity * entity)
+{
+	std::string name = xml_component.attribute("name").as_string();
+	auto& it = m_component_initilizers.find(name);
+	if (it != m_component_initilizers.end())
+	{
+		m_component_initilizers[name](*entity, xml_component);
+	}
+	else
+	{
+		std::cout << "Warning! Could not find component (" << name.c_str() << ") Initializer!" << std::endl;
+	}
 }

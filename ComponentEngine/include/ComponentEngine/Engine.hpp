@@ -7,6 +7,8 @@
 #include <ComponentEngine\Components\Camera.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <ComponentEngine\ThreadHandler.hpp>
+#include <ComponentEngine\pugixml.hpp>
+
 
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
@@ -49,6 +51,9 @@ namespace ComponentEngine
 
 		ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
+		// Name needs to match how the component name will be written in the xml scene file
+
+		void RegisterComponentInitilizer(const char* name, void(*fp)(enteez::Entity& entity, pugi::xml_node& component_data));
 	private:
 		Uint32 GetWindowFlags(RenderingAPI api);
 		void InitWindow();
@@ -58,8 +63,12 @@ namespace ComponentEngine
 		void DeInitEnteeZ();
 		void InitRenderer();
 		void DeInitRenderer();
+		void InitComponentHooks();
 
 		void UpdateCameraProjection();
+
+		void LoadXMLGameObject(pugi::xml_node& xml_entity);
+		void AttachXMLComponent(pugi::xml_node& xml_component, enteez::Entity* entity);
 
 		// Windowing data
 		SDL_Window* m_window;
@@ -93,6 +102,7 @@ namespace ComponentEngine
 		ordered_lock m_renderer_thread;
 
 		std::map<std::thread::id, Uint64> m_thread_time;
+		std::map<std::string, void(*)(enteez::Entity& entity, pugi::xml_node& component_data)> m_component_initilizers;
 
 		static const unsigned int IS_RUNNING_LOCK;
 		static const unsigned int THREAD_TIME_LOCK;

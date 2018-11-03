@@ -9,13 +9,19 @@ set(common_headers
     # External
     include/ComponentEngine/pugixml.hpp
     include/ComponentEngine/pugiconfig.hpp
+    include/ComponentEngine/tiny_obj_loader.h
+
 
     include/ComponentEngine/Engine.hpp
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
+    include/ComponentEngine/Components/MsgRecive.hpp
+    include/ComponentEngine/Components/MsgSend.hpp
     include/ComponentEngine/Components/Camera.hpp
+    include/ComponentEngine/Components/Mesh.hpp
     include/ComponentEngine/Components/Transformation.hpp
     include/ComponentEngine/Components/ParticalSystem.hpp
+    include/ComponentEngine/Components/Renderer.hpp
 )
 
 set(common_source
@@ -24,8 +30,12 @@ set(common_source
 
     src/Engine.cpp
     src/ThreadHandler.cpp
+    src/Components/MsgRecive.cpp
+    src/Components/MsgSend.cpp
+    src/Components/Mesh.cpp
     src/Components/Transformation.cpp
     src/Components/ParticalSystem.cpp
+    src/Components/Renderer.cpp
 )
 
 include_directories(include)
