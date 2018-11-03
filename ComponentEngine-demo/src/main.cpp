@@ -17,18 +17,6 @@ Engine* engine;
 
 IGraphicsPipeline* textured_pipeline = nullptr;
 
-class MeshVertex
-{
-public:
-	MeshVertex() {};
-	MeshVertex(glm::vec3 position, glm::vec2 uv, glm::vec3 normal, glm::vec3 color) : position(position), uv(uv), normal(normal), color(color) {}
-	glm::vec3 position;
-	glm::vec2 uv;
-	glm::vec3 normal;
-	glm::vec3 color;
-};
-
-
 
 void LogicThread()
 {
@@ -285,7 +273,7 @@ int main(int argc, char **argv)
 	//exit(0);
 
 
-	engine = new Engine();
+	engine = Engine::Singlton();
 
 	engine->Start(LogicThread);
 

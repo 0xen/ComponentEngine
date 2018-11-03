@@ -30,7 +30,7 @@ namespace ComponentEngine
 	class Engine : public EnteeZ
 	{
 	public:
-		Engine();
+		static Engine* Singlton();
 		~Engine();
 		void Start(void(*logic_function)());
 		bool Running();
@@ -54,7 +54,9 @@ namespace ComponentEngine
 		// Name needs to match how the component name will be written in the xml scene file
 
 		void RegisterComponentInitilizer(const char* name, void(*fp)(enteez::Entity& entity, pugi::xml_node& component_data));
+
 	private:
+		Engine();
 		Uint32 GetWindowFlags(RenderingAPI api);
 		void InitWindow();
 		void UpdateWindow();
@@ -69,6 +71,9 @@ namespace ComponentEngine
 
 		void LoadXMLGameObject(pugi::xml_node& xml_entity);
 		void AttachXMLComponent(pugi::xml_node& xml_component, enteez::Entity* entity);
+
+		// Singlton instance of engine
+		static Engine* m_engine;
 
 		// Windowing data
 		SDL_Window* m_window;

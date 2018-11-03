@@ -1,6 +1,7 @@
 #pragma once
 
 #include <EnteeZ\EnteeZ.hpp>
+#include <ComponentEngine\Components\MsgRecive.hpp>
 
 namespace ComponentEngine
 {

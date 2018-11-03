@@ -13,9 +13,19 @@ using namespace Renderer;
 
 const unsigned int Engine::IS_RUNNING_LOCK = 0;
 const unsigned int Engine::THREAD_TIME_LOCK = 1;
+Engine* Engine::m_engine = nullptr;
 
 ComponentEngine::Engine::Engine()
 {
+}
+
+Engine* ComponentEngine::Engine::Singlton()
+{
+	if (m_engine == nullptr)
+	{
+		m_engine = new Engine();
+	}
+	return m_engine;
 }
 
 ComponentEngine::Engine::~Engine()
@@ -257,7 +267,9 @@ void ComponentEngine::Engine::DeInitWindow()
 
 void ComponentEngine::Engine::InitEnteeZ()
 {
-
+	// Define what base classes each one of these components have
+	RegisterBase<RendererComponent, MsgSend>();
+	RegisterBase<Mesh, MsgRecive<RenderStatus>>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()

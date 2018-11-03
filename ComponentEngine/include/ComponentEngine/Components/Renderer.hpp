@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ComponentEngine\Components\MsgSend.hpp>
+
 namespace enteez
 {
 	class Entity;
@@ -11,8 +13,10 @@ namespace pugi
 
 namespace ComponentEngine
 {
-	struct RendererComponent
+	struct RendererComponent : public MsgSend
 	{
+		RendererComponent(enteez::Entity* entity);
+		~RendererComponent();
 		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 	};
 }

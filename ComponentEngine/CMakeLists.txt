@@ -15,6 +15,7 @@ set(common_headers
     include/ComponentEngine/Engine.hpp
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
+    include/ComponentEngine/Components/ComponentMessages.hpp
     include/ComponentEngine/Components/MsgRecive.hpp
     include/ComponentEngine/Components/MsgSend.hpp
     include/ComponentEngine/Components/Camera.hpp
