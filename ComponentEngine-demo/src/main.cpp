@@ -191,7 +191,7 @@ void LogicThread()
 		}
 	}
 
-	textured_pipeline->AttachModelPool(model_pool);
+	//textured_pipeline->AttachModelPool(model_pool);
 
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
@@ -217,62 +217,8 @@ void LogicThread()
 
 }
 
-#include <ComponentEngine\pugixml.hpp>
-
-
-pugi::xml_node LoadScene(pugi::xml_node& xml)
-{
-	pugi::xml_node game_node = xml.child("Game");
-	if (!game_node)return game_node;
-	pugi::xml_node scenes_node = game_node.child("Scenes");
-	if (!scenes_node)return scenes_node;
-	pugi::xml_node scene_node = scenes_node.child("Scene");
-	return scene_node;
-}
-
-
-void SetupScene(pugi::xml_node& xml)
-{
-
-
-	for (pugi::xml_node node : xml.children("GameObject"))
-	{
-
-	}
-}
-
-
-
-void TestXML()
-{
-	pugi::xml_document xml;
-	pugi::xml_parse_result result = xml.load_file("../../ComponentEngine-demo/Scenes/GameInstance.xml");
-
-	pugi::xml_node scene;
-	if (scene = LoadScene(xml))
-	{
-		std::cout << "Yes" << std::endl;
-		SetupScene(scene);
-	}
-
-
-}
-
-
 int main(int argc, char **argv)
 {
-
-
-	//TestXML();
-
-
-
-
-
-
-	//exit(0);
-
-
 	engine = Engine::Singlton();
 
 	engine->Start(LogicThread);
@@ -280,7 +226,6 @@ int main(int argc, char **argv)
 	// Rendering
 	while (engine->Running())
 	{
-
 		engine->Update();
 		engine->GetRendererMutex().lock();
 		std::cout << "R:" << engine->GetFrameTime() << std::endl;

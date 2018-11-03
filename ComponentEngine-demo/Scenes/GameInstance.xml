@@ -3,7 +3,6 @@
 	<Scenes>
 		<Scene>
 
-
 			<GameObject name="LargeFloor">
 
 				<Component name="Transformation">
@@ -15,10 +14,9 @@
 					<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
 				</Component>
 				<Component name="Renderer"\>
-				
+
 			</GameObject>
-
-
+			
 		</Scene>
 	</Scenes>
 </Game>
