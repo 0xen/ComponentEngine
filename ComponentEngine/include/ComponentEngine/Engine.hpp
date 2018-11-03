@@ -11,6 +11,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -34,6 +35,8 @@ namespace ComponentEngine
 		void Update();
 		void Rebuild();
 		void RenderFrame();
+		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
+		bool LoadScene(const char* path, bool merge_scenes = false);
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
 		Entity* GetCameraEntity();

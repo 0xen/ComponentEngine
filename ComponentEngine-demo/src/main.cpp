@@ -24,13 +24,13 @@ public:
 	glm::vec3 normal;
 	glm::vec3 color;
 };
-
-
+	
 void LogicThread()
 {
 	engine->GetRendererMutex().lock();
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
+
 
 	engine->GetCameraTransformation()->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
 
@@ -117,19 +117,19 @@ void LogicThread()
 
 	unsigned int model_array_size = 10000;
 	glm::mat4* model_position_array = new glm::mat4[model_array_size];
-	float scale = 0.1f;
 	for (int i = 0; i < model_array_size; i++)
 	{
-		model_position_array[i] = glm::scale(glm::mat4(1.0f), glm::vec3(scale, scale, scale));
+		model_position_array[i] = glm::mat4(1.0f);
 		
 	}
 	IUniformBuffer* model_position_buffer = renderer->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), model_array_size);
 
 	// Attach the buffer to buffer index 0
 	model_pool->AttachBuffer(0, model_position_buffer);
-	float padding_scale = 1.0f;
-	int grid_width = 100;
-	int grid_height = 100;
+	float padding_scale = 2.0f;
+	int grid_width = 10;
+	int grid_height = 10;
+	float scale = 0.5f;
 	for (int x = 0; x < grid_width; x++)
 	{
 		for (int y = 0; y < grid_height; y++)
@@ -142,7 +142,7 @@ void LogicThread()
 				-(grid_height * padding_scale / 2) + (y * padding_scale),
 				0.0f
 				));
-			transform->Scale(glm::vec3(0.3f, 0.3f, 0.3f));
+			transform->Scale(glm::vec3(scale, scale, scale));
 		}
 	}
 
@@ -162,6 +162,7 @@ void LogicThread()
 		}, true);
 
 		engine->GetRendererMutex().lock();
+		std::cout << "L:" << thread_time << std::endl;
 		model_pool->Update();
 		engine->GetRendererMutex().unlock();
 	}
@@ -170,8 +171,62 @@ void LogicThread()
 
 }
 
+#include <ComponentEngine\pugixml.hpp>
+
+
+pugi::xml_node LoadScene(pugi::xml_node& xml)
+{
+	pugi::xml_node game_node = xml.child("Game");
+	if (!game_node)return game_node;
+	pugi::xml_node scenes_node = game_node.child("Scenes");
+	if (!scenes_node)return scenes_node;
+	pugi::xml_node scene_node = scenes_node.child("Scene");
+	return scene_node;
+}
+
+
+void SetupScene(pugi::xml_node& xml)
+{
+
+
+	for (pugi::xml_node node : xml.children("GameObject"))
+	{
+
+	}
+}
+
+
+
+void TestXML()
+{
+	pugi::xml_document xml;
+	pugi::xml_parse_result result = xml.load_file("../../ComponentEngine-demo/Scenes/GameInstance.xml");
+
+	pugi::xml_node scene;
+	if (scene = LoadScene(xml))
+	{
+		std::cout << "Yes" << std::endl;
+		SetupScene(scene);
+	}
+
+
+}
+
+
+
 int main(int argc, char **argv)
 {
+
+
+	TestXML();
+
+
+
+
+
+
+	exit(0);
+
 
 	engine = new Engine();
 
@@ -183,6 +238,7 @@ int main(int argc, char **argv)
 
 		engine->Update();
 		engine->GetRendererMutex().lock();
+		std::cout << "F:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
 		engine->GetRendererMutex().unlock();
 	}

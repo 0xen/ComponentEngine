@@ -66,6 +66,11 @@ void ComponentEngine::Engine::RenderFrame()
 	IRenderer::UpdateAll();
 }
 
+bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
+{
+	return false;
+}
+
 IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
 {
 	return m_default_pipeline;

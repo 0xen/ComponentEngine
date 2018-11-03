@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<Game>
+	<Scenes>
+		<Scene>
+
+
+			<GameObject name="LargeFloor">
+				<Component name="Transformation">
+					
+				</Component>
+			</GameObject>
+
+
+		</Scene>
+	</Scenes>
+</Game>
