@@ -6,6 +6,9 @@
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 
+#define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
+#include <ComponentEngine\tiny_obj_loader.h>
+
 
 using namespace ComponentEngine;
 
@@ -51,6 +54,19 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, const RenderS
 	std::cout << "Revived Message! " << message.should_renderer << std::endl;
 }
 
+void ComponentEngine::Mesh::Update()
+{
+
+}
+
+void ComponentEngine::Mesh::UpdateBuffers()
+{
+	for (auto& p : m_model_pools)
+	{
+		p.second.model_pool->Update();
+	}
+}
+
 void ComponentEngine::Mesh::LoadModel()
 {
 	auto it = m_mdel_buffer_instances.find(m_path);
@@ -92,7 +108,6 @@ void ComponentEngine::Mesh::LoadModel()
 					{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
 					});
 
-				last_created_pipeline = pipeline;
 
 				pipeline->AttachVertexBinding({
 					VertexInputRate::INPUT_RATE_VERTEX,
@@ -137,10 +152,9 @@ void ComponentEngine::Mesh::LoadModel()
 
 
 				m_shaders[m.name].pipeline = pipeline;
-
-
 			}
 
+			last_created_pipeline = m_shaders[m.name].pipeline;
 
 		}
 

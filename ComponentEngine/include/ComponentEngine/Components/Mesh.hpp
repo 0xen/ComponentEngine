@@ -5,6 +5,7 @@
 
 #include <ComponentEngine\Components\MsgRecive.hpp>
 #include <ComponentEngine\Components\MsgSend.hpp>
+#include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -50,13 +51,15 @@ namespace ComponentEngine
 
 	};
 
-	struct Mesh : public MsgSend, public MsgRecive<RenderStatus>
+	struct Mesh : public MsgSend, public Logic, public MsgRecive<RenderStatus>
 	{
 		Mesh(enteez::Entity* entity, std::string path);
 		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 		std::string GetPath();
 		bool Loaded();
 		virtual void ReciveMessage(enteez::Entity* sender, const RenderStatus& message);
+		virtual void Update();
+		static void UpdateBuffers();
 	private:
 		void LoadModel();
 		std::string m_path;

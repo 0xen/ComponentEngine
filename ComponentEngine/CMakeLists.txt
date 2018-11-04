@@ -24,6 +24,7 @@ set(common_headers
     include/ComponentEngine/Components/Transformation.hpp
     include/ComponentEngine/Components/ParticalSystem.hpp
     include/ComponentEngine/Components/Renderer.hpp
+    include/ComponentEngine/Components/Logic.hpp
 )
 
 set(common_source

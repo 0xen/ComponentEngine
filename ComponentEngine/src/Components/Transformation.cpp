@@ -65,15 +65,6 @@ void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::
 {
 	Transformation* trans = entity.AddComponent<Transformation>();
 
-	pugi::xml_node scale_node = component_data.child("Scale");
-	if (scale_node)
-	{
-		trans->Scale(glm::vec3(
-			scale_node.attribute("x").as_float(),
-			scale_node.attribute("y").as_float(),
-			scale_node.attribute("z").as_float()
-		));
-	}
 	pugi::xml_node position_node = component_data.child("Position");
 	if (position_node)
 	{
@@ -90,6 +81,15 @@ void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::
 			rotation_node.attribute("x").as_float(),
 			rotation_node.attribute("y").as_float(),
 			rotation_node.attribute("z").as_float()
+		));
+	}
+	pugi::xml_node scale_node = component_data.child("Scale");
+	if (scale_node)
+	{
+		trans->Scale(glm::vec3(
+			scale_node.attribute("x").as_float(),
+			scale_node.attribute("y").as_float(),
+			scale_node.attribute("z").as_float()
 		));
 	}
 

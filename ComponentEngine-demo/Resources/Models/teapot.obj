@@ -1,5 +1,6 @@
 # OBJ file created by ply_to_obj.c
 #
+mtllib cube.mtl
 g Object001
 
 v  40.6266  28.3457  -1.10804
@@ -1064,6 +1065,7 @@ vn  0.15959  0.984977  -0.0659615
 vn  0.350498  0.925312  -0.14474
 vn  0.48559  0.850653  -0.201474
 
+usemtl AmazingShader
 f  7  6  1
 f  1  2  7
 f  8  7  2

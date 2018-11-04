@@ -63,6 +63,11 @@ void ComponentEngine::Engine::Update()
 	UpdateWindow();
 }
 
+void ComponentEngine::Engine::UpdateScene()
+{
+	Mesh::UpdateBuffers();
+}
+
 void ComponentEngine::Engine::Rebuild()
 {
 	GetRendererMutex().lock();
@@ -288,7 +293,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
 	RegisterBase<RendererComponent, MsgSend>();
-	RegisterBase<Mesh, MsgSend, MsgRecive<RenderStatus>>();
+	RegisterBase<Mesh, MsgSend, Logic, MsgRecive<RenderStatus>>();
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>>();
 }
 

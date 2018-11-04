@@ -35,6 +35,7 @@ namespace ComponentEngine
 		void Start(void(*logic_function)());
 		bool Running();
 		void Update();
+		void UpdateScene();
 		void Rebuild();
 		void RenderFrame();
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
