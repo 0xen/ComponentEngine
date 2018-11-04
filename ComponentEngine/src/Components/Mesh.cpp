@@ -14,7 +14,7 @@ std::map<std::string, ModelPoolData> Mesh::m_model_pools;
 std::map<std::string, ShaderStorage> Mesh::m_shaders;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-ComponentEngine::Mesh::Mesh(std::string path) : m_path(path)
+ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : MsgSend(entity), m_path(path)
 {
 	m_loaded = false;
 	LoadModel();
@@ -27,7 +27,7 @@ void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node &
 	if (mesh_node)
 	{
 		std::string path = mesh_node.attribute("value").as_string();
-		Mesh* mesh = entity.AddComponent<Mesh>(path);
+		Mesh* mesh = entity.AddComponent<Mesh>(&entity,path);
 		if (!mesh->Loaded())
 		{
 			std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
@@ -127,6 +127,12 @@ void ComponentEngine::Mesh::LoadModel()
 					});
 				pipeline->AttachDescriptorPool(texture_pool);
 
+				IDescriptorSet* texture_descriptor_set = texture_pool->CreateDescriptorSet();
+				texture_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture("../../ComponentEngine-demo/Resources/Resources/cobble.png"));
+				texture_descriptor_set->UpdateSet();
+				pipeline->AttachDescriptorSet(1, texture_descriptor_set);
+
+
 				pipeline->Build();
 
 
@@ -202,7 +208,10 @@ void ComponentEngine::Mesh::LoadModel()
 	}
 	
 	IModel* model = m_model_pools[m_path].model_pool->CreateModel();
-	model->GetData<glm::mat4>(0) = glm::mat4(1.0f);
+	model->GetData<glm::mat4>(0) = glm::mat4(0.0f);
+
+	Send(TransformationPtrRedirect(&model->GetData<glm::mat4>(0)));
+
 	m_model_pools[m_path].model_pool->Update();
 
 	m_model = model;

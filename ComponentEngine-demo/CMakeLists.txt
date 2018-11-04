@@ -12,15 +12,6 @@ set(src
 set(headers
 )
 
-# Load Lodepng
-set(lodepng_src
-    ../../lodepng/lodepng.cpp
-)
-set(lodepng_headers
-    ../../lodepng/lodepng.h
-)
-list(APPEND src ${lodepng_src})
-list(APPEND headers ${lodepng_headers})
 
 include_directories(include)
 include_directories(../ComponentEngine/include)

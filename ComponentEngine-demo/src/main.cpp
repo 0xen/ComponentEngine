@@ -5,7 +5,6 @@
 #include <vector>
 #include <sstream>
 
-#include <lodepng.h>
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -76,17 +75,10 @@ void LogicThread()
 	textured_pipeline->Build();
 
 
-	std::vector<unsigned char> image; //the raw pixels
-	unsigned width;
-	unsigned height;
-	unsigned error = lodepng::decode(image, width, height, "../../ComponentEngine-demo/Resources/Resources/cobble.png");
-	if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
-
-	ITextureBuffer* texture = renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
-	texture->SetData();
+	
 
 	IDescriptorSet* texture_descriptor_set1 = texture_pool->CreateDescriptorSet();
-	texture_descriptor_set1->AttachBuffer(0, texture);
+	texture_descriptor_set1->AttachBuffer(0, engine->GetTexture("../../ComponentEngine-demo/Resources/Resources/cobble.png"));
 	texture_descriptor_set1->UpdateSet();
 
 
@@ -190,7 +182,7 @@ void LogicThread()
 			transform->Scale(glm::vec3(scale, scale, scale));
 		}
 	}
-
+	
 	//textured_pipeline->AttachModelPool(model_pool);
 
 	engine->GetRendererMutex().unlock();
@@ -212,8 +204,6 @@ void LogicThread()
 		model_pool->Update();
 		engine->GetRendererMutex().unlock();
 	}
-
-	delete texture;
 
 }
 

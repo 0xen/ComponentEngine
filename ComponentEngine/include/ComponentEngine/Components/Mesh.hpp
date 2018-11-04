@@ -4,6 +4,7 @@
 #include <map>
 
 #include <ComponentEngine\Components\MsgRecive.hpp>
+#include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -49,9 +50,9 @@ namespace ComponentEngine
 
 	};
 
-	struct Mesh : public MsgRecive<RenderStatus>
+	struct Mesh : public MsgSend, public MsgRecive<RenderStatus>
 	{
-		Mesh(std::string path);
+		Mesh(enteez::Entity* entity, std::string path);
 		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 		std::string GetPath();
 		bool Loaded();

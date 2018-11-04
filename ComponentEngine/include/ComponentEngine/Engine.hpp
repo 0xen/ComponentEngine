@@ -48,6 +48,7 @@ namespace ComponentEngine
 		float GetFrameTime();
 		float GetThreadTime();
 		float GetFPS();
+		ITextureBuffer* GetTexture(std::string path);
 
 		ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
@@ -108,6 +109,8 @@ namespace ComponentEngine
 
 		std::map<std::thread::id, Uint64> m_thread_time;
 		std::map<std::string, void(*)(enteez::Entity& entity, pugi::xml_node& component_data)> m_component_initilizers;
+		std::map<std::string, ITextureBuffer*> m_texture_storage;
+
 
 		static const unsigned int IS_RUNNING_LOCK;
 		static const unsigned int THREAD_TIME_LOCK;

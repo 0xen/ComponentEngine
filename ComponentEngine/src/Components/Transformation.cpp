@@ -39,6 +39,11 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 	*m_mat4 = glm::rotate(*m_mat4, angle, axis);
 }
 
+void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, const TransformationPtrRedirect & message)
+{
+	MemoryPointTo(message.mat_ptr, true);
+}
+
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)
 {
 	Rotate(glm::vec3(1.0f, 0.0f, 0.0f), angles.x);
@@ -90,3 +95,4 @@ void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::
 
 
 }
+

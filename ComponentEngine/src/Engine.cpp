@@ -4,6 +4,8 @@
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
 
+#include <lodepng.h>
+
 #include <assert.h>
 #include <sstream>
 
@@ -168,6 +170,23 @@ float ComponentEngine::Engine::GetFPS()
 	return m_fps;
 }
 
+ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
+{
+	if (m_texture_storage.find(path) == m_texture_storage.end())
+	{
+		std::vector<unsigned char> image; //the raw pixels
+		unsigned width;
+		unsigned height;
+		unsigned error = lodepng::decode(image, width, height, path);
+		if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+
+		ITextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
+		texture->SetData();
+		m_texture_storage[path] = texture;
+	}
+	return m_texture_storage[path];
+}
+
 ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 {
 	return m_logic_thread->ThreadLock();
@@ -269,7 +288,8 @@ void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
 	RegisterBase<RendererComponent, MsgSend>();
-	RegisterBase<Mesh, MsgRecive<RenderStatus>>();
+	RegisterBase<Mesh, MsgSend, MsgRecive<RenderStatus>>();
+	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -381,9 +401,6 @@ void ComponentEngine::Engine::UpdateCameraProjection()
 	);
 	// Need to flip the projection as GLM was made for OpenGL
 	m_camera_component.projection[1][1] *= -1;
-
-
-
 }
 
 void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity)

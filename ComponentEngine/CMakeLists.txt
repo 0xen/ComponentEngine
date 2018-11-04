@@ -10,6 +10,7 @@ set(common_headers
     include/ComponentEngine/pugixml.hpp
     include/ComponentEngine/pugiconfig.hpp
     include/ComponentEngine/tiny_obj_loader.h
+    ../../lodepng/lodepng.h
 
 
     include/ComponentEngine/Engine.hpp
@@ -28,6 +29,7 @@ set(common_headers
 set(common_source
     # External
     src/pugixml.cpp
+    ../../lodepng/lodepng.cpp
 
     src/Engine.cpp
     src/ThreadHandler.cpp
