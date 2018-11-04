@@ -1,6 +1,7 @@
 #include <ComponentEngine\Components\Mesh.hpp>
 
 #include <ComponentEngine\Engine.hpp>
+#include <ComponentEngine\Common.hpp>
 
 #include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
@@ -17,7 +18,7 @@ std::map<std::string, ModelPoolData> Mesh::m_model_pools;
 std::map<std::string, ShaderStorage> Mesh::m_shaders;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : MsgSend(entity), m_path(path)
+ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : MsgSend(entity), m_path(path), m_dir(Common::GetDir(m_path))
 {
 	m_loaded = false;
 	LoadModel();
@@ -30,7 +31,7 @@ void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node &
 	if (mesh_node)
 	{
 		std::string path = mesh_node.attribute("value").as_string();
-		Mesh* mesh = entity.AddComponent<Mesh>(&entity,path);
+		Mesh* mesh = entity.AddComponent<Mesh>(&entity, path);
 		if (!mesh->Loaded())
 		{
 			std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
@@ -76,7 +77,7 @@ void ComponentEngine::Mesh::LoadModel()
 	if (it == m_mdel_buffer_instances.end())
 	{
 		// Needs changed how we do this
-		std::string material_base_dir = "../../ComponentEngine-demo/Resources/Resources/";
+		std::string material_base_dir = m_dir + "../Resources/";
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
@@ -136,16 +137,22 @@ void ComponentEngine::Mesh::LoadModel()
 				// Attach the camera descriptor set to the pipeline
 				pipeline->AttachDescriptorSet(0, Engine::Singlton()->GetCameraDescriptorSet());
 
-
 				IDescriptorPool* texture_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
 					Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
 					});
 				pipeline->AttachDescriptorPool(texture_pool);
 
-				IDescriptorSet* texture_descriptor_set = texture_pool->CreateDescriptorSet();
-				texture_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture("../../ComponentEngine-demo/Resources/Resources/cobble.png"));
-				texture_descriptor_set->UpdateSet();
-				pipeline->AttachDescriptorSet(1, texture_descriptor_set);
+				IDescriptorSet* diffuse_texture_descriptor_set = texture_pool->CreateDescriptorSet();
+				if (m.diffuse_texname.empty())
+				{
+					diffuse_texture_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + "default.png"));
+				}
+				else
+				{
+					diffuse_texture_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + m.diffuse_texname));
+				}
+				diffuse_texture_descriptor_set->UpdateSet();
+				pipeline->AttachDescriptorSet(1, diffuse_texture_descriptor_set);
 
 
 				pipeline->Build();
@@ -163,13 +170,68 @@ void ComponentEngine::Mesh::LoadModel()
 
 		for (const auto& shape : shapes)
 		{
-			for (const auto& index : shape.mesh.indices)
+
+			//shape.mesh.material_ids[f];
+
+			size_t index_offset = 0;
+
+			for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
 			{
+				int fv = shape.mesh.num_face_vertices[f];
+
+
+				int mat_id = shape.mesh.material_ids[f];
+
+				glm::vec3 diffuse_color = glm::vec3(materials[mat_id].diffuse[0], materials[mat_id].diffuse[1], materials[mat_id].diffuse[2]);
+
+				// Loop over vertices in the face.
+				for (size_t v = 0; v < fv; v++)
+				{
+					tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+					MeshVertex vertex;
+					vertex.position = {
+						attrib.vertices[3 * idx.vertex_index + 0],
+						attrib.vertices[3 * idx.vertex_index + 1],
+						attrib.vertices[3 * idx.vertex_index + 2]
+					};
+
+					vertex.color = diffuse_color;
+
+					if (idx.normal_index >= 0)
+					{
+						vertex.normal = {
+							attrib.vertices[3 * idx.normal_index + 0],
+							attrib.vertices[3 * idx.normal_index + 1],
+							attrib.vertices[3 * idx.normal_index + 2]
+						};
+					}
+					if (idx.texcoord_index >= 0)
+					{
+						vertex.uv = {
+							attrib.texcoords[2 * idx.texcoord_index + 0],
+							attrib.texcoords[2 * idx.texcoord_index + 1]
+						};
+					}
+					vertexData.push_back(vertex);
+					indexData.push_back(indexData.size());
+				}
+				index_offset += fv;
+			}
+
+
+
+
+			/*for (int i = 0 ; i < shape.mesh.indices.size(); i++)
+			{
+				const auto& index = shape.mesh.indices[i];
 				MeshVertex vertex;
 				vertex.position = {
 					attrib.vertices[3 * index.vertex_index + 0],
 					attrib.vertices[3 * index.vertex_index + 1],
 					attrib.vertices[3 * index.vertex_index + 2]
+				};
+				vertex.color = {
+					1.0f,0.0f,0.0f
 				};
 				if (index.normal_index >= 0)
 				{
@@ -186,11 +248,14 @@ void ComponentEngine::Mesh::LoadModel()
 						attrib.texcoords[2 * index.texcoord_index + 1]
 					};
 				}
+
+
+
 				vertexData.push_back(vertex);
 				indexData.push_back(indexData.size());
 				//shape.mesh.material_ids[1];
 				//materials[1].
-			}
+			}*/
 
 		}
 
@@ -220,7 +285,7 @@ void ComponentEngine::Mesh::LoadModel()
 		m_model_pools[m_path].model_position_buffer = model_position_buffer;
 		m_model_pools[m_path].model_position_array = model_position_array;
 	}
-	
+
 	IModel* model = m_model_pools[m_path].model_pool->CreateModel();
 	model->GetData<glm::mat4>(0) = glm::mat4(0.0f);
 

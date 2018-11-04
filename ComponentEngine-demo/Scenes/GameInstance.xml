@@ -2,24 +2,12 @@
 <Game>
 	<Scenes>
 		<Scene>
-
-			<GameObject name="LargeFloor">
-				<Component name="Transformation">
-					<Position x="-3.0f" y="0.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="0.01f" y="0.01f" z="0.01f"/>
-				</Component>
-				<Component name="Mesh">
-					<Path value="../../ComponentEngine-demo/Resources/Models/teapot.obj"/>
-				</Component>
-				<Component name="Renderer"/>
-			</GameObject>
 			
 			<GameObject name="LargeFloor">
 				<Component name="Transformation">
 					<Position x="0.0f" y="0.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="0.08f" y="0.08f" z="0.08f"/>
+					<Scale x="0.2f" y="0.2f" z="0.2f"/>
 				</Component>
 				<Component name="Mesh">
 					<Path value="../../ComponentEngine-demo/Resources/Models/cessna.obj"/>
@@ -27,12 +15,12 @@
 				<Component name="Renderer"/>
 
 			</GameObject>
-			
-			<GameObject name="LargeFloor">
+
+			<GameObject name="SudoLight">
 				<Component name="Transformation">
-					<Position x="3.0f" y="0.0f" z="0.0f"/>
+					<Position x="8.0f" y="0.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+					<Scale x="0.2f" y="0.2f" z="0.2f"/>
 				</Component>
 				<Component name="Mesh">
 					<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>

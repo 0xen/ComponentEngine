@@ -63,6 +63,7 @@ namespace ComponentEngine
 	private:
 		void LoadModel();
 		std::string m_path;
+		std::string m_dir;
 		Renderer::IModel* m_model;
 		bool m_loaded;
 		static std::map<std::string, ModelBuffers> m_mdel_buffer_instances;

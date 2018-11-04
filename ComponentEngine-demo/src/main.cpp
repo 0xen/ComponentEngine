@@ -12,7 +12,7 @@ void LogicThread()
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 	Transformation* camera = engine->GetCameraTransformation();
-	camera->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
+	camera->Translate(glm::vec3(0.0f, 0.0f, 16.0f));
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
 	while (engine->Running())
@@ -26,7 +26,7 @@ void LogicThread()
 			}
 		}, true);
 		engine->GetRendererMutex().lock();
-		std::cout << "L:" << thread_time << std::endl;
+		//std::cout << "L:" << thread_time << std::endl;
 		engine->UpdateScene();
 		engine->GetRendererMutex().unlock();
 	}
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 	{
 		engine->Update();
 		engine->GetRendererMutex().lock();
-		std::cout << "R:" << engine->GetFrameTime() << std::endl;
+		//std::cout << "R:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
 		engine->GetRendererMutex().unlock();
 	}

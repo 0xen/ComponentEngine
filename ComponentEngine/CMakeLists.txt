@@ -14,6 +14,7 @@ set(common_headers
 
 
     include/ComponentEngine/Engine.hpp
+    include/ComponentEngine/Common.hpp
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/Components/ComponentMessages.hpp
@@ -33,6 +34,7 @@ set(common_source
     ../../lodepng/lodepng.cpp
 
     src/Engine.cpp
+    src/Common.cpp
     src/ThreadHandler.cpp
     src/Components/MsgRecive.cpp
     src/Components/MsgSend.cpp
