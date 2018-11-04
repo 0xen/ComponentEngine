@@ -6,62 +6,55 @@ layout(location = 0) out vec4 outColor;
 
 
 layout(location = 0) in vec2 inUV;
-
-
-struct LightInstanceData
-{
-	vec4 diffuse_color;
-	vec4 world_pos;
-	vec4 proj_pos;
-	vec4 world_normal;
-	vec4 camera_position;
-};
-
-layout(location = 1) in LightInstanceData in_light_data;
-
-
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec3 inDiffuseColor;
+layout(location = 3) in vec3 inFragPos;
+layout(location = 4) in vec3 inViewPos;
 
 
 
 void main() 
 {
-
-	vec4 world_normal = normalize(in_light_data.world_normal);
-	vec3 camera_dir = normalize(in_light_data.camera_position.xyz - in_light_data.world_pos.xyz);
-
-	vec3 ambient_colour = vec3(0.2f,0.2f,0.2f);
-
 	// Temp static light
 
-	vec4 light_position = vec4(8.0f,0.0f,0.0f,0.0f);
-	vec4 light_color = vec4(1.0f,1.0f,1.0f,1.0f);
-	vec4 light_facing = normalize(vec4(1.0f,0.0f,0.0f,0.0f));
-	float SpecularPower = 256.0f;
+	vec3 light_position = vec3(0.0f, 0.0f, 10.0f);
+	vec3 light_color = vec3(1.0f,1.0f,1.0f);
 
-	vec3 light_direction = normalize(light_position.xyz * in_light_data.world_pos.xyz);
+
+
+	float specularPower = 0.3f;
+
 
 	// End of temp static light
 
 
+	
+    float ambientStrength = 0.1f;
+    vec3 ambient_colour = ambientStrength * light_color;
 	vec3 total_diffuse_light = ambient_colour;
 	vec3 total_specular_light = vec3(0.0f, 0.0f, 0.0f);
 
 
+{
+	
+	vec3 norm = normalize(inNormal);
+	vec3 lightDir = normalize(light_position - inFragPos);  
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diff * light_color;
+	total_diffuse_light+=diffuse;
 
-	if(dot(light_facing.xyz,-light_direction) > cos(45.0f))
-	{
-		vec3 diffuse_light = light_color.xyz * max(dot(world_normal.xyz,light_direction),0.0f);
-		vec3 halfway = normalize(light_direction + camera_dir);
-		vec3 specular_light = light_color.xyz * pow(max(dot(world_normal.xyz,halfway),0.0f),SpecularPower);
-		total_diffuse_light += diffuse_light;
-		total_specular_light += specular_light;
-	}
 
+    vec3 viewDir = normalize(inViewPos - inFragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3 specular = specularPower * spec * light_color;
+	total_specular_light += specular;
+}
 
 
 	vec3 specular_material = vec3(1.0f);
 
-	vec3 diffuse_material = texture(diffuse_texture, inUV, 0.0f).xyz * in_light_data.diffuse_color.xyz;
+	vec3 diffuse_material = texture(diffuse_texture, inUV, 0.0f).xyz * inDiffuseColor;
 
 	vec4 final_color;
 

@@ -12,7 +12,7 @@ void LogicThread()
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 	Transformation* camera = engine->GetCameraTransformation();
-	camera->Translate(glm::vec3(0.0f, 0.0f, 16.0f));
+	camera->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
 	while (engine->Running())

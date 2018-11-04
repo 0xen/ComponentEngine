@@ -82,7 +82,7 @@ void ComponentEngine::Mesh::LoadModel()
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string err;
-		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, m_path.c_str(), material_base_dir.c_str());
+		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, m_path.c_str(), m_dir.c_str());
 		if (!err.empty())
 		{
 			std::cerr << err << std::endl;
@@ -171,8 +171,6 @@ void ComponentEngine::Mesh::LoadModel()
 		for (const auto& shape : shapes)
 		{
 
-			//shape.mesh.material_ids[f];
-
 			size_t index_offset = 0;
 
 			for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
@@ -200,9 +198,9 @@ void ComponentEngine::Mesh::LoadModel()
 					if (idx.normal_index >= 0)
 					{
 						vertex.normal = {
-							attrib.vertices[3 * idx.normal_index + 0],
-							attrib.vertices[3 * idx.normal_index + 1],
-							attrib.vertices[3 * idx.normal_index + 2]
+							attrib.normals[3 * idx.normal_index + 0],
+							attrib.normals[3 * idx.normal_index + 1],
+							attrib.normals[3 * idx.normal_index + 2]
 						};
 					}
 					if (idx.texcoord_index >= 0)
