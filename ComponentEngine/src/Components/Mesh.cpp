@@ -53,6 +53,7 @@ bool ComponentEngine::Mesh::Loaded()
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, const RenderStatus& message)
 {
 	std::cout << "Revived Message! " << message.should_renderer << std::endl;
+	m_model->ShouldRender(message.should_renderer);
 }
 
 void ComponentEngine::Mesh::Update()
@@ -285,6 +286,7 @@ void ComponentEngine::Mesh::LoadModel()
 	}
 
 	IModel* model = m_model_pools[m_path].model_pool->CreateModel();
+	model->ShouldRender(false);
 	model->GetData<glm::mat4>(0) = glm::mat4(0.0f);
 
 	Send(TransformationPtrRedirect(&model->GetData<glm::mat4>(0)));

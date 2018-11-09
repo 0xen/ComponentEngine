@@ -1,4 +1,6 @@
 #include <ComponentEngine\Engine.hpp>
+#include <ComponentEngine\Components\Mesh.hpp>
+#include <EnteeZ\EnteeZ.hpp>
 #include <iostream>
 using namespace ComponentEngine;
 using namespace enteez;
