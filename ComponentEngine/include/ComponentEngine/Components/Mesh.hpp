@@ -60,6 +60,7 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, const RenderStatus& message);
 		virtual void Update();
 		static void UpdateBuffers();
+		Renderer::IModel* GetModel();
 	private:
 		void LoadModel();
 		std::string m_path;

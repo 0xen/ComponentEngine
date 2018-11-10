@@ -52,7 +52,6 @@ bool ComponentEngine::Mesh::Loaded()
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, const RenderStatus& message)
 {
-	std::cout << "Revived Message! " << message.should_renderer << std::endl;
 	m_model->ShouldRender(message.should_renderer);
 }
 
@@ -67,6 +66,11 @@ void ComponentEngine::Mesh::UpdateBuffers()
 	{
 		p.second.model_pool->Update();
 	}
+}
+
+Renderer::IModel * ComponentEngine::Mesh::GetModel()
+{
+	return m_model;
 }
 
 void ComponentEngine::Mesh::LoadModel()
@@ -124,12 +128,16 @@ void ComponentEngine::Mesh::LoadModel()
 					});
 
 				pipeline->AttachVertexBinding({
-					VertexInputRate::INPUT_RATE_INSTANCE,
-					{
-						{ 4, DataFormat::MAT4_FLOAT,0 }
+					VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
+					{									  
+						{	// Vertex Bindings
+							4, // Location
+							DataFormat::MAT4_FLOAT, // Format
+							0 // Offset from start of data structure
+						}
 					},
-					sizeof(glm::mat4),
-					1
+					sizeof(glm::mat4), // Total size
+					1 // Binding
 					});
 
 

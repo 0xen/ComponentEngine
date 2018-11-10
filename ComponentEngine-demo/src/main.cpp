@@ -1,5 +1,6 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\Mesh.hpp>
+#include <ComponentEngine\Components\Renderer.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <iostream>
 using namespace ComponentEngine;
@@ -17,10 +18,12 @@ void LogicThread()
 	camera->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
+	float totaltime = 0.0f;
 	while (engine->Running())
 	{
 		float thread_time = engine->GetThreadTime();
-		em.ForEach<Transformation>([thread_time, camera](enteez::Entity* entity, Transformation& transformation)
+		totaltime += thread_time;
+		em.ForEach<Transformation,Mesh>([thread_time, camera, totaltime](enteez::Entity* entity, Transformation& transformation, Mesh& mesh)
 		{
 			if (&transformation != camera)
 			{
