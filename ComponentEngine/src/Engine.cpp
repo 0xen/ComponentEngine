@@ -140,6 +140,11 @@ IDescriptorSet * ComponentEngine::Engine::GetCameraDescriptorSet()
 	return m_camera_descriptor_set;
 }
 
+IDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
+{
+	return m_texture_maps_pool;
+}
+
 float ComponentEngine::Engine::GetFrameTime()
 {
 	return m_frame_time;
@@ -347,34 +352,48 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Create default pipeline
 	m_default_pipeline = m_renderer->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Default/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Default/frag.spv" }
+		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
 		});
 
 	// Tell the pipeline what data is should expect in the forum of Vertex input
 	m_default_pipeline->AttachVertexBinding({
 		VertexInputRate::INPUT_RATE_VERTEX,
 		{
-			{ 0, DataFormat::R32G32B32A32_FLOAT,offsetof(DefaultMeshVertex,position) },
-			{ 1, DataFormat::R32G32B32A32_FLOAT,offsetof(DefaultMeshVertex,color) }
+			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
+		{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
+		{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+		{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
 		},
-		sizeof(DefaultMeshVertex),
+		sizeof(MeshVertex),
 		0
 		});
 
 	m_default_pipeline->AttachVertexBinding({
-		VertexInputRate::INPUT_RATE_INSTANCE,
+		VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
 		{
-			{ 2, DataFormat::MAT4_FLOAT,0 }
+			{	// Vertex Bindings
+				4, // Location
+				DataFormat::MAT4_FLOAT, // Format
+				0 // Offset from start of data structure
+			}
 		},
-		sizeof(glm::mat4),
-		1
+		sizeof(glm::mat4), // Total size
+		1 // Binding
 		});
 
 	// Tell the pipeline what the input data will be payed out like
 	m_default_pipeline->AttachDescriptorPool(m_camera_pool);
 	// Attach the camera descriptor set to the pipeline
 	m_default_pipeline->AttachDescriptorSet(0, m_camera_descriptor_set);
+
+	m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
+		Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+		});
+	m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
+
+	m_default_pipeline->UseCulling(true);
+
 
 	// Build and check default pipeline
 	assert(m_default_pipeline->Build() && "Unable to build default pipeline");
@@ -386,6 +405,7 @@ void ComponentEngine::Engine::DeInitRenderer()
 	delete m_default_pipeline;
 	delete m_camera_buffer;
 	delete m_renderer;
+	delete m_texture_maps_pool;
 }
 
 void ComponentEngine::Engine::InitComponentHooks()

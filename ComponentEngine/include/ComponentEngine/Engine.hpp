@@ -45,7 +45,8 @@ namespace ComponentEngine
 		Entity* GetCameraEntity();
 		Transformation* GetCameraTransformation();
 		IDescriptorPool* GetCameraPool();
-		IDescriptorSet* GetCameraDescriptorSet();;
+		IDescriptorSet* GetCameraDescriptorSet();
+		IDescriptorPool* GetTextureMapsPool();
 		float GetFrameTime();
 		float GetThreadTime();
 		float GetFPS();
@@ -95,6 +96,7 @@ namespace ComponentEngine
 		IUniformBuffer* m_camera_buffer;
 		IDescriptorPool* m_camera_pool;
 		IDescriptorSet* m_camera_descriptor_set;
+		IDescriptorPool* m_texture_maps_pool;
 
 		// FPS
 		Uint64 m_delta_time = 0;

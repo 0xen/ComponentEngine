@@ -39,7 +39,7 @@ void ComponentEngine::ParticalSystem::Build()
 
 
 	m_vertex_data.resize(m_config.data.partical_count * 3);
-	m_vertex_buffer = renderer->CreateVertexBuffer(m_vertex_data.data(), sizeof(DefaultMeshVertex), m_vertex_data.size());
+	m_vertex_buffer = renderer->CreateVertexBuffer(m_vertex_data.data(), sizeof(MeshVertex), m_vertex_data.size());
 	m_vertex_buffer->SetData();
 
 

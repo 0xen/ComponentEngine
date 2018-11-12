@@ -32,6 +32,8 @@ layout(std430, set=1, binding=0) buffer particle_system_value_buffer {
 
 struct particle_vertex_instance{
 	vec4 vertex;
+	vec2 uv;
+	vec3 normal;
 	vec4 color;
 };
 

@@ -61,7 +61,7 @@ namespace ComponentEngine
 
 
 
-	struct DefaultMeshVertex;
+	struct MeshVertex;
 	class Engine;
 	const int FRAME_TIME = 0;
 	class ParticalSystem
@@ -74,7 +74,7 @@ namespace ComponentEngine
 		void Rebuild();
 		ParticalSystemConfiguration& GetConfig();
 	private:
-		std::vector<DefaultMeshVertex> m_vertex_data;
+		std::vector<MeshVertex> m_vertex_data;
 
 		std::vector<ParticalSystemInstanceValues> m_partical_system_instance_values;
 

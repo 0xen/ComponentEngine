@@ -13,9 +13,8 @@
 
 using namespace ComponentEngine;
 
-std::map<std::string, ModelBuffers> Mesh::m_mdel_buffer_instances;
-std::map<std::string, ModelPoolData> Mesh::m_model_pools;
-std::map<std::string, ShaderStorage> Mesh::m_shaders;
+std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
+std::map<std::string, MaterialStorage> Mesh::m_materials;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : MsgSend(entity), m_path(path), m_dir(Common::GetDir(m_path))
@@ -52,7 +51,10 @@ bool ComponentEngine::Mesh::Loaded()
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, const RenderStatus& message)
 {
-	m_model->ShouldRender(message.should_renderer);
+	for (int i = 0; i < m_sub_mesh_count; i++)
+	{
+		m_sub_meshes[i]->ShouldRender(message.should_renderer);
+	}
 }
 
 void ComponentEngine::Mesh::Update()
@@ -62,24 +64,32 @@ void ComponentEngine::Mesh::Update()
 
 void ComponentEngine::Mesh::UpdateBuffers()
 {
-	for (auto& p : m_model_pools)
+	for (auto& it : m_mesh_instance)
 	{
-		p.second.model_pool->Update();
-	}
-}
 
-Renderer::IModel * ComponentEngine::Mesh::GetModel()
-{
-	return m_model;
+		for (int i = 0; i < it.second.sub_meshes_count; i++)
+		{
+			SubMesh& sub_mesh = it.second.sub_meshes[i];
+			for (int j = 0; j < sub_mesh.material_meshes_count; j++)
+			{
+				MaterialMesh& material_mesh = sub_mesh.material_meshes[j];
+				material_mesh.model_pool->Update();
+			}
+		}
+
+		/*for (int i = 0; i < p.second.sub_mesh_count; i++)
+		{
+			p.second.sub_meshes[i].model_pool->Update();
+		}*/
+	}
 }
 
 void ComponentEngine::Mesh::LoadModel()
 {
-	auto it = m_mdel_buffer_instances.find(m_path);
+	auto it = m_mesh_instance.find(m_path);
 
-	m_mdel_buffer_instances[m_path].used_instances++;
 
-	if (it == m_mdel_buffer_instances.end())
+	if (it == m_mesh_instance.end())
 	{
 		// Needs changed how we do this
 		std::string material_base_dir = m_dir + "../Resources/";
@@ -99,93 +109,65 @@ void ComponentEngine::Mesh::LoadModel()
 		}
 
 		// TEMP
-		IGraphicsPipeline* last_created_pipeline;
+		IGraphicsPipeline* last_created_pipeline = Engine::Singlton()->GetDefaultGraphicsPipeline();
+
+
+		std::vector<IDescriptorSet*> materials_descriptor_set;
 
 		for (auto& m : materials)
 		{
-
-			if (m_shaders.find(m.name) == m_shaders.end())
+			if (m_materials.find(m.name) == m_materials.end())
 			{
 				// For now use the same shader for everything, just create duplicate pipelines to emulate the functionality
 
-
-				IGraphicsPipeline* pipeline = Engine::Singlton()->GetRenderer()->CreateGraphicsPipeline({
-					{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
-					{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
-					});
-
-
-				pipeline->AttachVertexBinding({
-					VertexInputRate::INPUT_RATE_VERTEX,
-					{
-						{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
-					{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
-					{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
-					{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
-					},
-					sizeof(MeshVertex),
-					0
-					});
-
-				pipeline->AttachVertexBinding({
-					VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
-					{									  
-						{	// Vertex Bindings
-							4, // Location
-							DataFormat::MAT4_FLOAT, // Format
-							0 // Offset from start of data structure
-						}
-					},
-					sizeof(glm::mat4), // Total size
-					1 // Binding
-					});
-
-
-				// Tell the pipeline what the input data will be payed out like
-				pipeline->AttachDescriptorPool(Engine::Singlton()->GetCameraPool());
-				// Attach the camera descriptor set to the pipeline
-				pipeline->AttachDescriptorSet(0, Engine::Singlton()->GetCameraDescriptorSet());
-
-				IDescriptorPool* texture_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
-					Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
-					});
-				pipeline->AttachDescriptorPool(texture_pool);
-
-				IDescriptorSet* diffuse_texture_descriptor_set = texture_pool->CreateDescriptorSet();
+				IDescriptorSet* texture_maps_descriptor_set = Engine::Singlton()->GetTextureMapsPool()->CreateDescriptorSet();
 				if (m.diffuse_texname.empty())
 				{
-					diffuse_texture_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + "default.png"));
+					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + "default.png"));
 				}
 				else
 				{
-					diffuse_texture_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + m.diffuse_texname));
+					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + m.diffuse_texname));
 				}
-				diffuse_texture_descriptor_set->UpdateSet();
-				pipeline->AttachDescriptorSet(1, diffuse_texture_descriptor_set);
+				texture_maps_descriptor_set->UpdateSet();
 
+				m_materials[m.name].m_texture_descriptor_set = texture_maps_descriptor_set;
 
-				pipeline->Build();
-
-
-				m_shaders[m.name].pipeline = pipeline;
 			}
-
-			last_created_pipeline = m_shaders[m.name].pipeline;
+			
+			materials_descriptor_set.push_back(m_materials[m.name].m_texture_descriptor_set);
 
 		}
+		
+		/*
+		
+			
 
-		std::vector<MeshVertex> vertexData;
-		std::vector<uint16_t> indexData;
+		*/
 
-		for (const auto& shape : shapes)
+		// Create the mesh instance
+		MeshInstance mesh_instance;
+
+		// Create the model position buffers
+		mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
+		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array, sizeof(glm::mat4), m_buffer_size_step);
+		// Create the sub meshes
+		mesh_instance.sub_meshes_count = shapes.size();
+		mesh_instance.sub_meshes = new SubMesh[mesh_instance.sub_meshes_count];
+
+		// Load the models into the mesh instance
+		for (int i = 0 ; i < mesh_instance.sub_meshes_count; i ++)
 		{
+			const auto& shape = shapes[i];
+			SubMesh& sub_mesh = mesh_instance.sub_meshes[i];
 
 			size_t index_offset = 0;
+
+			std::map<unsigned int, MaterialMeshBases> mesh_bases;
 
 			for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
 			{
 				int fv = shape.mesh.num_face_vertices[f];
-
 
 				int mat_id = shape.mesh.material_ids[f];
 
@@ -219,100 +201,94 @@ void ComponentEngine::Mesh::LoadModel()
 							attrib.texcoords[2 * idx.texcoord_index + 1]
 						};
 					}
-					vertexData.push_back(vertex);
-					indexData.push_back(indexData.size());
+
+					mesh_bases[mat_id].vertexData.push_back(vertex);
+					mesh_bases[mat_id].indexData.push_back(mesh_bases[mat_id].indexData.size());
 				}
 				index_offset += fv;
 			}
 
+			// Creation of the model pools
+			sub_mesh.material_meshes_count = mesh_bases.size();
+			sub_mesh.material_meshes = new MaterialMesh[sub_mesh.material_meshes_count];
 
+			// Add to the total of pools
+			mesh_instance.total_pool_allocation += sub_mesh.material_meshes_count;
 
-
-			/*for (int i = 0 ; i < shape.mesh.indices.size(); i++)
+			int j = 0;
+			for (auto& mesh_it = mesh_bases.begin(); mesh_it != mesh_bases.end(); ++mesh_it)
 			{
-				const auto& index = shape.mesh.indices[i];
-				MeshVertex vertex;
-				vertex.position = {
-					attrib.vertices[3 * index.vertex_index + 0],
-					attrib.vertices[3 * index.vertex_index + 1],
-					attrib.vertices[3 * index.vertex_index + 2]
-				};
-				vertex.color = {
-					1.0f,0.0f,0.0f
-				};
-				if (index.normal_index >= 0)
-				{
-					vertex.normal = {
-						attrib.vertices[3 * index.normal_index + 0],
-						attrib.vertices[3 * index.normal_index + 1],
-						attrib.vertices[3 * index.normal_index + 2]
-					};
-				}
-				if (index.texcoord_index >= 0)
-				{
-					vertex.uv = {
-						attrib.texcoords[2 * index.texcoord_index + 0],
-						attrib.texcoords[2 * index.texcoord_index + 1]
-					};
-				}
+				MaterialMesh& material_mesh = sub_mesh.material_meshes[j];
+
+				material_mesh.vertexBuffer =
+					Engine::Singlton()->GetRenderer()->CreateVertexBuffer(mesh_it->second.vertexData.data(), sizeof(MeshVertex), mesh_it->second.vertexData.size());
+				material_mesh.vertexBuffer->SetData();
+
+				material_mesh.indexBuffer =
+					Engine::Singlton()->GetRenderer()->CreateIndexBuffer(mesh_it->second.indexData.data(), sizeof(uint16_t), mesh_it->second.indexData.size());
+				material_mesh.indexBuffer->SetData();
+
+				material_mesh.model_pool = Engine::Singlton()->GetRenderer()->CreateModelPool
+					(material_mesh.vertexBuffer, material_mesh.indexBuffer);
+
+				material_mesh.model_pool->AttachBuffer(0, mesh_instance.model_position_buffer);
 
 
+				material_mesh.model_pool->AttachDescriptorSet(1, materials_descriptor_set[mesh_it->first]);
+				
+				last_created_pipeline->AttachModelPool(material_mesh.model_pool);
 
-				vertexData.push_back(vertex);
-				indexData.push_back(indexData.size());
-				//shape.mesh.material_ids[1];
-				//materials[1].
-			}*/
+				++j;
+			}
 
 		}
 
-		m_mdel_buffer_instances[m_path].vertexBuffer =
-			Engine::Singlton()->GetRenderer()->CreateVertexBuffer(vertexData.data(), sizeof(MeshVertex), vertexData.size());
-		m_mdel_buffer_instances[m_path].vertexBuffer->SetData();
 
-		m_mdel_buffer_instances[m_path].indexBuffer =
-			Engine::Singlton()->GetRenderer()->CreateIndexBuffer(indexData.data(), sizeof(uint16_t), indexData.size());
-		m_mdel_buffer_instances[m_path].indexBuffer->SetData();
+		m_mesh_instance[m_path] = mesh_instance;
 
-		IModelPool* model_pool = Engine::Singlton()->GetRenderer()->CreateModelPool
-		(m_mdel_buffer_instances[m_path].vertexBuffer, m_mdel_buffer_instances[m_path].indexBuffer);
-
-
-		glm::mat4* model_position_array = new glm::mat4[m_buffer_size_step];
-
-		IUniformBuffer* model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(model_position_array, sizeof(glm::mat4), m_buffer_size_step);
-
-
-		model_pool->AttachBuffer(0, model_position_buffer);
-
-		last_created_pipeline->AttachModelPool(model_pool);
-
-		// Populate the model pool map
-		m_model_pools[m_path].model_pool = model_pool;
-		m_model_pools[m_path].model_position_buffer = model_position_buffer;
-		m_model_pools[m_path].model_position_array = model_position_array;
 	}
 
-	IModel* model = m_model_pools[m_path].model_pool->CreateModel();
+	MeshInstance& mesh_instance = m_mesh_instance[m_path];
+	// Store the amount of sub-meshes
+	m_sub_mesh_count = mesh_instance.total_pool_allocation;
+	// Create a imodel pointer array to store all sub-mesh materials
+	m_sub_meshes = new Renderer::IModel*[m_sub_mesh_count];
+
+	int i = 0;
+	for (int j = 0; j < mesh_instance.sub_meshes_count; j++)
+	{
+		SubMesh& sub_mesh = mesh_instance.sub_meshes[j];
+		for (int k = 0; k < sub_mesh.material_meshes_count; k++)
+		{
+			MaterialMesh& material_meshe = sub_mesh.material_meshes[k];
+
+			IModel* model = material_meshe.model_pool->CreateModel();
+			model->ShouldRender(false);
+			model->GetData<glm::mat4>(0) = glm::mat4(1.0f);
+			m_sub_meshes[i++] = model;
+		}
+	}
+	
+	Send(TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_instance[m_path].used_instances]));
+
+	m_mesh_instance[m_path].used_instances++;
+
+
+	/*
+	IModel* model = m_mesh_instance[m_path].model_pool->CreateModel();
 	model->ShouldRender(false);
 	model->GetData<glm::mat4>(0) = glm::mat4(0.0f);
 
 	Send(TransformationPtrRedirect(&model->GetData<glm::mat4>(0)));
 
-	m_model_pools[m_path].model_pool->Update();
+	m_mesh_instance[m_path].model_pool->Update();
 
 	m_model = model;
-
+	*/
 	m_loaded = true;
 }
 
-ComponentEngine::ModelBuffers::~ModelBuffers()
+ComponentEngine::MaterialStorage::~MaterialStorage()
 {
-	delete vertexBuffer;
-	delete indexBuffer;
-}
-
-ComponentEngine::ShaderStorage::~ShaderStorage()
-{
-	delete pipeline;
+	delete m_texture_descriptor_set;
 }

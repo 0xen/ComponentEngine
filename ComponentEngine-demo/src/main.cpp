@@ -15,15 +15,13 @@ void LogicThread()
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 	Transformation* camera = engine->GetCameraTransformation();
-	camera->Translate(glm::vec3(0.0f, 0.0f, 10.0f));
+	camera->Translate(glm::vec3(0.0f, 0.0f, 6.0f));
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
-	float totaltime = 0.0f;
 	while (engine->Running())
 	{
 		float thread_time = engine->GetThreadTime();
-		totaltime += thread_time;
-		em.ForEach<Transformation,Mesh>([thread_time, camera, totaltime](enteez::Entity* entity, Transformation& transformation, Mesh& mesh)
+		em.ForEach<Transformation,Mesh>([thread_time, camera](enteez::Entity* entity, Transformation& transformation, Mesh& mesh)
 		{
 			if (&transformation != camera)
 			{
@@ -36,8 +34,25 @@ void LogicThread()
 		engine->GetRendererMutex().unlock();
 	}
 }
+
+#include <direct.h>
+#define GetCurrentDir _getcwd
+
+std::string GetCurrentWorkingDir(void)
+{
+	char buff[FILENAME_MAX];
+	GetCurrentDir(buff, FILENAME_MAX);
+	std::string current_working_dir(buff);
+	return current_working_dir;
+}
+
 int main(int argc, char **argv)
 {
+
+	std::cout << GetCurrentWorkingDir() << std::endl;
+
+
+
 	engine = Engine::Singlton();
 	engine->Start(LogicThread);
 	// Rendering
