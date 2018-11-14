@@ -337,11 +337,13 @@ void ComponentEngine::Engine::InitRenderer()
 	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera_component, sizeof(Camera), 1);
 	m_camera_buffer->SetData();
 
+
 	// Create camera pool
 	// This is a layout for the camera input data
 	m_camera_pool = m_renderer->CreateDescriptorPool({
 		m_renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::VERTEX_SHADER, 0),
 		});
+
 
 	// Create camera descriptor set from the tempalte
 	m_camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
@@ -390,6 +392,7 @@ void ComponentEngine::Engine::InitRenderer()
 	m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
 		Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
 		});
+
 	m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
 
 	m_default_pipeline->UseCulling(true);

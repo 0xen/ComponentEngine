@@ -24,6 +24,7 @@ namespace Renderer
 	class IVertexBuffer;
 	class IIndexBuffer;
 	class IUniformBuffer;
+	class IDescriptorPool;
 	class IDescriptorSet;
 	class IGraphicsPipeline;
 	class IModelPool;
@@ -37,6 +38,7 @@ namespace ComponentEngine
 	struct MaterialStorage
 	{
 		~MaterialStorage();
+		Renderer::IDescriptorPool* m_texture_maps_pool;
 		Renderer::IDescriptorSet* m_texture_descriptor_set;
 	};
 

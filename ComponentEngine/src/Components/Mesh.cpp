@@ -111,7 +111,6 @@ void ComponentEngine::Mesh::LoadModel()
 		// TEMP
 		IGraphicsPipeline* last_created_pipeline = Engine::Singlton()->GetDefaultGraphicsPipeline();
 
-
 		std::vector<IDescriptorSet*> materials_descriptor_set;
 
 		for (auto& m : materials)
@@ -120,7 +119,13 @@ void ComponentEngine::Mesh::LoadModel()
 			{
 				// For now use the same shader for everything, just create duplicate pipelines to emulate the functionality
 
-				IDescriptorSet* texture_maps_descriptor_set = Engine::Singlton()->GetTextureMapsPool()->CreateDescriptorSet();
+
+				m_materials[m.name].m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
+					Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+					});
+
+
+				IDescriptorSet* texture_maps_descriptor_set = /*Engine::Singlton()->GetTextureMapsPool()*/m_materials[m.name].m_texture_maps_pool->CreateDescriptorSet();
 				if (m.diffuse_texname.empty())
 				{
 					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + "default.png"));
