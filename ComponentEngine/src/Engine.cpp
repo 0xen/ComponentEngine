@@ -235,7 +235,8 @@ void ComponentEngine::Engine::InitWindow()
 
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
-	assert(SDL_GetWindowWMInfo(m_window, &info) && "Error, unable to get window info");
+	bool sucsess = SDL_GetWindowWMInfo(m_window, &info);
+	assert(sucsess && "Error, unable to get window info");
 
 	m_window_handle = new NativeWindowHandle(info.info.win.window, m_width, m_height);
 	m_window_handle->clear_color = { 0.2f,0.2f,0.2f,1.0f };
@@ -397,9 +398,9 @@ void ComponentEngine::Engine::InitRenderer()
 
 	m_default_pipeline->UseCulling(true);
 
-
+	bool sucsess = m_default_pipeline->Build();
 	// Build and check default pipeline
-	assert(m_default_pipeline->Build() && "Unable to build default pipeline");
+	assert(sucsess && "Unable to build default pipeline");
 
 }
 

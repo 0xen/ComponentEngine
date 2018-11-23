@@ -17,6 +17,18 @@
 
 			<GameObject name="Cube">
 				<Component name="Transformation">
+					<Position x="2.0f" y="0.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="0.08f" y="0.08f" z="0.08f"/>
+				</Component>
+				<Component name="Mesh">
+					<Path value="../../ComponentEngine-demo/Resources/Models/cessna.obj"/>
+				</Component>
+				<Component name="Renderer"/>
+			</GameObject>
+
+			<GameObject name="Cube">
+				<Component name="Transformation">
 					<Position x="3.0f" y="0.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
 					<Scale x="1.0f" y="1.0f" z="1.0f"/>
