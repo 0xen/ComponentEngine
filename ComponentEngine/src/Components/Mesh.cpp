@@ -155,7 +155,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 		// Create the model position buffers
 		mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
-		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array, sizeof(glm::mat4), m_buffer_size_step);
+		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array, BufferChain::Single, sizeof(glm::mat4), m_buffer_size_step);
 		// Create the sub meshes
 		mesh_instance.sub_meshes_count = shapes.size();
 		mesh_instance.sub_meshes = new SubMesh[mesh_instance.sub_meshes_count];
@@ -227,11 +227,11 @@ void ComponentEngine::Mesh::LoadModel()
 
 				material_mesh.vertexBuffer =
 					Engine::Singlton()->GetRenderer()->CreateVertexBuffer(mesh_it->second.vertexData.data(), sizeof(MeshVertex), mesh_it->second.vertexData.size());
-				material_mesh.vertexBuffer->SetData();
+				material_mesh.vertexBuffer->SetData(BufferSlot::Primary);
 
 				material_mesh.indexBuffer =
 					Engine::Singlton()->GetRenderer()->CreateIndexBuffer(mesh_it->second.indexData.data(), sizeof(uint16_t), mesh_it->second.indexData.size());
-				material_mesh.indexBuffer->SetData();
+				material_mesh.indexBuffer->SetData(BufferSlot::Primary);
 
 				material_mesh.model_pool = Engine::Singlton()->GetRenderer()->CreateModelPool
 					(material_mesh.vertexBuffer, material_mesh.indexBuffer);

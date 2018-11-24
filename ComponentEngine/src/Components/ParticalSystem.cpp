@@ -34,13 +34,13 @@ void ComponentEngine::ParticalSystem::Build()
 
 	Renderer::IRenderer* renderer = m_engine->GetRenderer();
 
-	m_partical_system_configuration_buffer = renderer->CreateUniformBuffer(&m_config, sizeof(ParticalSystemConfiguration), 1, true);
-	m_partical_system_configuration_buffer->SetData();
+	m_partical_system_configuration_buffer = renderer->CreateUniformBuffer(&m_config, BufferChain::Single, sizeof(ParticalSystemConfiguration), 1, true);
+	m_partical_system_configuration_buffer->SetData(BufferSlot::Primary);
 
 
 	m_vertex_data.resize(m_config.data.partical_count * 3);
 	m_vertex_buffer = renderer->CreateVertexBuffer(m_vertex_data.data(), sizeof(MeshVertex), m_vertex_data.size());
-	m_vertex_buffer->SetData();
+	m_vertex_buffer->SetData(BufferSlot::Primary);
 
 
 	for (int i = 0; i < m_config.data.partical_count; i++)
@@ -59,8 +59,8 @@ void ComponentEngine::ParticalSystem::Build()
 
 		m_partical_system_instance_values.push_back(instance_value);
 	}
-	m_partical_system_values_buffer = renderer->CreateUniformBuffer(m_partical_system_instance_values.data(), sizeof(ParticalSystemInstanceValues), m_partical_system_instance_values.size(), true);
-	m_partical_system_values_buffer->SetData();
+	m_partical_system_values_buffer = renderer->CreateUniformBuffer(m_partical_system_instance_values.data(), BufferChain::Single, sizeof(ParticalSystemInstanceValues), m_partical_system_instance_values.size(), true);
+	m_partical_system_values_buffer->SetData(BufferSlot::Primary);
 
 
 	m_pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/Compute/Particle/comp.spv", m_config.data.partical_count, 1, 1);
@@ -127,7 +127,7 @@ void ComponentEngine::ParticalSystem::Build()
 	m_model_pool = renderer->CreateModelPool(m_vertex_buffer);
 
 	m_model_position = m_entity->GetComponent<Transformation>().Get();
-	m_model_position_buffer = renderer->CreateUniformBuffer(&m_model_position, sizeof(glm::mat4), 1);
+	m_model_position_buffer = renderer->CreateUniformBuffer(&m_model_position, BufferChain::Single, sizeof(glm::mat4), 1);
 
 	// Attach the buffer to buffer index 0
 	m_model_pool->AttachBuffer(0, m_model_position_buffer);
@@ -136,7 +136,7 @@ void ComponentEngine::ParticalSystem::Build()
 	m_model = m_model_pool->CreateModel();
 	m_model->SetData(0, m_model_position);
 
-	m_model_position_buffer->SetData();
+	m_model_position_buffer->SetData(BufferSlot::Primary);
 
 
 	m_engine->GetDefaultGraphicsPipeline()->AttachModelPool(m_model_pool);
@@ -148,12 +148,12 @@ void ComponentEngine::ParticalSystem::Update()
 	m_config.data.frame_time += m_engine->GetFrameTime();
 	m_model_position = m_entity->GetComponent<Transformation>().Get();
 	m_model->SetData(0, m_model_position);
-	m_model_position_buffer->SetData();
+	m_model_position_buffer->SetData(BufferSlot::Primary);
 }
 
 void ComponentEngine::ParticalSystem::Rebuild()
 {
-	m_partical_system_configuration_buffer->SetData();
+	m_partical_system_configuration_buffer->SetData(BufferSlot::Primary);
 	m_program->Run();
 
 	m_config.data.frame_time = 0.001f;// m_engine->GetFrameTime();

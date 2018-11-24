@@ -21,6 +21,7 @@
 
 #include <SDL.h>
 #include <SDL_syswm.h>
+#include <imgui.h>
 
 using namespace enteez;
 using namespace Renderer;
@@ -36,6 +37,7 @@ namespace ComponentEngine
 		bool Running();
 		void Update();
 		void UpdateScene();
+		void UpdateUI();
 		void Rebuild();
 		void RenderFrame();
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
@@ -75,6 +77,10 @@ namespace ComponentEngine
 		void LoadXMLGameObject(pugi::xml_node& xml_entity);
 		void AttachXMLComponent(pugi::xml_node& xml_component, enteez::Entity* entity);
 
+		void InitImGUI();
+		void UpdateImGUI();
+		void DeInitImGUI();
+
 		// Singlton instance of engine
 		static Engine* m_engine;
 
@@ -105,6 +111,30 @@ namespace ComponentEngine
 		float m_fps_update = 0.0f;
 		unsigned int m_delta_fps = 0;
 		float m_fps = 0;
+
+		// ImGUI
+		struct
+		{
+			IGraphicsPipeline* m_imgui_pipeline = nullptr;
+			// Screen buffer
+			glm::vec2 m_screen_dim;
+			IUniformBuffer* m_screen_res_buffer = nullptr;
+			IDescriptorPool* m_screen_res_pool = nullptr;
+			IDescriptorSet* m_screen_res_set = nullptr;
+			// Font texture
+			ITextureBuffer* m_font_texture = nullptr;
+			IDescriptorPool* m_font_texture_pool = nullptr;
+			IDescriptorSet* m_texture_descriptor_set = nullptr;
+			// Local memory
+			ImDrawVert* m_vertex_data = nullptr;
+			ImDrawIdx* m_index_data = nullptr;
+			// GUI GPU Buffer
+			IVertexBuffer* m_vertex_buffer = nullptr;
+			IIndexBuffer* m_index_buffer = nullptr;
+			// Model pool instance
+			IModelPool* model_pool = nullptr;
+			IModel* model = nullptr;
+		}m_imgui;
 
 
 		ThreadHandler* m_logic_thread;

@@ -46,8 +46,11 @@ std::string GetCurrentWorkingDir(void)
 	return current_working_dir;
 }
 
+
+
 int main(int argc, char **argv)
 {
+
 
 	std::cout << GetCurrentWorkingDir() << std::endl;
 
@@ -60,6 +63,21 @@ int main(int argc, char **argv)
 	{
 		engine->Update();
 		engine->GetRendererMutex().lock();
+
+		{
+			ImGui::NewFrame();
+			{
+				ImGui::ShowTestWindow();
+			}
+			{
+				ImGui::Begin("My First Tool");
+				ImGui::End();
+			}
+			ImGui::Render();
+		}
+
+
+		engine->UpdateUI();
 		//std::cout << "R:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
 		engine->GetRendererMutex().unlock();

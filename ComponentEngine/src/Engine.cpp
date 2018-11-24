@@ -68,6 +68,11 @@ void ComponentEngine::Engine::UpdateScene()
 	Mesh::UpdateBuffers();
 }
 
+void ComponentEngine::Engine::UpdateUI()
+{
+	UpdateImGUI();
+}
+
 void ComponentEngine::Engine::Rebuild()
 {
 	GetRendererMutex().lock();
@@ -81,7 +86,7 @@ void ComponentEngine::Engine::RenderFrame()
 	m_camera_component.view = glm::inverse(m_camera_component.view);
 	m_camera_component.view = m_camera_entity->GetComponent<Transformation>().Get();
 	m_camera_component.view = glm::inverse(m_camera_component.view);
-	m_camera_buffer->SetData();
+	m_camera_buffer->SetData(BufferSlot::Primary);
 
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
@@ -191,7 +196,7 @@ ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
 		if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
 
 		ITextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
-		texture->SetData();
+		texture->SetData(BufferSlot::Primary);
 		m_texture_storage[path] = texture;
 	}
 	return m_texture_storage[path];
@@ -260,6 +265,7 @@ void ComponentEngine::Engine::UpdateWindow()
 		SDL_SetWindowTitle(m_window, ss.str().c_str());
 	}
 
+	ImGuiIO& io = ImGui::GetIO();
 	SDL_Event event;
 	while (SDL_PollEvent(&event) > 0)
 	{
@@ -277,15 +283,46 @@ void ComponentEngine::Engine::UpdateWindow()
 				GetRendererMutex().lock();
 				m_window_handle->width = event.window.data1;
 				m_window_handle->height = event.window.data2;
+				m_imgui.m_screen_dim = glm::vec2(event.window.data1, event.window.data2);
+				io.DisplaySize = ImVec2(event.window.data1, event.window.data2);
+				m_imgui.m_screen_res_buffer->SetData(BufferSlot::Primary);
 				Rebuild();
 				GetRendererMutex().unlock();
-
 				// Update Camera
 				UpdateCameraProjection();
-				m_camera_buffer->SetData();
+				m_camera_buffer->SetData(BufferSlot::Primary);
 				break;
 			}
 			break;
+			case SDL_MOUSEBUTTONDOWN:
+			case SDL_MOUSEBUTTONUP:
+				if (event.button.button == SDL_BUTTON_LEFT) io.MouseDown[0] = event.button.state == SDL_PRESSED;
+				if (event.button.button == SDL_BUTTON_RIGHT) io.MouseDown[1] = event.button.state == SDL_PRESSED;
+				if (event.button.button == SDL_BUTTON_MIDDLE) io.MouseDown[2] = event.button.state == SDL_PRESSED;
+				//io.MouseDown[0] = true;
+				break;
+			case SDL_MOUSEMOTION:
+				io.MousePos = ImVec2(event.motion.x, event.motion.y);
+				break;
+			case SDL_TEXTINPUT:
+			{
+				io.AddInputCharactersUTF8(event.text.text);
+				break;
+			}
+			case SDL_KEYDOWN:
+			case SDL_KEYUP:
+			{
+				int key = event.key.keysym.scancode;
+				IM_ASSERT(key >= 0 && key < IM_ARRAYSIZE(io.KeysDown));
+				io.KeysDown[key] = (event.type == SDL_KEYDOWN);
+				io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
+				io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
+				io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);
+				io.KeySuper = ((SDL_GetModState() & KMOD_GUI) != 0);
+			}
+			break;
+
+
 		}
 	}
 }
@@ -330,14 +367,9 @@ void ComponentEngine::Engine::InitRenderer()
 	camera_transformation->Translate(glm::vec3(0.0f, 0.0f, 0.0f));
 	m_camera_entity->AddComponent(&m_camera_component);
 
-
-
-
-
 	// Create camera buffer
-	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera_component, sizeof(Camera), 1);
-	m_camera_buffer->SetData();
-
+	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera_component, BufferChain::Single, sizeof(Camera), 1);
+	m_camera_buffer->SetData(BufferSlot::Primary);
 
 	// Create camera pool
 	// This is a layout for the camera input data
@@ -401,11 +433,12 @@ void ComponentEngine::Engine::InitRenderer()
 	bool sucsess = m_default_pipeline->Build();
 	// Build and check default pipeline
 	assert(sucsess && "Unable to build default pipeline");
-
+	InitImGUI();
 }
 
 void ComponentEngine::Engine::DeInitRenderer()
 {
+	DeInitImGUI();
 	delete m_default_pipeline;
 	delete m_camera_buffer;
 	delete m_renderer;
@@ -453,4 +486,141 @@ void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component,
 	{
 		std::cout << "Warning! Could not find component (" << name.c_str() << ") Initializer!" << std::endl;
 	}
+}
+
+void ComponentEngine::Engine::InitImGUI()
+{
+
+	// Init ImGUI
+	ImGuiIO& io = ImGui::GetIO();
+	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
+	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+
+	// Init Screen Dim
+	m_imgui.m_screen_dim = glm::vec2(1080, 720);
+	m_imgui.m_screen_res_buffer = m_renderer->CreateUniformBuffer(&m_imgui.m_screen_dim, BufferChain::Single, sizeof(glm::vec2), 1, true);
+	m_imgui.m_screen_res_buffer->SetData(BufferSlot::Primary);
+	m_imgui.m_screen_res_pool = m_renderer->CreateDescriptorPool({
+		m_renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::VERTEX_SHADER, 0),
+		});
+	m_imgui.m_screen_res_set = m_imgui.m_screen_res_pool->CreateDescriptorSet();
+	m_imgui.m_screen_res_set->AttachBuffer(0, m_imgui.m_screen_res_buffer);
+	m_imgui.m_screen_res_set->UpdateSet();
+
+	// Create font texture
+	unsigned char* font_data;
+	int font_width, font_height;
+	io.Fonts->GetTexDataAsRGBA32(&font_data, &font_width, &font_height);
+	m_imgui.m_font_texture = m_renderer->CreateTextureBuffer(font_data, Renderer::DataFormat::R8G8B8A8_FLOAT, font_width, font_height);
+
+	io.Fonts->TexID = (ImTextureID)m_imgui.m_font_texture->GetTextureID();
+
+	m_imgui.m_font_texture_pool = m_renderer->CreateDescriptorPool({
+		m_renderer->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+		});
+	m_imgui.m_texture_descriptor_set = m_imgui.m_font_texture_pool->CreateDescriptorSet();
+	m_imgui.m_texture_descriptor_set->AttachBuffer(0, m_imgui.m_font_texture);
+	m_imgui.m_texture_descriptor_set->UpdateSet();
+
+	// Setup ImGUI Pipeline
+	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline({
+		{ ShaderStage::VERTEX_SHADER, "../../ImGUI/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../../ImGUI/frag.spv" }
+		});
+	m_imgui.m_imgui_pipeline->UseDepth(false);
+
+	m_imgui.m_imgui_pipeline->AttachVertexBinding({
+		VertexInputRate::INPUT_RATE_VERTEX,
+		{
+			{ 0, DataFormat::R32G32_FLOAT,offsetof(ImDrawVert,pos) },
+			{ 1, DataFormat::R32G32_FLOAT,offsetof(ImDrawVert,uv) },
+			{ 2, DataFormat::R8G8B8A8_UNORM,offsetof(ImDrawVert,col) },
+		},
+		sizeof(ImDrawVert),
+		0
+		});
+
+	// Attach screen buffer
+	m_imgui.m_imgui_pipeline->AttachDescriptorPool(m_imgui.m_screen_res_pool);
+	m_imgui.m_imgui_pipeline->AttachDescriptorSet(0, m_imgui.m_screen_res_set);
+
+	// Attach font buffer
+	m_imgui.m_imgui_pipeline->AttachDescriptorPool(m_imgui.m_font_texture_pool);
+	m_imgui.m_imgui_pipeline->AttachDescriptorSet(1, m_imgui.m_texture_descriptor_set);
+	
+
+	// Build Pipeline
+	m_imgui.m_imgui_pipeline->Build();
+
+	const int temp_vert_max = 10000;
+	const int temp_in_max = 10000;
+
+	m_imgui.m_vertex_data = new ImDrawVert[temp_vert_max];
+	m_imgui.m_vertex_buffer = m_renderer->CreateVertexBuffer(m_imgui.m_vertex_data, sizeof(ImDrawVert), temp_vert_max);
+
+	m_imgui.m_index_data = new ImDrawIdx[temp_in_max];
+	m_imgui.m_index_buffer = m_renderer->CreateIndexBuffer(m_imgui.m_index_data, sizeof(ImDrawIdx), temp_in_max);
+
+	// Setup model instance
+	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, m_imgui.m_index_buffer);
+	m_imgui.model = m_imgui.model_pool->CreateModel();
+
+	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
+}
+
+void ComponentEngine::Engine::UpdateImGUI()
+{
+	ImDrawData* imDrawData = ImGui::GetDrawData();
+
+	if (imDrawData == nullptr)return;
+
+	if (m_imgui.m_vertex_buffer->GetElementCount(BufferSlot::Primary) < imDrawData->TotalVtxCount ||
+		m_imgui.m_index_buffer->GetElementCount(BufferSlot::Primary) < imDrawData->TotalIdxCount)
+	{
+		throw "Dynamic GUI buffers not handled";
+	}
+	ImDrawVert* temp_vertex_data = m_imgui.m_vertex_data;
+	ImDrawIdx* temp_index_data = m_imgui.m_index_data;
+	unsigned int index_count = 0;
+	unsigned int vertex_count = 0;
+	for (int n = 0; n < imDrawData->CmdListsCount; n++)
+	{
+		const ImDrawList* cmd_list = imDrawData->CmdLists[n];
+		memcpy(temp_vertex_data, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+		// Loop through and manually add a offset to the index's so they can all be rendered in one render pass
+		for (int i = 0; i < cmd_list->IdxBuffer.Size; i++)
+		{
+			temp_index_data[i] = cmd_list->IdxBuffer.Data[i] + vertex_count;
+		}
+
+		temp_vertex_data += cmd_list->VtxBuffer.Size;
+		temp_index_data += cmd_list->IdxBuffer.Size;
+
+		vertex_count += cmd_list->VtxBuffer.Size;
+		index_count += cmd_list->IdxBuffer.Size;
+	}
+	m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
+	m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
+
+
+	m_imgui.model_pool->SetVertexDrawCount(index_count);
+
+
+}
+
+void ComponentEngine::Engine::DeInitImGUI()
+{
+	delete m_imgui.m_imgui_pipeline;
+	delete m_imgui.m_screen_res_buffer;
+	delete m_imgui.m_screen_res_pool;
+	delete m_imgui.m_screen_res_set;
+	delete m_imgui.m_font_texture;
+	delete m_imgui.m_font_texture_pool;
+	delete m_imgui.m_texture_descriptor_set;
+	delete m_imgui.m_vertex_data;
+	delete m_imgui.m_index_data;
+	delete m_imgui.m_vertex_buffer;
+	delete m_imgui.m_index_buffer;
+
+
 }

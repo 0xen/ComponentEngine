@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Game>
 	<Scenes>
-		<Scene>
+		<Scenea>
 
 			<GameObject name="Cube">
 				<Component name="Transformation">
