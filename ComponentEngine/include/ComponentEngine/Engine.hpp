@@ -34,6 +34,7 @@ namespace ComponentEngine
 		static Engine* Singlton();
 		~Engine();
 		void Start(void(*logic_function)());
+		void Stop();
 		bool Running();
 		void Update();
 		void UpdateScene();
@@ -140,7 +141,7 @@ namespace ComponentEngine
 		ThreadHandler* m_logic_thread;
 		ordered_lock m_renderer_thread;
 
-		std::map<std::thread::id, Uint64> m_thread_time;
+		std::map<std::thread::id, Uint64> m_thread_time_delta;
 		std::map<std::string, void(*)(enteez::Entity& entity, pugi::xml_node& component_data)> m_component_initilizers;
 		std::map<std::string, ITextureBuffer*> m_texture_storage;
 

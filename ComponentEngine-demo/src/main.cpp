@@ -67,12 +67,45 @@ int main(int argc, char **argv)
 		{
 			ImGui::NewFrame();
 			{
-				ImGui::ShowTestWindow();
+				//ImGui::ShowTestWindow();
 			}
 			{
-				ImGui::Begin("My First Tool");
+				if (ImGui::BeginMainMenuBar())
+				{
+					if (ImGui::BeginMenu("File"))
+					{
+						if (ImGui::MenuItem("Exit")) 
+						{
+							engine->Stop();
+						}
+						ImGui::EndMenu();
+					}
+					if (ImGui::BeginMenu("Edit"))
+					{
+						if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+						if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+						ImGui::Separator();
+						if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+						if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+						if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+						ImGui::EndMenu();
+					}
+					ImGui::EndMainMenuBar();
+				}
+			}
+			{
+				bool open = true;
+				ImVec2 window_pos = ImVec2(10.0f, 25.0f);
+				ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always);
+				if (ImGui::Begin("Example: Simple Overlay", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+				{
+					ImGui::Text("FPS:%f  TPS:%f", 1.0f / engine->GetFrameTime(), 0.0f);
+					ImGui::Separator();
+				}
 				ImGui::End();
 			}
+
+
 			ImGui::Render();
 		}
 

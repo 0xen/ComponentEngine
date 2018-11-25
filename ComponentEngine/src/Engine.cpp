@@ -52,6 +52,12 @@ void ComponentEngine::Engine::Start(void(*logic_function)())
 	m_logic_thread = new ThreadHandler(logic_function);
 }
 
+void ComponentEngine::Engine::Stop()
+{
+	m_renderer->Stop();
+	m_logic_thread->join();
+}
+
 bool ComponentEngine::Engine::Running()
 {
 	std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
@@ -157,25 +163,18 @@ float ComponentEngine::Engine::GetFrameTime()
 
 float ComponentEngine::Engine::GetThreadTime()
 {
-
-	/* = m_now_delta_time;
-	m_now_delta_time = SDL_GetPerformanceCounter();
-	m_frame_time = static_cast<float>((m_now_delta_time - m_delta_time) / (float)SDL_GetPerformanceFrequency());
-*/
-
-
 	std::thread::id id = std::this_thread::get_id();
 	Uint64 now = SDL_GetPerformanceCounter();
 	Uint64 last;
 	{
 		std::lock_guard<std::mutex> guard(m_locks[THREAD_TIME_LOCK]);
-		if (m_thread_time.find(id) == m_thread_time.end())
+		if (m_thread_time_delta.find(id) == m_thread_time_delta.end())
 		{
-			m_thread_time[id] = now;
+			m_thread_time_delta[id] = now;
 		}
 	}
-	last = m_thread_time[id];
-	m_thread_time[id] = now;
+	last = m_thread_time_delta[id];
+	m_thread_time_delta[id] = now;
 	float temp = static_cast<float>((now - last) / (float)SDL_GetPerformanceFrequency());
 	return temp;
 }
@@ -492,6 +491,7 @@ void ComponentEngine::Engine::InitImGUI()
 {
 
 	// Init ImGUI
+	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
@@ -552,8 +552,8 @@ void ComponentEngine::Engine::InitImGUI()
 	// Build Pipeline
 	m_imgui.m_imgui_pipeline->Build();
 
-	const int temp_vert_max = 10000;
-	const int temp_in_max = 10000;
+	const int temp_vert_max = 20000;
+	const int temp_in_max = 20000;
 
 	m_imgui.m_vertex_data = new ImDrawVert[temp_vert_max];
 	m_imgui.m_vertex_buffer = m_renderer->CreateVertexBuffer(m_imgui.m_vertex_data, sizeof(ImDrawVert), temp_vert_max);

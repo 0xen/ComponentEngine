@@ -75,6 +75,9 @@ set(imgui_headers
 list(APPEND source ${imgui_src})
 list(APPEND headers ${imgui_headers})
 
+source_group("Source Files\\External\\imgui" FILES ${imgui_src})
+source_group("Header Files\\External\\imgui" FILES ${imgui_headers})
+
 
 include_directories(../../Renderer/renderer/include)
 include_directories(../../EnteeZ/EnteeZ/include)
