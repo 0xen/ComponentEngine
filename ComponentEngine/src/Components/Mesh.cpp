@@ -30,8 +30,11 @@ void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node &
 	if (mesh_node)
 	{
 		std::string path = mesh_node.attribute("value").as_string();
-		Mesh* mesh = entity.AddComponent<Mesh>(&entity, path);
-		if (!mesh->Loaded())
+
+
+		enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity, path);
+		mesh->SetName("Mesh");
+		if (!mesh->Get().Loaded())
 		{
 			std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
 			entity.RemoveComponent<Mesh>();

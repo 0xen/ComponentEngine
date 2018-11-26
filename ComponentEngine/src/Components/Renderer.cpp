@@ -18,5 +18,6 @@ ComponentEngine::RendererComponent::~RendererComponent()
 
 void ComponentEngine::RendererComponent::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
 {
-	entity.AddComponent<RendererComponent>(&entity);
+	enteez::ComponentWrapper<RendererComponent>* renderer = entity.AddComponent<RendererComponent>(&entity);
+	renderer->SetName("Renderer");
 }

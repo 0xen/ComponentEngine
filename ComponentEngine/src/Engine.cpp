@@ -54,8 +54,11 @@ void ComponentEngine::Engine::Start(void(*logic_function)())
 
 void ComponentEngine::Engine::Stop()
 {
-	m_renderer->Stop();
+	GetRendererMutex().lock();
+	GetEntityManager().Clear();
 	m_logic_thread->join();
+	m_renderer->Stop();
+	GetRendererMutex().unlock();
 }
 
 bool ComponentEngine::Engine::Running()
@@ -360,11 +363,13 @@ void ComponentEngine::Engine::InitRenderer()
 	UpdateCameraProjection(); 
 
 
-	m_camera_entity = this->GetEntityManager().CreateEntity();
+	m_camera_entity = this->GetEntityManager().CreateEntity("Camera");
 	//m_camera_entity->AddComponent(&m_camera_component);
-	Transformation* camera_transformation = m_camera_entity->AddComponent<Transformation>();
-	camera_transformation->Translate(glm::vec3(0.0f, 0.0f, 0.0f));
-	m_camera_entity->AddComponent(&m_camera_component);
+	ComponentWrapper<Transformation>* camera_transformation = m_camera_entity->AddComponent<Transformation>();
+	camera_transformation->SetName("Transformation");
+	camera_transformation->Get().Translate(glm::vec3(0.0f, 0.0f, 0.0f));
+	ComponentWrapper<Camera>* camera_component = m_camera_entity->AddComponent(&m_camera_component);
+	camera_component->SetName("Camera");
 
 	// Create camera buffer
 	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera_component, BufferChain::Single, sizeof(Camera), 1);
@@ -466,7 +471,8 @@ void ComponentEngine::Engine::UpdateCameraProjection()
 
 void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity)
 {
-	enteez::Entity* entity = GetEntityManager().CreateEntity();
+	std::string name = xml_entity.attribute("name").as_string();
+	enteez::Entity* entity = GetEntityManager().CreateEntity(name.size() > 0 ? name : "Object");
 	for (pugi::xml_node node : xml_entity.children("Component"))
 	{
 		AttachXMLComponent(node, entity);
@@ -552,8 +558,8 @@ void ComponentEngine::Engine::InitImGUI()
 	// Build Pipeline
 	m_imgui.m_imgui_pipeline->Build();
 
-	const int temp_vert_max = 20000;
-	const int temp_in_max = 20000;
+	const int temp_vert_max = 30000;
+	const int temp_in_max = 40000;
 
 	m_imgui.m_vertex_data = new ImDrawVert[temp_vert_max];
 	m_imgui.m_vertex_buffer = m_renderer->CreateVertexBuffer(m_imgui.m_vertex_data, sizeof(ImDrawVert), temp_vert_max);
@@ -563,6 +569,7 @@ void ComponentEngine::Engine::InitImGUI()
 
 	// Setup model instance
 	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, m_imgui.m_index_buffer);
+	m_imgui.model_pool->SetVertexDrawCount(0);
 	m_imgui.model = m_imgui.model_pool->CreateModel();
 
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);

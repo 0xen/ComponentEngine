@@ -17,6 +17,7 @@ set(common_headers
     include/ComponentEngine/Common.hpp
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
+    include/ComponentEngine/UI.hpp
     include/ComponentEngine/Components/ComponentMessages.hpp
     include/ComponentEngine/Components/MsgRecive.hpp
     include/ComponentEngine/Components/MsgSend.hpp
@@ -36,6 +37,7 @@ set(common_source
     src/Engine.cpp
     src/Common.cpp
     src/ThreadHandler.cpp
+    src/UI.cpp
     src/Components/MsgRecive.cpp
     src/Components/MsgSend.cpp
     src/Components/Mesh.cpp

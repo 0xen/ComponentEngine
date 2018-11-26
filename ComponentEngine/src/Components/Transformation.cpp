@@ -63,12 +63,13 @@ Transformation* ComponentEngine::Transformation::GetParent()
 
 void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
 {
-	Transformation* trans = entity.AddComponent<Transformation>();
-
+	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>();
+	trans_wrapper->SetName("Transformation");
+	Transformation& trans = trans_wrapper->Get();
 	pugi::xml_node position_node = component_data.child("Position");
 	if (position_node)
 	{
-		trans->Translate(glm::vec3(
+		trans.Translate(glm::vec3(
 			position_node.attribute("x").as_float(),
 			position_node.attribute("y").as_float(),
 			position_node.attribute("z").as_float()
@@ -77,7 +78,7 @@ void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::
 	pugi::xml_node rotation_node = component_data.child("Rotation");
 	if (rotation_node)
 	{
-		trans->Rotate(glm::vec3(
+		trans.Rotate(glm::vec3(
 			rotation_node.attribute("x").as_float(),
 			rotation_node.attribute("y").as_float(),
 			rotation_node.attribute("z").as_float()
@@ -86,7 +87,7 @@ void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::
 	pugi::xml_node scale_node = component_data.child("Scale");
 	if (scale_node)
 	{
-		trans->Scale(glm::vec3(
+		trans.Scale(glm::vec3(
 			scale_node.attribute("x").as_float(),
 			scale_node.attribute("y").as_float(),
 			scale_node.attribute("z").as_float()
