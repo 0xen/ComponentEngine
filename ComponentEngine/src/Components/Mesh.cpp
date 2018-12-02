@@ -7,6 +7,8 @@
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 
+#include <imgui.h>
+
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -17,10 +19,21 @@ std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : MsgSend(entity), m_path(path), m_dir(Common::GetDir(m_path))
+ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity), m_path(path), m_dir(Common::GetDir(m_path))
 {
 	m_loaded = false;
+	m_vertex_count = 0;
 	LoadModel();
+}
+
+ComponentEngine::Mesh::~Mesh()
+{
+	// Stop rendering
+	for (int i = 0; i < m_sub_mesh_count; i++)
+	{
+		m_sub_meshes[i]->ShouldRender(false);
+	}
+	delete[] m_sub_meshes;
 }
 
 void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
@@ -65,6 +78,14 @@ void ComponentEngine::Mesh::Update()
 
 }
 
+void ComponentEngine::Mesh::Display()
+{
+	ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
+	ImGui::Text("Vertex Count: %d", m_vertex_count);
+
+	
+}
+
 void ComponentEngine::Mesh::UpdateBuffers()
 {
 	for (auto& it : m_mesh_instance)
@@ -79,11 +100,6 @@ void ComponentEngine::Mesh::UpdateBuffers()
 				material_mesh.model_pool->Update();
 			}
 		}
-
-		/*for (int i = 0; i < p.second.sub_mesh_count; i++)
-		{
-			p.second.sub_meshes[i].model_pool->Update();
-		}*/
 	}
 }
 
@@ -180,7 +196,8 @@ void ComponentEngine::Mesh::LoadModel()
 				int mat_id = shape.mesh.material_ids[f];
 
 				glm::vec3 diffuse_color = glm::vec3(materials[mat_id].diffuse[0], materials[mat_id].diffuse[1], materials[mat_id].diffuse[2]);
-
+				
+				
 				// Loop over vertices in the face.
 				for (size_t v = 0; v < fv; v++)
 				{
@@ -215,6 +232,7 @@ void ComponentEngine::Mesh::LoadModel()
 				}
 				index_offset += fv;
 			}
+
 
 			// Creation of the model pools
 			sub_mesh.material_meshes_count = mesh_bases.size();
@@ -271,13 +289,16 @@ void ComponentEngine::Mesh::LoadModel()
 			MaterialMesh& material_meshe = sub_mesh.material_meshes[k];
 
 			IModel* model = material_meshe.model_pool->CreateModel();
+
+			m_vertex_count += material_meshe.model_pool->GetVertexBuffer()->GetElementCount(BufferSlot::Primary);
+
 			model->ShouldRender(false);
 			model->GetData<glm::mat4>(0) = glm::mat4(1.0f);
 			m_sub_meshes[i++] = model;
 		}
 	}
 	
-	Send(TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_instance[m_path].used_instances]));
+	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_instance[m_path].used_instances]));
 
 	m_mesh_instance[m_path].used_instances++;
 

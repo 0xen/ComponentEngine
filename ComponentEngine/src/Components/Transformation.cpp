@@ -2,6 +2,7 @@
 
 #include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
+#include <imgui.h>
 
 using namespace ComponentEngine;
 
@@ -42,6 +43,11 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, const TransformationPtrRedirect & message)
 {
 	MemoryPointTo(message.mat_ptr, true);
+}
+
+void ComponentEngine::Transformation::Display()
+{
+	ImGui::Text("test");
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)

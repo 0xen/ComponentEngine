@@ -5,7 +5,16 @@
 
 namespace ComponentEngine
 {
-	class MsgSend
+	template<typename T>
+	void Send(enteez::Entity* current_entity, T data)
+	{
+		current_entity->ForEach<MsgRecive<T>>([data](enteez::Entity* entity, MsgRecive<T>& recive)
+		{
+			recive.ReciveMessage(entity, data);
+		});
+	}
+	
+	/*class MsgSend
 	{
 	public:
 		MsgSend() {}
@@ -20,6 +29,6 @@ namespace ComponentEngine
 		}
 	private:
 		enteez::Entity* m_entity;
-	};
+	};*/
 
 }

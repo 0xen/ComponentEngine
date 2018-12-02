@@ -7,6 +7,7 @@
 #include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
+#include <ComponentEngine\Components\UI.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
 #include <glm/glm.hpp>
@@ -79,14 +80,17 @@ namespace ComponentEngine
 	};
 
 
-	struct Mesh : public MsgSend, public Logic, public MsgRecive<RenderStatus>
+	class Mesh : /*public MsgSend,*/ public MsgRecive<RenderStatus>, public UI , public Logic
 	{
+	public:
 		Mesh(enteez::Entity* entity, std::string path);
+		~Mesh();
 		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 		std::string GetPath();
 		bool Loaded();
 		virtual void ReciveMessage(enteez::Entity* sender, const RenderStatus& message);
 		virtual void Update();
+		virtual void Display();
 		static void UpdateBuffers();
 	private:
 		void LoadModel();
@@ -94,10 +98,13 @@ namespace ComponentEngine
 		std::string m_dir;
 		Renderer::IModel** m_sub_meshes;
 		unsigned int m_sub_mesh_count;
+		unsigned int m_vertex_count;
 		bool m_loaded;
 		static std::map<std::string, MeshInstance> m_mesh_instance;
 		static std::map<std::string, MaterialStorage> m_materials;
 		// How many slots we will reserve 
 		static const unsigned int m_buffer_size_step;
+
+		enteez::Entity * m_entity;
 	};
 }

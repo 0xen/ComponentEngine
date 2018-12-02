@@ -3,6 +3,8 @@
 
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
+#include <ComponentEngine\Components\Indestructable.hpp>
+#include <ComponentEngine\UIManager.hpp>
 
 #include <lodepng.h>
 
@@ -214,9 +216,9 @@ ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 	return m_renderer_thread;
 }
 
-void ComponentEngine::Engine::RegisterComponentInitilizer(const char * name, void(*fp)(enteez::Entity& entity, pugi::xml_node& component_data))
+void ComponentEngine::Engine::RegisterComponentInitilizer(const char * name, ComponentFunctionPointers cfp)
 {
-	m_component_initilizers[name] = fp;
+	m_component_initilizers[name] = cfp;
 }
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
@@ -337,9 +339,9 @@ void ComponentEngine::Engine::DeInitWindow()
 void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
-	RegisterBase<RendererComponent, MsgSend>();
-	RegisterBase<Mesh, MsgSend, Logic, MsgRecive<RenderStatus>>();
-	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>>();
+	RegisterBase<RendererComponent, /*MsgSend,*/ UI>();
+	RegisterBase<Mesh, /*MsgSend,*/ Logic, MsgRecive<RenderStatus>, UI>();
+	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -365,6 +367,8 @@ void ComponentEngine::Engine::InitRenderer()
 
 	m_camera_entity = this->GetEntityManager().CreateEntity("Camera");
 	//m_camera_entity->AddComponent(&m_camera_component);
+	ComponentWrapper<Indestructable>* indestructable_transformation = m_camera_entity->AddComponent<Indestructable>();
+	indestructable_transformation->SetName("Indestructable");
 	ComponentWrapper<Transformation>* camera_transformation = m_camera_entity->AddComponent<Transformation>();
 	camera_transformation->SetName("Transformation");
 	camera_transformation->Get().Translate(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -451,9 +455,18 @@ void ComponentEngine::Engine::DeInitRenderer()
 
 void ComponentEngine::Engine::InitComponentHooks()
 {
-	RegisterComponentInitilizer("Transformation", Transformation::EntityHook);
-	RegisterComponentInitilizer("Mesh", Mesh::EntityHook);
-	RegisterComponentInitilizer("Renderer", RendererComponent::EntityHook);
+	RegisterComponentInitilizer("Transformation", {
+		Transformation::EntityHook
+		});
+	RegisterComponentInitilizer("Indestructable", {
+		Indestructable::EntityHook
+		});
+	RegisterComponentInitilizer("Mesh", {
+		Mesh::EntityHook
+		});
+	RegisterComponentInitilizer("Renderer", {
+		RendererComponent::EntityHook
+		});
 }
 
 void ComponentEngine::Engine::UpdateCameraProjection()
@@ -485,7 +498,7 @@ void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component,
 	auto& it = m_component_initilizers.find(name);
 	if (it != m_component_initilizers.end())
 	{
-		m_component_initilizers[name](*entity, xml_component);
+		m_component_initilizers[name].initilizer(*entity, xml_component);
 	}
 	else
 	{
@@ -495,6 +508,8 @@ void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component,
 
 void ComponentEngine::Engine::InitImGUI()
 {
+
+	m_ui = new UIMaanger(this);
 
 	// Init ImGUI
 	ImGui::CreateContext();
@@ -577,6 +592,10 @@ void ComponentEngine::Engine::InitImGUI()
 
 void ComponentEngine::Engine::UpdateImGUI()
 {
+
+	m_ui->Render();
+
+
 	ImDrawData* imDrawData = ImGui::GetDrawData();
 
 	if (imDrawData == nullptr)return;
@@ -628,6 +647,7 @@ void ComponentEngine::Engine::DeInitImGUI()
 	delete m_imgui.m_index_data;
 	delete m_imgui.m_vertex_buffer;
 	delete m_imgui.m_index_buffer;
+	delete m_ui;
 
 
 }

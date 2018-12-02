@@ -36,6 +36,7 @@
 				<Component name="Mesh">
 					<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
 				</Component>
+				<Component name="Renderer"/>
 			</GameObject>
 
 			<GameObject name="Cube">

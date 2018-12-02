@@ -8,9 +8,9 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-
 #include <ComponentEngine\Components\MsgRecive.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
+#include <ComponentEngine\Components\UI.hpp>
 
 namespace enteez
 {
@@ -22,7 +22,7 @@ namespace pugi
 }
 namespace ComponentEngine
 {
-	class Transformation : public MsgRecive<TransformationPtrRedirect>
+	class Transformation : public UI, public MsgRecive<TransformationPtrRedirect>
 	{
 	public:
 		Transformation()
@@ -40,6 +40,7 @@ namespace ComponentEngine
 			if (m_origional)delete m_mat4;
 		}
 		virtual void ReciveMessage(enteez::Entity* sender, const TransformationPtrRedirect& message);
+		virtual void Display();
 		void Translate(glm::vec3 translation);
 		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);

@@ -17,7 +17,8 @@ set(common_headers
     include/ComponentEngine/Common.hpp
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
-    include/ComponentEngine/UI.hpp
+    include/ComponentEngine/UIManager.hpp
+    include/ComponentEngine/Components/UI.hpp
     include/ComponentEngine/Components/ComponentMessages.hpp
     include/ComponentEngine/Components/MsgRecive.hpp
     include/ComponentEngine/Components/MsgSend.hpp
@@ -27,6 +28,7 @@ set(common_headers
     include/ComponentEngine/Components/ParticalSystem.hpp
     include/ComponentEngine/Components/Renderer.hpp
     include/ComponentEngine/Components/Logic.hpp
+    include/ComponentEngine/Components/Indestructable.hpp
 )
 
 set(common_source
@@ -37,13 +39,15 @@ set(common_source
     src/Engine.cpp
     src/Common.cpp
     src/ThreadHandler.cpp
-    src/UI.cpp
+    src/UIManager.cpp
+    src/Components/UI.cpp
     src/Components/MsgRecive.cpp
     src/Components/MsgSend.cpp
     src/Components/Mesh.cpp
     src/Components/Transformation.cpp
     src/Components/ParticalSystem.cpp
     src/Components/Renderer.cpp
+    src/Components/Indestructable.cpp
 )
 
 include_directories(include)

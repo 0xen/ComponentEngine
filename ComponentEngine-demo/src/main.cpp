@@ -1,7 +1,6 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
-#include <ComponentEngine\UI.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <iostream>
 using namespace ComponentEngine;
@@ -48,8 +47,47 @@ std::string GetCurrentWorkingDir(void)
 }
 
 
+struct A
+{
+public:
+	virtual void test1() = 0;
+	int a;
+};
+
+struct B
+{
+public:
+	virtual void test2() = 0;
+};
+
+
+struct C
+{
+public:
+	virtual void test3() = 0;
+};
+
+struct D : public A, public B, public C
+{
+public:
+	virtual void test1() { std::cout << "a" << std::endl; };
+	virtual void test2() { std::cout << "b" << std::endl; };
+	virtual void test3() { std::cout << "c" << std::endl; };
+};
+
+
 int main(int argc, char **argv)
 {
+
+	void* a = new D;
+
+	B& d = *static_cast<D*>(a);
+
+
+	d.test2();
+	//d.test2();
+	//d.test3();
+
 
 
 	std::cout << GetCurrentWorkingDir() << std::endl;
@@ -60,7 +98,17 @@ int main(int argc, char **argv)
 	engine->Start(LogicThread);
 	EntityManager& em = engine->GetEntityManager();
 
-	UI ui(engine);
+
+
+	/*
+	engine->GetRendererMutex().lock();
+	Mesh* mesh = new Mesh(em.CreateEntity(), "../../ComponentEngine-demo/Resources/Models/cessna.obj");
+	void* ptr = mesh; // Storage in ValuePair
+	UI* ui = dynamic_cast<UI*>(static_cast<Mesh*>(ptr)); // Conversion to UI from ValuePair
+	UI& ui1 = *ui; // Returned to UI Manager from ValuePair
+	ui1.Display(); // Called in UI Manager
+	engine->GetRendererMutex().unlock();
+	*/
 
 	// Rendering
 	while (engine->Running())
@@ -68,7 +116,6 @@ int main(int argc, char **argv)
 		engine->Update();
 		engine->GetRendererMutex().lock();
 
-		ui.Render();
 
 
 		engine->UpdateUI();
