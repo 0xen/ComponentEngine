@@ -7,6 +7,9 @@ using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
 Engine* engine;
+// Updates per second
+const int kUPS = 30;
+
 void LogicThread()
 {
 	engine->GetRendererMutex().lock();
@@ -18,9 +21,11 @@ void LogicThread()
 	camera->Translate(glm::vec3(0.0f, 0.0f, 6.0f));
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
+	float thread_time = 0.0f;
 	while (engine->Running())
 	{
-		float thread_time = engine->GetThreadTime();
+		float start = engine->GetThreadTime();
+		thread_time += start;
 		em.ForEach<Transformation,Mesh>([thread_time, camera](enteez::Entity* entity, Transformation& transformation, Mesh& mesh)
 		{
 			if (&transformation != camera)
@@ -29,9 +34,18 @@ void LogicThread()
 			}
 		}, true);
 		engine->GetRendererMutex().lock();
+		engine->UpdateUI();
 		//std::cout << "L:" << thread_time << std::endl;
 		engine->UpdateScene();
 		engine->GetRendererMutex().unlock();
+
+
+		float stop = engine->GetThreadTime();
+		thread_time = stop;
+		// Calculate the amount of time we should pause for
+		int pause_time = (int)(1000 / kUPS - ((1000 / (int)(1.0f / stop)) - (1000 / (int)(1.0f / start))));
+		std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
+		thread_time += engine->GetThreadTime();
 	}
 }
 
@@ -47,49 +61,8 @@ std::string GetCurrentWorkingDir(void)
 }
 
 
-struct A
-{
-public:
-	virtual void test1() = 0;
-	int a;
-};
-
-struct B
-{
-public:
-	virtual void test2() = 0;
-};
-
-
-struct C
-{
-public:
-	virtual void test3() = 0;
-};
-
-struct D : public A, public B, public C
-{
-public:
-	virtual void test1() { std::cout << "a" << std::endl; };
-	virtual void test2() { std::cout << "b" << std::endl; };
-	virtual void test3() { std::cout << "c" << std::endl; };
-};
-
-
 int main(int argc, char **argv)
 {
-
-	void* a = new D;
-
-	B& d = *static_cast<D*>(a);
-
-
-	d.test2();
-	//d.test2();
-	//d.test3();
-
-
-
 	std::cout << GetCurrentWorkingDir() << std::endl;
 
 
@@ -98,27 +71,14 @@ int main(int argc, char **argv)
 	engine->Start(LogicThread);
 	EntityManager& em = engine->GetEntityManager();
 
-
-
-	/*
-	engine->GetRendererMutex().lock();
-	Mesh* mesh = new Mesh(em.CreateEntity(), "../../ComponentEngine-demo/Resources/Models/cessna.obj");
-	void* ptr = mesh; // Storage in ValuePair
-	UI* ui = dynamic_cast<UI*>(static_cast<Mesh*>(ptr)); // Conversion to UI from ValuePair
-	UI& ui1 = *ui; // Returned to UI Manager from ValuePair
-	ui1.Display(); // Called in UI Manager
-	engine->GetRendererMutex().unlock();
-	*/
-
 	// Rendering
 	while (engine->Running())
 	{
-		engine->Update();
 		engine->GetRendererMutex().lock();
 
+		engine->Update();
 
 
-		engine->UpdateUI();
 		//std::cout << "R:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
 		engine->GetRendererMutex().unlock();

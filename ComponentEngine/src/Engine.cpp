@@ -584,8 +584,8 @@ void ComponentEngine::Engine::InitImGUI()
 
 	// Setup model instance
 	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, m_imgui.m_index_buffer);
-	m_imgui.model_pool->SetVertexDrawCount(0);
 	m_imgui.model = m_imgui.model_pool->CreateModel();
+	m_imgui.model_pool->SetVertexDrawCount(0);
 
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
 }
