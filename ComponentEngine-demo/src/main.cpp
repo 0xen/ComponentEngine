@@ -9,46 +9,33 @@ using namespace Renderer;
 Engine* engine;
 
 // Updates per second
-const int kUPS = 15;
+const int kUPS = 60;
 // UI updates per second
-const int kUIUPS = 5;
+const int kUIUPS = 20;
 
 void UIThread()
 {
-
-	float thread_time = 0.0f;
 	while (engine->Running())
 	{
-		float start = engine->GetThreadTime();
-		thread_time += start;
+		engine->Sync(kUIUPS);
 		engine->UpdateUI();
-
-		float stop = engine->GetThreadTime();
-		thread_time = stop;
-		// Calculate the amount of time we should pause for
-		int pause_time = (int)(1000 / kUIUPS - ((1000 / (int)(1.0f / stop)) - (1000 / (int)(1.0f / start))));
-		std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
-		thread_time += engine->GetThreadTime();
-
 	}
 }
 
 void LogicThread()
 {
-	engine->GetRendererMutex().lock();
 	EntityManager& em = engine->GetEntityManager();
 	IRenderer* renderer = engine->GetRenderer();
+	engine->GetRendererMutex().lock();
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 	Transformation* camera = engine->GetCameraTransformation();
 	camera->Translate(glm::vec3(0.0f, 0.0f, 6.0f));
 	engine->GetRendererMutex().unlock();
 	// Logic Updating
-	float thread_time = 0.0f;
 	while (engine->Running())
 	{
-		float start = engine->GetThreadTime();
-		thread_time += start;
+		float thread_time = engine->Sync(kUPS);
 		em.ForEach<Transformation,Mesh>([thread_time, camera](enteez::Entity* entity, Transformation& transformation, Mesh& mesh)
 		{
 			if (&transformation != camera)
@@ -57,54 +44,23 @@ void LogicThread()
 			}
 		}, true);
 		engine->GetRendererMutex().lock();
-		//std::cout << "L:" << thread_time << std::endl;
 		engine->UpdateScene();
 		engine->GetRendererMutex().unlock();
-
-		float stop = engine->GetThreadTime();
-		thread_time = stop;
-		// Calculate the amount of time we should pause for
-		int pause_time = (int)(1000 / kUPS - ((1000 / (int)(1.0f / stop)) - (1000 / (int)(1.0f / start))));
-		std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
-		thread_time += engine->GetThreadTime();
 	}
 }
 
-#include <direct.h>
-#define GetCurrentDir _getcwd
-
-std::string GetCurrentWorkingDir(void)
-{
-	char buff[FILENAME_MAX];
-	GetCurrentDir(buff, FILENAME_MAX);
-	std::string current_working_dir(buff);
-	return current_working_dir;
-}
-
-
 int main(int argc, char **argv)
 {
-	std::cout << GetCurrentWorkingDir() << std::endl;
-
-
-
 	engine = Engine::Singlton();
 	engine->Start();
 	engine->AddThread(LogicThread);
 	engine->AddThread(UIThread);
 	EntityManager& em = engine->GetEntityManager();
-
 	// Rendering
 	while (engine->Running())
 	{
-		engine->GetRendererMutex().lock();
-
-
-
-		//std::cout << "R:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
 		engine->Update();
-		engine->GetRendererMutex().unlock();
 	}
 	engine->Stop();
 	engine->Join();

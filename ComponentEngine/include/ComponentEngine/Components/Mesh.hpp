@@ -67,6 +67,7 @@ namespace ComponentEngine
 	// Instance of the main mesh
 	struct MeshInstance
 	{
+		~MeshInstance();
 		SubMesh* sub_meshes;
 		unsigned int sub_meshes_count = 0;
 
@@ -92,8 +93,10 @@ namespace ComponentEngine
 		virtual void Update();
 		virtual void Display();
 		static void UpdateBuffers();
+		friend class Engine;
 	private:
 		void LoadModel();
+		static void CleanUp();
 		std::string m_path;
 		std::string m_dir;
 		Renderer::IModel** m_sub_meshes;

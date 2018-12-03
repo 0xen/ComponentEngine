@@ -170,7 +170,7 @@ void ComponentEngine::Mesh::LoadModel()
 		*/
 
 		// Create the mesh instance
-		MeshInstance mesh_instance;
+		MeshInstance& mesh_instance = m_mesh_instance[m_path];
 
 		// Create the model position buffers
 		mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
@@ -270,8 +270,6 @@ void ComponentEngine::Mesh::LoadModel()
 		}
 
 
-		m_mesh_instance[m_path] = mesh_instance;
-
 	}
 
 	MeshInstance& mesh_instance = m_mesh_instance[m_path];
@@ -317,7 +315,30 @@ void ComponentEngine::Mesh::LoadModel()
 	m_loaded = true;
 }
 
+void ComponentEngine::Mesh::CleanUp()
+{
+	m_materials.clear();
+	m_mesh_instance.clear();
+}
+
 ComponentEngine::MaterialStorage::~MaterialStorage()
 {
+	delete m_texture_maps_pool;
 	delete m_texture_descriptor_set;
+}
+
+ComponentEngine::MeshInstance::~MeshInstance()
+{
+	delete model_position_buffer;
+	for (int i = 0; i < sub_meshes_count; i++)
+	{
+		SubMesh& sub_mesh = sub_meshes[i];
+		for (int j = 0; j < sub_mesh.material_meshes_count; j++)
+		{
+			MaterialMesh& material_mesh = sub_mesh.material_meshes[j];
+			delete material_mesh.vertexBuffer;
+			delete material_mesh.indexBuffer;
+			delete material_mesh.model_pool;
+		}
+	}
 }

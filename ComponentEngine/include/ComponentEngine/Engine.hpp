@@ -48,6 +48,7 @@ namespace ComponentEngine
 		void UpdateUI();
 		void Rebuild();
 		void RenderFrame();
+		float Sync(int ups);
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path, bool merge_scenes = false);
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();

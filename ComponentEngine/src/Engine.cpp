@@ -63,7 +63,6 @@ void ComponentEngine::Engine::Stop()
 	if (!Running())return;
 	GetRendererMutex().lock();
 	GetEntityManager().Clear();
-	// Stop threads
 	DeInitEnteeZ();
 	DeInitWindow();
 	DeInitRenderer();
@@ -88,7 +87,9 @@ bool ComponentEngine::Engine::Running()
 
 void ComponentEngine::Engine::Update()
 {
+	GetRendererMutex().lock();
 	UpdateWindow();
+	GetRendererMutex().unlock();
 }
 
 void ComponentEngine::Engine::UpdateScene()
@@ -113,14 +114,29 @@ void ComponentEngine::Engine::Rebuild()
 
 void ComponentEngine::Engine::RenderFrame()
 {
+	GetRendererMutex().lock();
 	//Update camera
 	m_camera_component.view = glm::inverse(m_camera_component.view);
 	m_camera_component.view = m_camera_entity->GetComponent<Transformation>().Get();
 	m_camera_component.view = glm::inverse(m_camera_component.view);
 	m_camera_buffer->SetData(BufferSlot::Primary);
 
+
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
+	GetRendererMutex().unlock();
+}
+
+
+float ComponentEngine::Engine::Sync(int ups)
+{
+	float last_call = GetThreadTime();
+
+
+	int pause_time = (int)(1000 / ups);
+	std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
+
+	return last_call;
 }
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
@@ -273,7 +289,6 @@ void ComponentEngine::Engine::InitWindow()
 
 void ComponentEngine::Engine::UpdateWindow()
 {
-
 	m_frame_time = GetThreadTime();
 
 	m_fps_update -= m_frame_time;
@@ -470,10 +485,22 @@ void ComponentEngine::Engine::InitRenderer()
 void ComponentEngine::Engine::DeInitRenderer()
 {
 	DeInitImGUI();
+
+	Mesh::CleanUp();
+
+	for (auto it = m_texture_storage.begin(); it != m_texture_storage.end(); it++)
+	{
+		delete it->second;
+	}
+	m_texture_storage.clear();
+
+
 	delete m_default_pipeline;
 	m_default_pipeline = nullptr;
 	delete m_camera_buffer;
 	m_camera_buffer = nullptr;
+	delete m_camera_pool;
+	m_camera_pool = nullptr;
 	delete m_texture_maps_pool;
 	m_texture_maps_pool = nullptr;
 	m_renderer->Stop();
@@ -654,6 +681,11 @@ void ComponentEngine::Engine::UpdateImGUI()
 
 	// Submit the payload to the GPU
 	GetRendererMutex().lock();
+	if (!Running())
+	{
+		GetRendererMutex().unlock();
+		return;
+	}
 	m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
 	m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
 	m_imgui.model_pool->SetVertexDrawCount(index_count);
@@ -674,6 +706,8 @@ void ComponentEngine::Engine::DeInitImGUI()
 	delete m_imgui.m_index_data;
 	delete m_imgui.m_vertex_buffer;
 	delete m_imgui.m_index_buffer;
+	delete m_imgui.model_pool;
+	delete m_imgui.model;
 	delete m_ui;
 
 
