@@ -38,8 +38,10 @@ namespace ComponentEngine
 	public:
 		static Engine* Singlton();
 		~Engine();
-		void Start(void(*logic_function)());
+		void Start();
+		void AddThread(void(*function)());
 		void Stop();
+		void Join();
 		bool Running();
 		void Update();
 		void UpdateScene();
@@ -60,7 +62,7 @@ namespace ComponentEngine
 		float GetFPS();
 		ITextureBuffer* GetTexture(std::string path);
 
-		ordered_lock& GetLogicMutex();
+		//ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
 		// Name needs to match how the component name will be written in the xml scene file
 
@@ -144,8 +146,7 @@ namespace ComponentEngine
 			IModel* model = nullptr;
 		}m_imgui;
 
-
-		ThreadHandler* m_logic_thread;
+		std::vector<ThreadHandler*> m_threads;
 		ordered_lock m_renderer_thread;
 
 		std::map<std::thread::id, Uint64> m_thread_time_delta;

@@ -5,6 +5,7 @@
 #include <imgui.h>
 
 const unsigned int ComponentEngine::UIMaanger::SCENE = 0;
+const unsigned int ComponentEngine::UIMaanger::ADD_COMPONENT = 1;
 
 ComponentEngine::UIMaanger::UIMaanger(Engine* engine) : m_engine(engine)
 {
@@ -14,13 +15,13 @@ ComponentEngine::UIMaanger::UIMaanger(Engine* engine) : m_engine(engine)
 void ComponentEngine::UIMaanger::Render()
 {
 	ImGui::NewFrame();
-
 	//ImGui::ShowTestWindow();
 
 
 	RenderMainMenu();
 	RenderFPSCounter();
-	RenderScene();
+	if (m_open[SCENE]) RenderScene();
+	if (m_open[ADD_COMPONENT]) RenderAddComponent();
 
 
 	ImGui::Render();
@@ -36,6 +37,13 @@ void ComponentEngine::UIMaanger::RenderMainMenu()
 			{
 				m_engine->Stop();
 			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Window"))
+		{
+			ImGui::MenuItem("Scene Manager", NULL, &m_open[SCENE]);
+			ImGui::MenuItem("Add Component", NULL, &m_open[ADD_COMPONENT]);
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -57,7 +65,7 @@ void ComponentEngine::UIMaanger::RenderFPSCounter()
 
 void ComponentEngine::UIMaanger::RenderScene()
 {
-	if (ImGui::Begin("Scene", &m_open[SCENE], ImGuiWindowFlags_NoCollapse))
+	if (ImGui::Begin("Scene Manager", &m_open[SCENE], ImGuiWindowFlags_NoCollapse))
 	{
 		EntityManager& em = m_engine->GetEntityManager();
 		
@@ -113,16 +121,12 @@ void ComponentEngine::UIMaanger::RenderScene()
 						ImGui::PopID();
 					}
 					{// Body
-
+						RenderEntity(m_current_scene_focus.entity);
 					}
-					RenderEntity(m_current_scene_focus.entity);
 				}
 
 				if (m_current_scene_focus.component != nullptr)
 				{
-					// Add padding between Entity and component
-					ImGui::NewLine();
-					ImGui::NewLine();
 					// Title
 					{
 						ImGui::Columns(2);
@@ -183,6 +187,12 @@ void ComponentEngine::UIMaanger::RenderEntityTreeNode(Entity * entity)
 
 void ComponentEngine::UIMaanger::RenderEntity(Entity * entity)
 {
+	ImGui::Text("Component Count:%i", 0);
+	bool clicked = ImGui::Button("Add Component");
+	if (clicked)
+	{
+		m_open[ADD_COMPONENT] = true;
+	}
 }
 
 void ComponentEngine::UIMaanger::RenderComponentTreeNode(Entity* entity, BaseComponentWrapper & wrapper)
@@ -196,22 +206,54 @@ void ComponentEngine::UIMaanger::RenderComponentTreeNode(Entity* entity, BaseCom
 	}
 
 }
-#include <ComponentEngine\Components\MEsh.hpp>
+
 void ComponentEngine::UIMaanger::RenderComponent()
 {
 	if (m_current_scene_focus.entity == nullptr || m_current_scene_focus.component == nullptr)return;
 
 	m_current_scene_focus.entity->ForEach<UI>([this](Entity* entity, BaseComponentWrapper& wrapper, UI* ui)
 	{
-		//UI* uip = &ui;
 		if (m_current_scene_focus.component->GetComponentPtr() == wrapper.GetComponentPtr())
 		{
-			//(*static_cast<UI*>(wrapper.GetComponentPtr())).Display();
-			//((UI*)wrapper.GetComponentPtr())->Display();
 			ui->Display();
 		}
 	});
 
+}
+
+void ComponentEngine::UIMaanger::RenderAddComponent()
+{
+	if (ImGui::Begin("Add Component", &m_open[ADD_COMPONENT], ImGuiWindowFlags_NoCollapse))
+	{
+		if (m_current_scene_focus.entity == nullptr) // No entity selected
+		{
+			ImGui::Text("No Entity Selected");
+		}
+		else // Entity selected
+		{
+			const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" };
+			static const char* item_current = items[0];
+			if (ImGui::BeginCombo("Component", item_current))
+			{
+				for (int n = 0; n < 4; n++)
+				{
+					bool is_selected = (item_current == items[n]);
+					if (ImGui::Selectable(items[n], is_selected))
+						item_current = items[n];
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();   
+				}
+				ImGui::EndCombo();
+			}
+			bool selected = ImGui::Button("Add");
+			if (selected)
+			{
+				m_open[ADD_COMPONENT] = false;
+			}
+
+		}
+	}
+	ImGui::End();
 }
 
 bool ComponentEngine::UIMaanger::ElementClicked()

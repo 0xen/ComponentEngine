@@ -27,16 +27,19 @@ glm::mat4 & Transformation::Get()
 
 void Transformation::Translate(glm::vec3 translation)
 {
+	m_position += translation;
 	*m_mat4 = glm::translate(*m_mat4, translation);
 }
 
 void Transformation::Scale(glm::vec3 scale)
 {
+	m_scale *= scale;
 	*m_mat4 = glm::scale(*m_mat4, scale);
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 {
+	//m_rotation
 	*m_mat4 = glm::rotate(*m_mat4, angle, axis);
 }
 
@@ -47,7 +50,24 @@ void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, con
 
 void ComponentEngine::Transformation::Display()
 {
-	ImGui::Text("test");
+	{
+		ImGui::PushID(0);
+		ImGui::Text("Position");
+		bool changed = ImGui::InputFloat3("", (float*)&m_position);
+		ImGui::PopID();
+	}
+	{
+		ImGui::PushID(1);
+		ImGui::Text("Rotation");
+		bool changed = ImGui::InputFloat3("", (float*)&m_rotation);
+		ImGui::PopID();
+	}
+	{
+		ImGui::PushID(2);
+		ImGui::Text("Scale");
+		bool changed = ImGui::InputFloat3("", (float*)&m_scale);
+		ImGui::PopID();
+	}
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)

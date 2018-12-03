@@ -18,6 +18,24 @@ set(common_headers
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/UIManager.hpp
+)
+
+set(common_source
+    # External
+    src/pugixml.cpp
+    ../../lodepng/lodepng.cpp
+
+    src/Engine.cpp
+    src/Common.cpp
+    src/ThreadHandler.cpp
+    src/UIManager.cpp
+)
+
+
+source_group("Source Files\\ComponentEngine" FILES ${common_source})
+source_group("Header Files\\ComponentEngine" FILES ${common_headers})
+
+set(component_headers
     include/ComponentEngine/Components/UI.hpp
     include/ComponentEngine/Components/ComponentMessages.hpp
     include/ComponentEngine/Components/MsgRecive.hpp
@@ -31,15 +49,7 @@ set(common_headers
     include/ComponentEngine/Components/Indestructable.hpp
 )
 
-set(common_source
-    # External
-    src/pugixml.cpp
-    ../../lodepng/lodepng.cpp
-
-    src/Engine.cpp
-    src/Common.cpp
-    src/ThreadHandler.cpp
-    src/UIManager.cpp
+set(component_source
     src/Components/UI.cpp
     src/Components/MsgRecive.cpp
     src/Components/MsgSend.cpp
@@ -49,6 +59,52 @@ set(common_source
     src/Components/Renderer.cpp
     src/Components/Indestructable.cpp
 )
+
+
+list(APPEND common_source ${component_source})
+list(APPEND common_headers ${component_headers})
+
+
+source_group("Source Files\\ComponentEngine\\Components" FILES ${component_source})
+source_group("Header Files\\ComponentEngine\\Components" FILES ${component_headers})
+
+
+
+set(event_headers
+    include/ComponentEngine/Events/KeyboardEvent.hpp
+    include/ComponentEngine/Events/MouseEvent.hpp
+)
+
+set(event_source
+
+)
+
+
+list(APPEND common_source ${event_source})
+list(APPEND common_headers ${event_headers})
+
+
+source_group("Source Files\\ComponentEngine\\Events" FILES ${event_source})
+source_group("Header Files\\ComponentEngine\\Events" FILES ${event_headers})
+
+
+set(datastructure_headers
+    include/ComponentEngine/DataStructure/LinkedList.hpp
+)
+
+set(datastructure_source
+
+)
+
+
+list(APPEND common_source ${datastructure_source})
+list(APPEND common_headers ${datastructure_headers})
+
+
+source_group("Source Files\\ComponentEngine\\DataStructure" FILES ${datastructure_source})
+source_group("Header Files\\ComponentEngine\\DataStructure" FILES ${datastructure_headers})
+
+
 
 include_directories(include)
 

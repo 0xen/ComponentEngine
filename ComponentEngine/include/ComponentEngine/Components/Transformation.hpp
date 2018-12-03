@@ -29,11 +29,17 @@ namespace ComponentEngine
 		{
 			m_mat4 = new glm::mat4(1.0f);
 			m_origional = true;
+			m_position = glm::vec3();
+			m_rotation = glm::vec3();
+			m_scale = glm::vec3();
 		}
 		Transformation(glm::mat4* mat4)
 		{
 			m_mat4 = mat4;
 			m_origional = false;
+			m_position = glm::vec3();
+			m_rotation = glm::vec3();
+			m_scale = glm::vec3();
 		}
 		~Transformation()
 		{
@@ -57,6 +63,9 @@ namespace ComponentEngine
 
 	private:
 		glm::mat4* m_mat4;
+		glm::vec3 m_position;
+		glm::vec3 m_rotation;
+		glm::vec3 m_scale;
 		Transformation* m_parent = nullptr;
 		bool m_origional;
 	};

@@ -7,8 +7,31 @@ using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
 Engine* engine;
+
 // Updates per second
-const int kUPS = 30;
+const int kUPS = 15;
+// UI updates per second
+const int kUIUPS = 5;
+
+void UIThread()
+{
+
+	float thread_time = 0.0f;
+	while (engine->Running())
+	{
+		float start = engine->GetThreadTime();
+		thread_time += start;
+		engine->UpdateUI();
+
+		float stop = engine->GetThreadTime();
+		thread_time = stop;
+		// Calculate the amount of time we should pause for
+		int pause_time = (int)(1000 / kUIUPS - ((1000 / (int)(1.0f / stop)) - (1000 / (int)(1.0f / start))));
+		std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
+		thread_time += engine->GetThreadTime();
+
+	}
+}
 
 void LogicThread()
 {
@@ -34,11 +57,9 @@ void LogicThread()
 			}
 		}, true);
 		engine->GetRendererMutex().lock();
-		engine->UpdateUI();
 		//std::cout << "L:" << thread_time << std::endl;
 		engine->UpdateScene();
 		engine->GetRendererMutex().unlock();
-
 
 		float stop = engine->GetThreadTime();
 		thread_time = stop;
@@ -68,7 +89,9 @@ int main(int argc, char **argv)
 
 
 	engine = Engine::Singlton();
-	engine->Start(LogicThread);
+	engine->Start();
+	engine->AddThread(LogicThread);
+	engine->AddThread(UIThread);
 	EntityManager& em = engine->GetEntityManager();
 
 	// Rendering
@@ -76,13 +99,15 @@ int main(int argc, char **argv)
 	{
 		engine->GetRendererMutex().lock();
 
-		engine->Update();
 
 
 		//std::cout << "R:" << engine->GetFrameTime() << std::endl;
 		engine->RenderFrame();
+		engine->Update();
 		engine->GetRendererMutex().unlock();
 	}
+	engine->Stop();
+	engine->Join();
 	delete engine;
     return 0;
 }

@@ -18,11 +18,14 @@ namespace ComponentEngine
 	private:
 		void RenderMainMenu();
 		void RenderFPSCounter();
+		// Scene render functions
 		void RenderScene();
 		void RenderEntityTreeNode(Entity* entity);
 		void RenderEntity(Entity* entity);
 		void RenderComponentTreeNode(Entity* entity, BaseComponentWrapper& wrapper);
 		void RenderComponent();
+		// Add component render functions
+		void RenderAddComponent();
 
 		bool ElementClicked();
 
@@ -30,6 +33,7 @@ namespace ComponentEngine
 		CurrentSceneFocus m_current_scene_focus;
 		unsigned int m_indestructable_component_id = 0;
 		static const unsigned int SCENE;
+		static const unsigned int ADD_COMPONENT;
 		bool m_open[2];
 	};
 }

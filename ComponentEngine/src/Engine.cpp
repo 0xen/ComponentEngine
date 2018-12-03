@@ -34,14 +34,14 @@ Engine* ComponentEngine::Engine::Singlton()
 
 ComponentEngine::Engine::~Engine()
 {
-	// Stop threads
-	m_logic_thread->join();
-	DeInitEnteeZ();
-	DeInitRenderer();
-	DeInitWindow();
+	Stop();
+	for (auto i : m_threads)
+	{
+		delete i;
+	}
 }
 
-void ComponentEngine::Engine::Start(void(*logic_function)())
+void ComponentEngine::Engine::Start()
 {
 	m_title = "Component Engine";
 	m_width = 1080;
@@ -51,22 +51,39 @@ void ComponentEngine::Engine::Start(void(*logic_function)())
 	InitRenderer();
 	InitEnteeZ();
 	InitComponentHooks();
-	m_logic_thread = new ThreadHandler(logic_function);
+}
+
+void ComponentEngine::Engine::AddThread(void(*function)())
+{
+	m_threads.push_back(new ThreadHandler(function));
 }
 
 void ComponentEngine::Engine::Stop()
 {
+	if (!Running())return;
 	GetRendererMutex().lock();
 	GetEntityManager().Clear();
-	m_logic_thread->join();
-	m_renderer->Stop();
+	// Stop threads
+	DeInitEnteeZ();
+	DeInitWindow();
+	DeInitRenderer();
 	GetRendererMutex().unlock();
+}
+
+void ComponentEngine::Engine::Join()
+{
+	for (auto i : m_threads)
+	{
+		i->join();
+	}
 }
 
 bool ComponentEngine::Engine::Running()
 {
-	std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
-	return m_renderer != nullptr && m_renderer->IsRunning();
+	GetRendererMutex().lock();
+	bool result = m_renderer != nullptr && m_renderer->IsRunning();
+	GetRendererMutex().unlock();
+	return result;
 }
 
 void ComponentEngine::Engine::Update()
@@ -76,7 +93,10 @@ void ComponentEngine::Engine::Update()
 
 void ComponentEngine::Engine::UpdateScene()
 {
+	GetRendererMutex().lock();
 	Mesh::UpdateBuffers();
+	GetRendererMutex().unlock();
+
 }
 
 void ComponentEngine::Engine::UpdateUI()
@@ -205,11 +225,11 @@ ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
 	}
 	return m_texture_storage[path];
 }
-
+/*
 ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 {
 	return m_logic_thread->ThreadLock();
-}
+}*/
 
 ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 {
@@ -277,7 +297,10 @@ void ComponentEngine::Engine::UpdateWindow()
 		{
 		case SDL_QUIT:
 			if (Running())
-				m_renderer->Stop();
+			{
+				Stop();
+				return;
+			}
 			break;
 		case SDL_WINDOWEVENT:
 			switch (event.window.event)
@@ -346,7 +369,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 
 void ComponentEngine::Engine::DeInitEnteeZ()
 {
-	this->GetEntityManager().DestroyEntity(m_camera_entity);
+
 }
 
 void ComponentEngine::Engine::InitRenderer()
@@ -448,9 +471,14 @@ void ComponentEngine::Engine::DeInitRenderer()
 {
 	DeInitImGUI();
 	delete m_default_pipeline;
+	m_default_pipeline = nullptr;
 	delete m_camera_buffer;
-	delete m_renderer;
+	m_camera_buffer = nullptr;
 	delete m_texture_maps_pool;
+	m_texture_maps_pool = nullptr;
+	m_renderer->Stop();
+	delete m_renderer;
+	m_renderer = nullptr;
 }
 
 void ComponentEngine::Engine::InitComponentHooks()
@@ -592,10 +620,7 @@ void ComponentEngine::Engine::InitImGUI()
 
 void ComponentEngine::Engine::UpdateImGUI()
 {
-
 	m_ui->Render();
-
-
 	ImDrawData* imDrawData = ImGui::GetDrawData();
 
 	if (imDrawData == nullptr)return;
@@ -605,6 +630,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 	{
 		throw "Dynamic GUI buffers not handled";
 	}
+
 	ImDrawVert* temp_vertex_data = m_imgui.m_vertex_data;
 	ImDrawIdx* temp_index_data = m_imgui.m_index_data;
 	unsigned int index_count = 0;
@@ -625,17 +651,18 @@ void ComponentEngine::Engine::UpdateImGUI()
 		vertex_count += cmd_list->VtxBuffer.Size;
 		index_count += cmd_list->IdxBuffer.Size;
 	}
+
+	// Submit the payload to the GPU
+	GetRendererMutex().lock();
 	m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
 	m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
-
-
 	m_imgui.model_pool->SetVertexDrawCount(index_count);
-
-
+	GetRendererMutex().unlock();
 }
 
 void ComponentEngine::Engine::DeInitImGUI()
 {
+	ImGui::SaveIniSettingsToDisk("imgui.ini");
 	delete m_imgui.m_imgui_pipeline;
 	delete m_imgui.m_screen_res_buffer;
 	delete m_imgui.m_screen_res_pool;
