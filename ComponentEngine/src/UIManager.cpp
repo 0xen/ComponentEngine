@@ -1,4 +1,4 @@
-#include <ComponentEngine\UIManager.hpp>
+﻿#include <ComponentEngine\UIManager.hpp>
 #include <ComponentEngine\Components\Indestructable.hpp>
 #include <ComponentEngine\Components\UI.hpp>
 
@@ -72,9 +72,13 @@ void ComponentEngine::UIMaanger::RenderScene()
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
-
 		{
-			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), 320), false, ImGuiWindowFlags_HorizontalScrollbar);
+			// Add Entity
+			if (ImGui::Button("Add"))
+			{
+				em.CreateEntity("New Entity");
+			}
+			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), 320), false);
 			{
 				int i = 0;
 				for (auto entity : em.GetEntitys())
@@ -91,39 +95,45 @@ void ComponentEngine::UIMaanger::RenderScene()
 		ImGui::NextColumn();
 
 		{
-			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), 320), false, ImGuiWindowFlags_HorizontalScrollbar);
+			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), 320), false);
 			{
-
-				if (m_current_scene_focus.entity != nullptr)
 				{
-
-					// Title
+					if (m_current_scene_focus.entity != nullptr)
 					{
-						ImGui::Columns(2);
-						ImGui::Separator();
-						ImGui::PushID(1); // Button scope 1
-						bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
-						if (!hasIndestructable && ImGui::SmallButton("X"))
+						// Title
 						{
-							m_current_scene_focus.entity->Destroy();
-							m_current_scene_focus.entity = nullptr;
-							m_current_scene_focus.component = nullptr;
-						}
-						else
-						{
-							if(!hasIndestructable)ImGui::SameLine();
-							ImGui::Text("Entity");
-							ImGui::NextColumn();
-							ImGui::Text(m_current_scene_focus.entity->GetName().c_str());
-							ImGui::Columns(1);
+							ImGui::Columns(2);
 							ImGui::Separator();
+							ImGui::PushID(1); // Button scope 1
+							bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
+							if (!hasIndestructable && ImGui::SmallButton("X"))
+							{
+								m_current_scene_focus.entity->Destroy();
+								ResetSceneFocusEntity();
+								ResetSceneFocusComponent();
+							}
+							else
+							{
+								if (!hasIndestructable)ImGui::SameLine();
+								ImGui::Text("Entity");
+								ImGui::NextColumn();
+
+								EdiableText(m_current_scene_focus.entity->GetName(), m_current_scene_focus.entity_temp_name, 20, !hasIndestructable);
+
+								ImGui::Columns(1);
+								ImGui::Separator();
+							}
+							ImGui::PopID();
 						}
-						ImGui::PopID();
 					}
-					{// Body
-						RenderEntity(m_current_scene_focus.entity);
+					if (m_current_scene_focus.entity != nullptr)
+					{
+						{// Body
+							RenderEntity(m_current_scene_focus.entity);
+						}
 					}
 				}
+				
 
 				if (m_current_scene_focus.component != nullptr)
 				{
@@ -171,8 +181,9 @@ void ComponentEngine::UIMaanger::RenderEntityTreeNode(Entity * entity)
 
 	if (ElementClicked())
 	{
+		ResetSceneFocusEntity();
 		m_current_scene_focus.entity = entity;
-		m_current_scene_focus.component = nullptr;
+		ResetSceneFocusComponent();
 	}
 
 	if (node_open)
@@ -259,4 +270,59 @@ void ComponentEngine::UIMaanger::RenderAddComponent()
 bool ComponentEngine::UIMaanger::ElementClicked()
 {
 	return ImGui::IsItemHovered() && ImGui::IsMouseClicked(0);
+}
+
+bool ComponentEngine::UIMaanger::EdiableText(std::string & text, char *& temp_data, int max_size, bool editable)
+{
+	if (temp_data == nullptr || !editable)
+	{
+		ImGui::Text(text.c_str());
+		if (ElementClicked())
+		{
+			temp_data = new char[max_size + 1];
+			temp_data[max_size] = '\0';
+			for (int i = 0; i < max_size; i++)
+			{
+				if (i < text.size())
+				{
+					temp_data[i] = m_current_scene_focus.entity->GetName().at(i);
+				}
+				else
+				{
+					temp_data[i] = '\0';
+				}
+			}
+		}
+	}
+	else
+	{
+		ImGui::SetKeyboardFocusHere();
+		ImGui::CaptureKeyboardFromApp(true);
+		ImGuiInputTextFlags flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_AlwaysInsertMode;
+		bool done = ImGui::InputText("##data", temp_data, max_size, flags);
+		if (done)
+		{
+			text = std::string(temp_data);
+			delete temp_data;
+			temp_data = nullptr;
+			return true;
+		}
+	}
+	return false;
+}
+
+void ComponentEngine::UIMaanger::ResetSceneFocusEntity()
+{
+	m_current_scene_focus.entity = nullptr;
+
+	if (m_current_scene_focus.entity_temp_name != nullptr)
+	{
+		delete m_current_scene_focus.entity_temp_name;
+		m_current_scene_focus.entity_temp_name = nullptr;
+	}
+}
+
+void ComponentEngine::UIMaanger::ResetSceneFocusComponent()
+{
+	m_current_scene_focus.component = nullptr;
 }

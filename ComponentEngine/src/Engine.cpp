@@ -572,6 +572,9 @@ void ComponentEngine::Engine::InitImGUI()
 	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
+	io.KeyMap[ImGuiKey_Backspace] = SDL_SCANCODE_BACKSPACE;
+	io.KeyMap[ImGuiKey_Enter] = SDL_SCANCODE_RETURN;
+
 	// Init Screen Dim
 	m_imgui.m_screen_dim = glm::vec2(1080, 720);
 	m_imgui.m_screen_res_buffer = m_renderer->CreateUniformBuffer(&m_imgui.m_screen_dim, BufferChain::Single, sizeof(glm::vec2), 1, true);

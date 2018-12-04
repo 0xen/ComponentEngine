@@ -17,7 +17,7 @@ using namespace ComponentEngine;
 
 std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
-const unsigned int Mesh::m_buffer_size_step = 100;
+const unsigned int Mesh::m_buffer_size_step = 1000100;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity), m_path(path), m_dir(Common::GetDir(m_path))
 {

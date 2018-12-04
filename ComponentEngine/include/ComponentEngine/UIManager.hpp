@@ -8,6 +8,7 @@ namespace ComponentEngine
 	{
 		enteez::Entity* entity = nullptr;
 		BaseComponentWrapper* component = nullptr;
+		char* entity_temp_name = nullptr;
 	};
 
 	class UIMaanger
@@ -28,6 +29,10 @@ namespace ComponentEngine
 		void RenderAddComponent();
 
 		bool ElementClicked();
+		bool EdiableText(std::string& text,char*& temp_data, int max_size, bool editable = true);
+
+		void ResetSceneFocusEntity();
+		void ResetSceneFocusComponent();
 
 		Engine* m_engine;
 		CurrentSceneFocus m_current_scene_focus;
