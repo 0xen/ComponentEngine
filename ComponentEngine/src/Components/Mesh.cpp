@@ -131,7 +131,6 @@ void ComponentEngine::Mesh::LoadModel()
 		IGraphicsPipeline* last_created_pipeline = Engine::Singlton()->GetDefaultGraphicsPipeline();
 
 		std::vector<IDescriptorSet*> materials_descriptor_set;
-
 		for (auto& m : materials)
 		{
 			if (m_materials.find(m.name) == m_materials.end())

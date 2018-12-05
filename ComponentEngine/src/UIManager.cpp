@@ -15,7 +15,7 @@ ComponentEngine::UIMaanger::UIMaanger(Engine* engine) : m_engine(engine)
 void ComponentEngine::UIMaanger::Render()
 {
 	ImGui::NewFrame();
-	//ImGui::ShowTestWindow();
+	ImGui::ShowTestWindow();
 
 
 	RenderMainMenu();
@@ -65,20 +65,21 @@ void ComponentEngine::UIMaanger::RenderFPSCounter()
 
 void ComponentEngine::UIMaanger::RenderScene()
 {
-	if (ImGui::Begin("Scene Manager", &m_open[SCENE], ImGuiWindowFlags_NoCollapse))
+	static int window_height = 370;
+	ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	if (ImGui::Begin("Scene Manager", &m_open[SCENE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
 	{
 		EntityManager& em = m_engine->GetEntityManager();
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
-		ImGui::Separator();
 		{
 			// Add Entity
 			if (ImGui::Button("Add"))
 			{
 				em.CreateEntity("New Entity");
 			}
-			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), 320), false);
+			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), window_height - 50), false);
 			{
 				int i = 0;
 				for (auto entity : em.GetEntitys())
@@ -95,7 +96,7 @@ void ComponentEngine::UIMaanger::RenderScene()
 		ImGui::NextColumn();
 
 		{
-			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), 320), false);
+			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), window_height - 50), false);
 			{
 				{
 					if (m_current_scene_focus.entity != nullptr)
@@ -167,7 +168,6 @@ void ComponentEngine::UIMaanger::RenderScene()
 			}
 		}
 		ImGui::Columns(1);
-		ImGui::Separator();
 		ImGui::PopStyleVar();
 
 	}

@@ -33,36 +33,10 @@ void LogicThreadInit()
 {
 	engine->GetRendererMutex().lock();
 	// Load the scene
-	//engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
-
-
-	EntityManager& em = engine->GetEntityManager();
-	for (int x = -5; x < 5; x++)
-	{
-		for (int y = -5; y < 5; y++)
-		{
-			enteez::Entity* ent = em.CreateEntity("Cube");
-			{
-				enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>();
-				trans_wrapper->SetName("Transformation");
-				trans_wrapper->Get().Translate(glm::vec3(x, y, 0.0f));
-			}
-			{
-				enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
-				mesh->SetName("Mesh");
-			}
-			{
-				enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
-				renderer->SetName("Renderer");
-			}
-
-		}
-	}
-
-
+	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 
 	camera = engine->GetCameraTransformation();
-	camera->Translate(glm::vec3(0.0f, 0.0f, 16.0f));
+	camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
 	engine->GetRendererMutex().unlock();
 }
 

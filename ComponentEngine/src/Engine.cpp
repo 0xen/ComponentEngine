@@ -130,13 +130,16 @@ void ComponentEngine::Engine::RenderFrame()
 
 float ComponentEngine::Engine::Sync(int ups)
 {
-	float last_call = GetThreadTime();
+	float stop_time = GetThreadTime();
 
 
 	int pause_time = (int)(1000 / ups);
+	//pause_time -= stop_time * 1000;
 	std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
 
-	return last_call;
+	float start_time = GetThreadTime();
+
+	return start_time + stop_time;
 }
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
