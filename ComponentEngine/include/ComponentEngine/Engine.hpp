@@ -31,9 +31,10 @@ namespace ComponentEngine
 	class UIMaanger;
 	class Engine : public EnteeZ
 	{
-		struct ComponentFunctionPointers
+		struct ComponentTemplate
 		{
-			void(*initilizer)(enteez::Entity& entity, pugi::xml_node& component_data) = nullptr;
+			void(*default_initilizer)(enteez::Entity& entity) = nullptr;
+			void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data) = nullptr;
 		};
 	public:
 		static Engine* Singlton();
@@ -65,10 +66,10 @@ namespace ComponentEngine
 
 		//ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
-		// Name needs to match how the component name will be written in the xml scene file
 
-		void RegisterComponentInitilizer(const char* name, ComponentFunctionPointers cfp);
+		void RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
 
+		friend class UIMaanger;
 	private:
 		Engine();
 		Uint32 GetWindowFlags(RenderingAPI api);
@@ -152,7 +153,8 @@ namespace ComponentEngine
 
 		std::map<std::thread::id, Uint64> m_thread_time_delta;
 
-		std::map<std::string, ComponentFunctionPointers> m_component_initilizers;
+		std::map<std::string, ComponentTemplate> m_component_register;
+
 		std::map<std::string, void(*)(enteez::Entity& entity)> m_component_gui;
 		std::map<std::string, ITextureBuffer*> m_texture_storage;
 

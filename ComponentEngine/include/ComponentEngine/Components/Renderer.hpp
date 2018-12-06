@@ -14,12 +14,13 @@ namespace pugi
 
 namespace ComponentEngine
 {
-	struct RendererComponent : /*public MsgSend,*/ public UI
+	struct RendererComponent : public UI
 	{
 		RendererComponent(enteez::Entity* entity);
 		~RendererComponent();
 		virtual void Display();
-		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
+		static void EntityHookDefault(enteez::Entity& entity);
+		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 	private:
 		enteez::Entity * m_entity;
 		bool m_render = false;

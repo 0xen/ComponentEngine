@@ -9,6 +9,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include <ComponentEngine\Components\MsgRecive.hpp>
+#include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\UI.hpp>
 
@@ -25,27 +26,32 @@ namespace ComponentEngine
 	class Transformation : public UI, public MsgRecive<TransformationPtrRedirect>
 	{
 	public:
-		Transformation()
+		Transformation(enteez::Entity* entity)
 		{
+			//MsgRecive<OnComponentEnter<Transformation>>
+			m_entity = entity;
 			m_mat4 = new glm::mat4(1.0f);
 			m_origional = true;
 			m_position = glm::vec3();
 			m_rotation = glm::vec3();
 			m_scale = glm::vec3();
+			Send(m_entity, OnComponentEnter<Transformation>(this));
 		}
-		Transformation(glm::mat4* mat4)
+		Transformation(enteez::Entity* entity, glm::mat4* mat4)
 		{
+			m_entity = entity;
 			m_mat4 = mat4;
 			m_origional = false;
 			m_position = glm::vec3();
 			m_rotation = glm::vec3();
 			m_scale = glm::vec3();
+			//Send(m_entity, OnComponentEnter<Transformation>());
 		}
 		~Transformation()
 		{
 			if (m_origional)delete m_mat4;
 		}
-		virtual void ReciveMessage(enteez::Entity* sender, const TransformationPtrRedirect& message);
+		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
 		void Translate(glm::vec3 translation);
 		void Scale(glm::vec3 scale);
@@ -58,10 +64,12 @@ namespace ComponentEngine
 		Transformation* GetParent();
 
 
-		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
+		static void EntityHookDefault(enteez::Entity& entity);
+		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
-
+		friend class Mesh;
 	private:
+		enteez::Entity* m_entity;
 		glm::mat4* m_mat4;
 		glm::vec3 m_position;
 		glm::vec3 m_rotation;

@@ -18,6 +18,8 @@ set(common_headers
     include/ComponentEngine/ThreadHandler.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/UIManager.hpp
+    include/ComponentEngine/Type.hpp
+    include/ComponentEngine/TemplateType.hpp
 )
 
 set(common_source

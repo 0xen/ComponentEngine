@@ -80,8 +80,9 @@ namespace ComponentEngine
 
 	};
 
+	class Transformation;
 
-	class Mesh : /*public MsgSend,*/ public MsgRecive<RenderStatus>, public UI , public Logic
+	class Mesh : /*public MsgSend,*/ public MsgRecive<RenderStatus>, public UI , public Logic, public MsgRecive<OnComponentEnter<Transformation>>
 	{
 	public:
 		Mesh(enteez::Entity* entity, std::string path);
@@ -89,7 +90,8 @@ namespace ComponentEngine
 		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 		std::string GetPath();
 		bool Loaded();
-		virtual void ReciveMessage(enteez::Entity* sender, const RenderStatus& message);
+		virtual void ReciveMessage(enteez::Entity* sender, RenderStatus& message);
+		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<Transformation>& message);
 		virtual void Update();
 		virtual void Display();
 		static void UpdateBuffers();
@@ -102,6 +104,8 @@ namespace ComponentEngine
 		Renderer::IModel** m_sub_meshes;
 		unsigned int m_sub_mesh_count;
 		unsigned int m_vertex_count;
+		// Index for the current mesh in the position array
+		unsigned int m_mesh_index;
 		bool m_loaded;
 		static std::map<std::string, MeshInstance> m_mesh_instance;
 		static std::map<std::string, MaterialStorage> m_materials;

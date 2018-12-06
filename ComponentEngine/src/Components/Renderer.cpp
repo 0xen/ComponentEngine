@@ -19,10 +19,15 @@ ComponentEngine::RendererComponent::~RendererComponent()
 	Send(m_entity, RenderStatus(false));
 }
 
-void ComponentEngine::RendererComponent::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
+void ComponentEngine::RendererComponent::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<RendererComponent>* renderer = entity.AddComponent<RendererComponent>(&entity);
 	renderer->SetName("Renderer");
+}
+
+void ComponentEngine::RendererComponent::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
+{
+	EntityHookDefault(entity);
 }
 
 void ComponentEngine::RendererComponent::Display()

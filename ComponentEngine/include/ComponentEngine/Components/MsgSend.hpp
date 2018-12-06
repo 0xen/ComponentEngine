@@ -8,7 +8,7 @@ namespace ComponentEngine
 	template<typename T>
 	void Send(enteez::Entity* current_entity, T data)
 	{
-		current_entity->ForEach<MsgRecive<T>>([data](enteez::Entity* entity, MsgRecive<T>& recive)
+		current_entity->ForEach<MsgRecive<T>>([&data](enteez::Entity* entity, MsgRecive<T>& recive)
 		{
 			recive.ReciveMessage(entity, data);
 		});

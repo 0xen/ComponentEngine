@@ -43,7 +43,7 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 	*m_mat4 = glm::rotate(*m_mat4, angle, axis);
 }
 
-void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, const TransformationPtrRedirect & message)
+void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, TransformationPtrRedirect & message)
 {
 	MemoryPointTo(message.mat_ptr, true);
 }
@@ -87,9 +87,15 @@ Transformation* ComponentEngine::Transformation::GetParent()
 	return m_parent;
 }
 
-void ComponentEngine::Transformation::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
+void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity & entity)
 {
-	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>();
+	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>(&entity);
+	trans_wrapper->SetName("Transformation");
+}
+
+void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
+{
+	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>(&entity);
 	trans_wrapper->SetName("Transformation");
 	Transformation& trans = trans_wrapper->Get();
 	pugi::xml_node position_node = component_data.child("Position");

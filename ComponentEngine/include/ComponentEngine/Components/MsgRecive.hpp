@@ -8,7 +8,7 @@ namespace ComponentEngine
 	class MsgRecive
 	{
 	public:
-		virtual void ReciveMessage(enteez::Entity* sender, const T& message) = 0;
+		virtual void ReciveMessage(enteez::Entity* sender, T& message) = 0;
 	private:
 
 	};

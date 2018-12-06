@@ -10,12 +10,14 @@ const unsigned int ComponentEngine::UIMaanger::ADD_COMPONENT = 1;
 ComponentEngine::UIMaanger::UIMaanger(Engine* engine) : m_engine(engine)
 {
 	m_indestructable_component_id = engine->GetEntityManager().GetBaseIndex<Indestructable>();
+	m_open[SCENE] = true;
+	m_open[ADD_COMPONENT] = false;
 }
 
 void ComponentEngine::UIMaanger::Render()
 {
 	ImGui::NewFrame();
-	ImGui::ShowTestWindow();
+	//ImGui::ShowTestWindow();
 
 
 	RenderMainMenu();
@@ -72,14 +74,16 @@ void ComponentEngine::UIMaanger::RenderScene()
 		EntityManager& em = m_engine->GetEntityManager();
 		
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-		ImGui::Columns(2);
+		static bool v_borders = false;
+		ImGui::Columns(2, NULL, v_borders);
 		{
 			// Add Entity
 			if (ImGui::Button("Add"))
 			{
-				em.CreateEntity("New Entity");
+				enteez::Entity* entity = em.CreateEntity("New Entity");
+				Transformation::EntityHookDefault(*entity);
 			}
-			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), window_height - 50), false);
+			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() / 2) , window_height - 50), false);
 			{
 				int i = 0;
 				for (auto entity : em.GetEntitys())
@@ -96,14 +100,14 @@ void ComponentEngine::UIMaanger::RenderScene()
 		ImGui::NextColumn();
 
 		{
-			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() * 0.48f), window_height - 50), false);
+			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() / 2), window_height - 50), false);
 			{
 				{
 					if (m_current_scene_focus.entity != nullptr)
 					{
 						// Title
 						{
-							ImGui::Columns(2);
+							ImGui::Columns(2, NULL, v_borders);
 							ImGui::Separator();
 							ImGui::PushID(1); // Button scope 1
 							bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
@@ -135,7 +139,6 @@ void ComponentEngine::UIMaanger::RenderScene()
 					}
 				}
 				
-
 				if (m_current_scene_focus.component != nullptr)
 				{
 					// Title
@@ -143,7 +146,7 @@ void ComponentEngine::UIMaanger::RenderScene()
 						ImGui::Columns(2);
 						ImGui::Separator();
 						ImGui::PushID(2); // Button scope 2
-						bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
+						bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>() || m_current_scene_focus.component->GetName() == "Transformation";
 						if (!hasIndestructable && ImGui::SmallButton("X"))
 						{
 							m_current_scene_focus.entity->RemoveComponent(m_current_scene_focus.component->GetComponentPtr());
@@ -169,6 +172,7 @@ void ComponentEngine::UIMaanger::RenderScene()
 		}
 		ImGui::Columns(1);
 		ImGui::PopStyleVar();
+
 
 	}
 	ImGui::End();
@@ -199,8 +203,7 @@ void ComponentEngine::UIMaanger::RenderEntityTreeNode(Entity * entity)
 void ComponentEngine::UIMaanger::RenderEntity(Entity * entity)
 {
 	ImGui::Text("Component Count:%i", 0);
-	bool clicked = ImGui::Button("Add Component");
-	if (clicked)
+	if (ImGui::Button("Add Component"))
 	{
 		m_open[ADD_COMPONENT] = true;
 	}
@@ -242,23 +245,37 @@ void ComponentEngine::UIMaanger::RenderAddComponent()
 		}
 		else // Entity selected
 		{
-			const char* items[] = { "AAAA", "BBBB", "CCCC", "DDDD", "EEEE", "FFFF", "GGGG", "HHHH", "IIII", "JJJJ", "KKKK", "LLLLLLL", "MMMM", "OOOOOOO" };
-			static const char* item_current = items[0];
-			if (ImGui::BeginCombo("Component", item_current))
+			static std::string item_current = "Renderer";
+			if (ImGui::BeginCombo("Component", item_current.c_str()))
 			{
-				for (int n = 0; n < 4; n++)
+				for (auto it : m_engine->m_component_register)
 				{
-					bool is_selected = (item_current == items[n]);
-					if (ImGui::Selectable(items[n], is_selected))
-						item_current = items[n];
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();   
+					if (it.second.default_initilizer!=nullptr)
+					{
+						bool is_selected = (item_current == it.first);
+						if (ImGui::Selectable(it.first.c_str(), is_selected))
+						{
+							item_current = it.first;
+						}
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
 				}
 				ImGui::EndCombo();
 			}
 			bool selected = ImGui::Button("Add");
 			if (selected)
 			{
+				auto it = m_engine->m_component_register.find(item_current);
+				if (it != m_engine->m_component_register.end())
+				{
+					if (it->second.default_initilizer != nullptr)
+					{
+						// In-case we replace the current component with a new one, we want to forget the old one now
+						m_current_scene_focus.component = nullptr;
+						it->second.default_initilizer(*m_current_scene_focus.entity);
+					}
+				}
 				m_open[ADD_COMPONENT] = false;
 			}
 

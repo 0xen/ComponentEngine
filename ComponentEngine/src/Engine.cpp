@@ -48,8 +48,8 @@ void ComponentEngine::Engine::Start()
 	m_height = 720;
 	m_api = RenderingAPI::VulkanAPI;
 	InitWindow();
-	InitRenderer();
 	InitEnteeZ();
+	InitRenderer();
 	InitComponentHooks();
 }
 
@@ -64,8 +64,8 @@ void ComponentEngine::Engine::Stop()
 	GetRendererMutex().lock();
 	GetEntityManager().Clear();
 	DeInitEnteeZ();
-	DeInitWindow();
 	DeInitRenderer();
+	DeInitWindow();
 	GetRendererMutex().unlock();
 }
 
@@ -255,10 +255,12 @@ ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 	return m_renderer_thread;
 }
 
-void ComponentEngine::Engine::RegisterComponentInitilizer(const char * name, ComponentFunctionPointers cfp)
+void ComponentEngine::Engine::RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity &entity), void(*xml_initilizer)(enteez::Entity &entity, pugi::xml_node &component_data))
 {
-	m_component_initilizers[name] = cfp;
+	m_component_register[name].default_initilizer = default_initilizer;
+	m_component_register[name].xml_initilizer = xml_initilizer;
 }
+
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
 {
@@ -279,6 +281,7 @@ void ComponentEngine::Engine::InitWindow()
 		m_width, m_height,
 		GetWindowFlags(m_api) | SDL_WINDOW_RESIZABLE
 	);
+	//SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	SDL_ShowWindow(m_window);
 
 	SDL_SysWMinfo info;
@@ -354,6 +357,14 @@ void ComponentEngine::Engine::UpdateWindow()
 				io.AddInputCharactersUTF8(event.text.text);
 				break;
 			}
+			case SDL_MOUSEWHEEL:
+			{
+				if (event.wheel.x > 0) io.MouseWheelH += 1;
+				if (event.wheel.x < 0) io.MouseWheelH -= 1;
+				if (event.wheel.y > 0) io.MouseWheel += 1;
+				if (event.wheel.y < 0) io.MouseWheel -= 1;
+				break;
+			}
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
@@ -374,15 +385,17 @@ void ComponentEngine::Engine::UpdateWindow()
 
 void ComponentEngine::Engine::DeInitWindow()
 {
+	SDL_DestroyWindow(m_window);
+	//SDL_ShowWindow
 	delete m_window_handle;
 }
 
 void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
-	RegisterBase<RendererComponent, /*MsgSend,*/ UI>();
-	RegisterBase<Mesh, /*MsgSend,*/ Logic, MsgRecive<RenderStatus>, UI>();
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
+	RegisterBase<RendererComponent, UI>();
+	RegisterBase<Mesh, Logic, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -410,7 +423,7 @@ void ComponentEngine::Engine::InitRenderer()
 	//m_camera_entity->AddComponent(&m_camera_component);
 	ComponentWrapper<Indestructable>* indestructable_transformation = m_camera_entity->AddComponent<Indestructable>();
 	indestructable_transformation->SetName("Indestructable");
-	ComponentWrapper<Transformation>* camera_transformation = m_camera_entity->AddComponent<Transformation>();
+	ComponentWrapper<Transformation>* camera_transformation = m_camera_entity->AddComponent<Transformation>(m_camera_entity);
 	camera_transformation->SetName("Transformation");
 	camera_transformation->Get().Translate(glm::vec3(0.0f, 0.0f, 0.0f));
 	ComponentWrapper<Camera>* camera_component = m_camera_entity->AddComponent(&m_camera_component);
@@ -513,18 +526,13 @@ void ComponentEngine::Engine::DeInitRenderer()
 
 void ComponentEngine::Engine::InitComponentHooks()
 {
-	RegisterComponentInitilizer("Transformation", {
-		Transformation::EntityHook
-		});
-	RegisterComponentInitilizer("Indestructable", {
-		Indestructable::EntityHook
-		});
-	RegisterComponentInitilizer("Mesh", {
-		Mesh::EntityHook
-		});
-	RegisterComponentInitilizer("Renderer", {
-		RendererComponent::EntityHook
-		});
+	
+	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
+	RegisterComponentBase("Mesh",nullptr, Mesh::EntityHook);
+	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
+	
+
+	RegisterComponentBase("Indestructable", nullptr, Indestructable::EntityHook);
 }
 
 void ComponentEngine::Engine::UpdateCameraProjection()
@@ -553,10 +561,10 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity)
 void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component, enteez::Entity * entity)
 {
 	std::string name = xml_component.attribute("name").as_string();
-	auto& it = m_component_initilizers.find(name);
-	if (it != m_component_initilizers.end())
+	auto& it = m_component_register.find(name);
+	if (it != m_component_register.end())
 	{
-		m_component_initilizers[name].initilizer(*entity, xml_component);
+		m_component_register[name].xml_initilizer(*entity, xml_component);
 	}
 	else
 	{

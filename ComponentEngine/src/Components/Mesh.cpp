@@ -65,12 +65,17 @@ bool ComponentEngine::Mesh::Loaded()
 	return m_loaded;
 }
 
-void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, const RenderStatus& message)
+void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, RenderStatus& message)
 {
 	for (int i = 0; i < m_sub_mesh_count; i++)
 	{
 		m_sub_meshes[i]->ShouldRender(message.should_renderer);
 	}
+}
+
+void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEnter<Transformation>& message)
+{
+	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_path].model_position_array[m_mesh_index]);
 }
 
 void ComponentEngine::Mesh::Update()
@@ -295,7 +300,9 @@ void ComponentEngine::Mesh::LoadModel()
 		}
 	}
 	
-	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_instance[m_path].used_instances]));
+	m_mesh_index = m_mesh_instance[m_path].used_instances;
+
+	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_index]));
 
 	m_mesh_instance[m_path].used_instances++;
 
