@@ -15,7 +15,8 @@ using namespace enteez;
 using namespace Renderer;
 
 const unsigned int Engine::IS_RUNNING_LOCK = 0;
-const unsigned int Engine::THREAD_TIME_LOCK = 1;
+const unsigned int Engine::THREAD_DATA_LOCK = 1;
+
 Engine* Engine::m_engine = nullptr;
 
 ComponentEngine::Engine::Engine()
@@ -50,11 +51,14 @@ void ComponentEngine::Engine::Start()
 	InitEnteeZ();
 	InitRenderer();
 	InitComponentHooks();
+	InitThread("Renderer", std::this_thread::get_id());
 }
 
-void ComponentEngine::Engine::AddThread(void(*function)())
+void ComponentEngine::Engine::AddThread(void(*function)(), const char* name)
 {
 	m_threads.push_back(new ThreadHandler(function));
+
+	InitThread(name, m_threads[m_threads.size() - 1]->get_id());
 }
 
 void ComponentEngine::Engine::Stop()
@@ -81,6 +85,7 @@ bool ComponentEngine::Engine::Running()
 	GetRendererMutex().lock();
 	bool result = m_renderer != nullptr && m_renderer->IsRunning();
 	GetRendererMutex().unlock();
+	NewThreadUpdatePass();
 	return result;
 }
 
@@ -93,14 +98,16 @@ void ComponentEngine::Engine::Update()
 
 void ComponentEngine::Engine::UpdateScene()
 {
+	Mesh::SetBufferData();
 	GetRendererMutex().lock();
-	Mesh::UpdateBuffers();
+	Mesh::TransferToPrimaryBuffers();
 	GetRendererMutex().unlock();
-
 }
 
 void ComponentEngine::Engine::UpdateUI()
 {
+	ImGuiIO& io = ImGui::GetIO();
+	io.DeltaTime = GetLastThreadTime();
 	UpdateImGUI();
 }
 
@@ -113,14 +120,14 @@ void ComponentEngine::Engine::Rebuild()
 
 void ComponentEngine::Engine::RenderFrame()
 {
-	GetRendererMutex().lock();
 	//Update camera
 	m_camera_component.view = glm::inverse(m_camera_component.view);
 	m_camera_component.view = m_camera_entity->GetComponent<Transformation>().Get();
 	m_camera_component.view = glm::inverse(m_camera_component.view);
+
+	GetRendererMutex().lock();
+	// Set data
 	m_camera_buffer->SetData(BufferSlot::Primary);
-
-
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
 	GetRendererMutex().unlock();
@@ -129,16 +136,22 @@ void ComponentEngine::Engine::RenderFrame()
 
 float ComponentEngine::Engine::Sync(int ups)
 {
-	float stop_time = GetThreadTime();
 
+	std::thread::id id = std::this_thread::get_id();
+	ThreadData& data = m_thread_data[id];
+
+	float stop_time = GetThreadDeltaTime();
+	data.delta_process_time += stop_time;
+	data.delta_loop_time += stop_time;
 
 	int pause_time = (int)(1000 / ups);
-	//pause_time -= stop_time * 1000;
+	pause_time -= (int)(data.process_time * 1000.0f);
 	std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
 
-	float start_time = GetThreadTime();
+	float start_time = GetThreadDeltaTime();
+	data.delta_loop_time += start_time;
 
-	return start_time + stop_time;
+	return data.loop_time;
 }
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
@@ -199,32 +212,23 @@ IDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
 	return m_texture_maps_pool;
 }
 
-float ComponentEngine::Engine::GetFrameTime()
-{
-	return m_frame_time;
-}
-
-float ComponentEngine::Engine::GetThreadTime()
+float ComponentEngine::Engine::GetThreadDeltaTime()
 {
 	std::thread::id id = std::this_thread::get_id();
 	Uint64 now = SDL_GetPerformanceCounter();
-	Uint64 last;
-	{
-		std::lock_guard<std::mutex> guard(m_locks[THREAD_TIME_LOCK]);
-		if (m_thread_time_delta.find(id) == m_thread_time_delta.end())
-		{
-			m_thread_time_delta[id] = now;
-		}
-	}
-	last = m_thread_time_delta[id];
-	m_thread_time_delta[id] = now;
+	std::lock_guard<std::mutex> guard(m_locks[THREAD_DATA_LOCK]);
+	ThreadData& data = m_thread_data[id];
+	Uint64 last = data.delta_time;
+	data.delta_time = now;
 	float temp = static_cast<float>((now - last) / (float)SDL_GetPerformanceFrequency());
 	return temp;
 }
 
-float ComponentEngine::Engine::GetFPS()
+float ComponentEngine::Engine::GetLastThreadTime()
 {
-	return m_fps;
+	std::thread::id id = std::this_thread::get_id();
+	std::lock_guard<std::mutex> guard(m_locks[THREAD_DATA_LOCK]);
+	return m_thread_data[id].loop_time;
 }
 
 ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
@@ -294,20 +298,6 @@ void ComponentEngine::Engine::InitWindow()
 
 void ComponentEngine::Engine::UpdateWindow()
 {
-	m_frame_time = GetThreadTime();
-
-	m_fps_update -= m_frame_time;
-	
-	m_delta_fps++;
-	if (m_fps_update <= 0)
-	{
-		m_fps_update = 1.0f;
-		m_fps = m_delta_fps;
-		m_delta_fps = 0;
-		std::stringstream ss;
-		ss << m_title << " FPS:" << m_fps;
-		SDL_SetWindowTitle(m_window, ss.str().c_str());
-	}
 
 	ImGuiIO& io = ImGui::GetIO();
 	SDL_Event event;
@@ -574,7 +564,7 @@ void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component,
 void ComponentEngine::Engine::InitImGUI()
 {
 
-	m_ui = new UIMaanger(this);
+	m_ui = new UIManager(this);
 
 	// Init ImGUI
 	ImGui::CreateContext();
@@ -670,7 +660,6 @@ void ComponentEngine::Engine::UpdateImGUI()
 	{
 		throw "Dynamic GUI buffers not handled";
 	}
-
 	ImDrawVert* temp_vertex_data = m_imgui.m_vertex_data;
 	ImDrawIdx* temp_index_data = m_imgui.m_index_data;
 	unsigned int index_count = 0;
@@ -693,15 +682,13 @@ void ComponentEngine::Engine::UpdateImGUI()
 	}
 
 	// Submit the payload to the GPU
+
+	m_imgui.model_pool->SetVertexDrawCount(index_count);
+
+
 	GetRendererMutex().lock();
-	if (!Running())
-	{
-		GetRendererMutex().unlock();
-		return;
-	}
 	m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
 	m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
-	m_imgui.model_pool->SetVertexDrawCount(index_count);
 	GetRendererMutex().unlock();
 }
 
@@ -724,4 +711,48 @@ void ComponentEngine::Engine::DeInitImGUI()
 	delete m_ui;
 
 
+}
+
+void ComponentEngine::Engine::InitThread(const char * name, std::thread::id id)
+{
+	std::lock_guard<std::mutex> guard(m_locks[THREAD_DATA_LOCK]);
+	ThreadData& data = m_thread_data[id];
+	data.name = name;
+	data.delta_time = SDL_GetPerformanceCounter();
+
+
+
+}
+
+
+void ComponentEngine::Engine::NewThreadUpdatePass()
+{
+	std::thread::id id = std::this_thread::get_id();
+	ThreadData& data = m_thread_data[id];
+	float thread_last = GetThreadDeltaTime(); // Get the time from the last call to Sync or NewThreadUpdatePass
+	data.process_time = thread_last + data.delta_process_time; // Set the final time for data.process_time for this loop
+	data.loop_time = thread_last + data.delta_loop_time; // Set the final time for data.delta_loop_time for this loop
+
+
+
+	data.process_time_average_storage.push_back(data.process_time);
+	data.loop_time_average_storage.push_back(data.loop_time);
+
+	if (data.process_time_average_storage.size() >= 10)
+	{
+		data.process_time_average = 0.0f;
+		data.loop_time_average = 0.0f;
+		for (int i = 0; i < data.process_time_average_storage.size(); i++)
+		{
+			data.process_time_average += data.process_time_average_storage[i];
+			data.loop_time_average += data.loop_time_average_storage[i];
+		}
+		data.process_time_average /= data.process_time_average_storage.size();
+		data.loop_time_average /= data.loop_time_average_storage.size();
+		data.process_time_average_storage.clear();
+		data.loop_time_average_storage.clear();
+	}
+	// Reset the process time delta and delta loop time for this loop
+	data.delta_process_time = 0.0f;
+	data.delta_loop_time = 0.0f; 
 }

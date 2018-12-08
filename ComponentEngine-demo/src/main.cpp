@@ -11,7 +11,7 @@ Engine* engine;
 // Updates per second
 const int kUPS = 30;
 // UI updates per second
-const int kUIUPS = 30;
+const int kUIUPS = 15;
 
 // Camera
 Transformation* camera;
@@ -36,28 +36,34 @@ void LogicThreadInit()
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 
-
-	/*EntityManager& em = engine->GetEntityManager();
-	for (int x = -5; x < 5; x++)
+	
+	EntityManager& em = engine->GetEntityManager();
+	/*for (int x = -5; x < 5; x++)
 	{
 		for (int y = -5; y < 5; y++)
 		{
-			enteez::Entity* ent = em.CreateEntity("Cube");
+
+			for (int z = 0; z < 2; z++)
 			{
-				enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>(ent);
-				trans_wrapper->SetName("Transformation");
-				trans_wrapper->Get().Translate(glm::vec3(x, y, 0.0f));
-			}
-			{
-				enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
-				mesh->SetName("Mesh");
-			}
-			{
-				enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
-				renderer->SetName("Renderer");
+				enteez::Entity* ent = em.CreateEntity("Cube");
+				{
+					enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>(ent);
+					trans_wrapper->SetName("Transformation");
+					trans_wrapper->Get().Translate(glm::vec3(x, y, 0.0f - 10.0f));
+					trans_wrapper->Get().Scale(glm::vec3(0.8f, 0.8f, 0.8f));
+				}
+				{
+					enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
+					mesh->SetName("Mesh");
+				}
+				{
+					enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
+					renderer->SetName("Renderer");
+				}
 			}
 		}
 	}*/
+
 
 	camera = engine->GetCameraTransformation();
 	camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
@@ -75,9 +81,7 @@ void LogicThreadLoop()
 			transformation.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f * thread_time);
 		}
 	}, true);
-	//engine->Sync(kUPS);
 	engine->UpdateScene();
-
 }
 
 void LogicThread()
@@ -96,8 +100,8 @@ int main(int argc, char **argv)
 
 	engine = Engine::Singlton();
 	engine->Start();
-	engine->AddThread(LogicThread);
-	engine->AddThread(UIThread);
+	engine->AddThread(LogicThread,"Logic");
+	engine->AddThread(UIThread,"UI");
 	EntityManager& em = engine->GetEntityManager();
 
 	// Rendering

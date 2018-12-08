@@ -29,7 +29,7 @@ using namespace Renderer;
 
 namespace ComponentEngine
 {
-	class UIMaanger;
+	class UIManager;
 	class Engine : public EnteeZ
 	{
 		struct ComponentTemplate
@@ -41,7 +41,7 @@ namespace ComponentEngine
 		static Engine* Singlton();
 		~Engine();
 		void Start();
-		void AddThread(void(*function)());
+		void AddThread(void(*function)(), const char* name = (const char*)0);
 		void Stop();
 		void Join();
 		bool Running();
@@ -60,9 +60,8 @@ namespace ComponentEngine
 		IDescriptorPool* GetCameraPool();
 		IDescriptorSet* GetCameraDescriptorSet();
 		IDescriptorPool* GetTextureMapsPool();
-		float GetFrameTime();
-		float GetThreadTime();
-		float GetFPS();
+		float GetThreadDeltaTime();
+		float GetLastThreadTime();
 		ITextureBuffer* GetTexture(std::string path);
 
 		//ordered_lock& GetLogicMutex();
@@ -70,7 +69,7 @@ namespace ComponentEngine
 
 		void RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
 
-		friend class UIMaanger;
+		friend class UIManager;
 	private:
 		Engine();
 		Uint32 GetWindowFlags(RenderingAPI api);
@@ -92,6 +91,10 @@ namespace ComponentEngine
 		void UpdateImGUI();
 		void DeInitImGUI();
 
+		void InitThread(const char* name, std::thread::id id);
+
+		void NewThreadUpdatePass();
+
 		// Singlton instance of engine
 		static Engine* m_engine;
 
@@ -103,7 +106,7 @@ namespace ComponentEngine
 		int m_width;
 		int m_height;
 
-		UIMaanger* m_ui;
+		UIManager* m_ui;
 
 		// Rendering Data
 		IRenderer* m_renderer = nullptr;
@@ -116,14 +119,6 @@ namespace ComponentEngine
 		IDescriptorPool* m_camera_pool;
 		IDescriptorSet* m_camera_descriptor_set;
 		IDescriptorPool* m_texture_maps_pool;
-
-		// FPS
-		Uint64 m_delta_time = 0;
-		Uint64 m_now_delta_time = 0;
-		float m_frame_time = 0;
-		float m_fps_update = 0.0f;
-		unsigned int m_delta_fps = 0;
-		float m_fps = 0;
 
 		// ImGUI
 		struct
@@ -152,7 +147,26 @@ namespace ComponentEngine
 		std::vector<ThreadHandler*> m_threads;
 		ordered_lock m_renderer_thread;
 
-		std::map<std::thread::id, Uint64> m_thread_time_delta;
+
+
+		struct ThreadData
+		{
+			Uint64 delta_time;
+
+			std::vector<float> process_time_average_storage;
+			float delta_process_time;
+			float process_time;
+			float process_time_average;
+
+			std::vector<float> loop_time_average_storage;
+			float delta_loop_time;
+			float loop_time;
+			float loop_time_average;
+
+			const char* name;
+		};
+
+		std::map<std::thread::id, ThreadData> m_thread_data;
 
 		std::map<std::string, ComponentTemplate> m_component_register;
 
@@ -161,7 +175,7 @@ namespace ComponentEngine
 
 
 		static const unsigned int IS_RUNNING_LOCK;
-		static const unsigned int THREAD_TIME_LOCK;
+		static const unsigned int THREAD_DATA_LOCK;
 
 		// Store the various locks that will be needed
 		std::mutex m_locks[2];

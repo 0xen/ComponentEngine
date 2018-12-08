@@ -3,22 +3,23 @@
 
 #include <imgui.h>
 
-const unsigned int ComponentEngine::UIMaanger::SCENE = 0;
-const unsigned int ComponentEngine::UIMaanger::ADD_COMPONENT = 1;
+const unsigned int ComponentEngine::UIManager::SCENE = 0;
+const unsigned int ComponentEngine::UIManager::ADD_COMPONENT = 1;
 
-ComponentEngine::UIMaanger::UIMaanger(Engine* engine) : m_engine(engine)
+ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 {
 	m_indestructable_component_id = engine->GetEntityManager().GetBaseIndex<Indestructable>();
 	m_open[SCENE] = true;
 	m_open[ADD_COMPONENT] = false;
+	m_thread_time_update_delay = 0.0f;
 }
 
-void ComponentEngine::UIMaanger::Render()
+void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
 	//ImGui::ShowTestWindow();
 
-
+	
 	RenderMainMenu();
 	RenderFPSCounter();
 	if (m_open[SCENE]) RenderScene();
@@ -28,7 +29,7 @@ void ComponentEngine::UIMaanger::Render()
 	ImGui::Render();
 }
 
-void ComponentEngine::UIMaanger::RenderMainMenu()
+void ComponentEngine::UIManager::RenderMainMenu()
 {
 	if (ImGui::BeginMainMenuBar())
 	{
@@ -51,20 +52,60 @@ void ComponentEngine::UIMaanger::RenderMainMenu()
 	}
 }
 
-void ComponentEngine::UIMaanger::RenderFPSCounter()
+void ComponentEngine::UIManager::RenderFPSCounter()
 {
 	ImVec2 window_pos = ImVec2(10.0f, 25.0f);
 	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always);
 	bool open = true;
 	if (ImGui::Begin("", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
 	{
-		ImGui::Text("FPS:%i  TPS:%f", (int)(1.0f / m_engine->GetFrameTime()), 0.0f);
-		//ImGui::Separator();
+		ImGuiIO& io = ImGui::GetIO();
+		//ImGui::Text("FPS:%i  TPS:%f", 1000.0f / io.Framerate, 0.0f);
+
+		m_thread_time_update_delay -= m_engine->GetLastThreadTime();
+
+		if (m_thread_time_update_delay < 0.0f)
+		{
+			m_thread_time_update_delay = 1.0f;
+			//m_thread_data[id].
+			for (auto it = m_engine->m_thread_data.begin(); it != m_engine->m_thread_data.end(); it++)
+			{
+				if (m_thread_times_miliseconds[it->first].size() == 0)
+				{
+					m_thread_times_miliseconds[it->first].resize(20);
+				}
+				m_thread_times_fraction_last[it->first] = it->second.process_time_average;
+
+				m_thread_times_miliseconds[it->first].push_back(1000 * it->second.process_time_average);
+				m_thread_times_miliseconds[it->first].erase(m_thread_times_miliseconds[it->first].begin());
+
+			}
+		}
+
+		for (auto it = m_engine->m_thread_data.begin(); it != m_engine->m_thread_data.end(); it++)
+		{
+
+
+			ImGui::PlotLines(
+				"", // Label
+				m_thread_times_miliseconds[it->first].data(), // Line data
+				m_thread_times_miliseconds[it->first].size(), // Line count
+				0,
+				"",
+				0.0f,
+				70.0f
+			);
+
+			ImGui::SameLine();
+
+			ImGui::Text("~%04d:%s", (int)(1.0f / m_thread_times_fraction_last[it->first]), it->second.name);
+
+		}
 	}
 	ImGui::End();
 }
 
-void ComponentEngine::UIMaanger::RenderScene()
+void ComponentEngine::UIManager::RenderScene()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
@@ -177,7 +218,7 @@ void ComponentEngine::UIMaanger::RenderScene()
 	ImGui::End();
 }
 
-void ComponentEngine::UIMaanger::RenderEntityTreeNode(Entity * entity)
+void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 {
 	bool node_open = ImGui::TreeNode("GameObject", "%s", entity->GetName().c_str());
 
@@ -199,7 +240,7 @@ void ComponentEngine::UIMaanger::RenderEntityTreeNode(Entity * entity)
 	}
 }
 
-void ComponentEngine::UIMaanger::RenderEntity(Entity * entity)
+void ComponentEngine::UIManager::RenderEntity(Entity * entity)
 {
 	ImGui::Text("Component Count:%i", entity->GetComponentCount());
 	if (ImGui::Button("Add Component"))
@@ -208,7 +249,7 @@ void ComponentEngine::UIMaanger::RenderEntity(Entity * entity)
 	}
 }
 
-void ComponentEngine::UIMaanger::RenderComponentTreeNode(Entity* entity, BaseComponentWrapper & wrapper)
+void ComponentEngine::UIManager::RenderComponentTreeNode(Entity* entity, BaseComponentWrapper & wrapper)
 {
 	ImGui::TreeNodeEx("Component", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "%s", wrapper.GetName().c_str());
 
@@ -220,7 +261,7 @@ void ComponentEngine::UIMaanger::RenderComponentTreeNode(Entity* entity, BaseCom
 
 }
 
-void ComponentEngine::UIMaanger::RenderComponent()
+void ComponentEngine::UIManager::RenderComponent()
 {
 	if (m_current_scene_focus.entity == nullptr || m_current_scene_focus.component == nullptr)return;
 
@@ -234,7 +275,7 @@ void ComponentEngine::UIMaanger::RenderComponent()
 
 }
 
-void ComponentEngine::UIMaanger::RenderAddComponent()
+void ComponentEngine::UIManager::RenderAddComponent()
 {
 	if (ImGui::Begin("Add Component", &m_open[ADD_COMPONENT], ImGuiWindowFlags_NoCollapse))
 	{
@@ -283,12 +324,12 @@ void ComponentEngine::UIMaanger::RenderAddComponent()
 	ImGui::End();
 }
 
-bool ComponentEngine::UIMaanger::ElementClicked()
+bool ComponentEngine::UIManager::ElementClicked()
 {
 	return ImGui::IsItemHovered() && ImGui::IsMouseClicked(0);
 }
 
-bool ComponentEngine::UIMaanger::EdiableText(std::string & text, char *& temp_data, int max_size, bool editable)
+bool ComponentEngine::UIManager::EdiableText(std::string & text, char *& temp_data, int max_size, bool editable)
 {
 	if (temp_data == nullptr || !editable)
 	{
@@ -327,7 +368,7 @@ bool ComponentEngine::UIMaanger::EdiableText(std::string & text, char *& temp_da
 	return false;
 }
 
-void ComponentEngine::UIMaanger::ResetSceneFocusEntity()
+void ComponentEngine::UIManager::ResetSceneFocusEntity()
 {
 	m_current_scene_focus.entity = nullptr;
 
@@ -338,7 +379,7 @@ void ComponentEngine::UIMaanger::ResetSceneFocusEntity()
 	}
 }
 
-void ComponentEngine::UIMaanger::ResetSceneFocusComponent()
+void ComponentEngine::UIManager::ResetSceneFocusComponent()
 {
 	m_current_scene_focus.component = nullptr;
 }

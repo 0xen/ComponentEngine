@@ -17,7 +17,7 @@ using namespace ComponentEngine;
 
 std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
-const unsigned int Mesh::m_buffer_size_step = 100;
+const unsigned int Mesh::m_buffer_size_step = 10000;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity), m_path(path), m_dir(Common::GetDir(m_path))
 {
@@ -95,11 +95,19 @@ void ComponentEngine::Mesh::Display()
 	ImGui::Text("Vertex Count: %d", m_vertex_count);
 }
 
-void ComponentEngine::Mesh::UpdateBuffers()
+void ComponentEngine::Mesh::SetBufferData()
 {
 	for (auto& it : m_mesh_instance)
 	{
-		it.second.model_position_buffer->SetData(BufferSlot::Primary);
+		it.second.model_position_buffer->SetData(BufferSlot::Secondery);
+	}
+}
+
+void ComponentEngine::Mesh::TransferToPrimaryBuffers()
+{
+	for (auto& it : m_mesh_instance)
+	{
+		it.second.model_position_buffer->Transfer(BufferSlot::Primary, BufferSlot::Secondery);
 	}
 }
 
@@ -172,9 +180,9 @@ void ComponentEngine::Mesh::LoadModel()
 		MeshInstance& mesh_instance = m_mesh_instance[m_path];
 
 		// Create the model position buffers
-		//mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
-		mesh_instance.model_position_array.resize(m_buffer_size_step);
-		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array.data(), BufferChain::Single, sizeof(glm::mat4), m_buffer_size_step);
+		mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
+		//mesh_instance.model_position_array.resize(m_buffer_size_step);
+		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array, BufferChain::Double, sizeof(glm::mat4), m_buffer_size_step);
 		// Create the sub meshes
 		mesh_instance.sub_meshes_count = shapes.size();
 		mesh_instance.sub_meshes = new SubMesh[mesh_instance.sub_meshes_count];

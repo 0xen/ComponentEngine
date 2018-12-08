@@ -75,8 +75,8 @@ namespace ComponentEngine
 
 		unsigned int total_pool_allocation = 0;
 
-		//glm::mat4* model_position_array;
-		std::vector<glm::mat4> model_position_array;
+		glm::mat4* model_position_array;
+		//std::vector<glm::mat4> model_position_array;
 		Renderer::IUniformBuffer* model_position_buffer;
 
 		unsigned int used_instances = 0;
@@ -99,7 +99,8 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentExit<Transformation>& message);
 		virtual void Update();
 		virtual void Display();
-		static void UpdateBuffers();
+		static void SetBufferData();
+		static void TransferToPrimaryBuffers();
 		friend class Engine;
 	private:
 		void LoadModel();

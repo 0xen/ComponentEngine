@@ -12,10 +12,10 @@ namespace ComponentEngine
 		char* entity_temp_name = nullptr;
 	};
 
-	class UIMaanger
+	class UIManager
 	{
 	public:
-		UIMaanger(Engine* engine);
+		UIManager(Engine* engine);
 		void Render();
 	private:
 		void RenderMainMenu();
@@ -40,6 +40,11 @@ namespace ComponentEngine
 		unsigned int m_indestructable_component_id = 0;
 		static const unsigned int SCENE;
 		static const unsigned int ADD_COMPONENT;
+
+		float m_thread_time_update_delay;
+		std::map<std::thread::id, std::vector<float>> m_thread_times_miliseconds;
+		std::map<std::thread::id, float> m_thread_times_fraction_last;
+
 		bool m_open[2];
 	};
 }

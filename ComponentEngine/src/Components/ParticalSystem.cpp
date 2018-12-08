@@ -145,7 +145,7 @@ void ComponentEngine::ParticalSystem::Build()
 
 void ComponentEngine::ParticalSystem::Update()
 {
-	m_config.data.frame_time += m_engine->GetFrameTime();
+	//m_config.data.frame_time += m_engine->GetFrameTime();
 	m_model_position = m_entity->GetComponent<Transformation>().Get();
 	m_model->SetData(0, m_model_position);
 	m_model_position_buffer->SetData(BufferSlot::Primary);
