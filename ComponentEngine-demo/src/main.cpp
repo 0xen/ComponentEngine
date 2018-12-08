@@ -9,7 +9,7 @@ using namespace Renderer;
 Engine* engine;
 
 // Updates per second
-const int kUPS = 60;
+const int kUPS = 30;
 // UI updates per second
 const int kUIUPS = 30;
 
@@ -29,11 +29,35 @@ void UIThread()
 		UIThreadLoop();
 	}
 }
+
 void LogicThreadInit()
 {
 	engine->GetRendererMutex().lock();
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
+
+
+	/*EntityManager& em = engine->GetEntityManager();
+	for (int x = -5; x < 5; x++)
+	{
+		for (int y = -5; y < 5; y++)
+		{
+			enteez::Entity* ent = em.CreateEntity("Cube");
+			{
+				enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>(ent);
+				trans_wrapper->SetName("Transformation");
+				trans_wrapper->Get().Translate(glm::vec3(x, y, 0.0f));
+			}
+			{
+				enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
+				mesh->SetName("Mesh");
+			}
+			{
+				enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
+				renderer->SetName("Renderer");
+			}
+		}
+	}*/
 
 	camera = engine->GetCameraTransformation();
 	camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
@@ -51,9 +75,8 @@ void LogicThreadLoop()
 			transformation.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f * thread_time);
 		}
 	}, true);
-	engine->GetRendererMutex().lock();
+	//engine->Sync(kUPS);
 	engine->UpdateScene();
-	engine->GetRendererMutex().unlock();
 
 }
 
@@ -61,6 +84,7 @@ void LogicThread()
 {
 	LogicThreadInit();
 	// Logic Updating
+	engine->UpdateScene();
 	while (engine->Running())
 	{
 		LogicThreadLoop();
@@ -69,11 +93,13 @@ void LogicThread()
 
 int main(int argc, char **argv)
 {
+
 	engine = Engine::Singlton();
 	engine->Start();
 	engine->AddThread(LogicThread);
 	engine->AddThread(UIThread);
 	EntityManager& em = engine->GetEntityManager();
+
 	// Rendering
 	while (engine->Running())
 	{

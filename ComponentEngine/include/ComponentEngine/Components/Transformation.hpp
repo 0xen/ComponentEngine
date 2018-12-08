@@ -17,10 +17,12 @@ namespace enteez
 {
 	class Entity;
 }
+
 namespace pugi
 {
 	class xml_node;
 }
+
 namespace ComponentEngine
 {
 	class Transformation : public UI, public MsgRecive<TransformationPtrRedirect>
@@ -49,6 +51,7 @@ namespace ComponentEngine
 		}
 		~Transformation()
 		{
+			Send(m_entity, OnComponentExit<Transformation>(this));
 			if (m_origional)delete m_mat4;
 		}
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);

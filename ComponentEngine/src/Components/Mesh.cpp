@@ -17,7 +17,7 @@ using namespace ComponentEngine;
 
 std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
-const unsigned int Mesh::m_buffer_size_step = 1000100;
+const unsigned int Mesh::m_buffer_size_step = 100;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity), m_path(path), m_dir(Common::GetDir(m_path))
 {
@@ -78,6 +78,12 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEn
 	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_path].model_position_array[m_mesh_index]);
 }
 
+void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentExit<Transformation>& message)
+{
+	//auto it = m_mesh_instance[m_path].model_position_array.begin() + m_mesh_index;
+	//m_mesh_instance[m_path].model_position_array.erase(it);
+}
+
 void ComponentEngine::Mesh::Update()
 {
 
@@ -87,24 +93,13 @@ void ComponentEngine::Mesh::Display()
 {
 	ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
 	ImGui::Text("Vertex Count: %d", m_vertex_count);
-
-	
 }
 
 void ComponentEngine::Mesh::UpdateBuffers()
 {
 	for (auto& it : m_mesh_instance)
 	{
-
-		for (int i = 0; i < it.second.sub_meshes_count; i++)
-		{
-			SubMesh& sub_mesh = it.second.sub_meshes[i];
-			for (int j = 0; j < sub_mesh.material_meshes_count; j++)
-			{
-				MaterialMesh& material_mesh = sub_mesh.material_meshes[j];
-				material_mesh.model_pool->Update();
-			}
-		}
+		it.second.model_position_buffer->SetData(BufferSlot::Primary);
 	}
 }
 
@@ -177,8 +172,9 @@ void ComponentEngine::Mesh::LoadModel()
 		MeshInstance& mesh_instance = m_mesh_instance[m_path];
 
 		// Create the model position buffers
-		mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
-		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array, BufferChain::Single, sizeof(glm::mat4), m_buffer_size_step);
+		//mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
+		mesh_instance.model_position_array.resize(m_buffer_size_step);
+		mesh_instance.model_position_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(mesh_instance.model_position_array.data(), BufferChain::Single, sizeof(glm::mat4), m_buffer_size_step);
 		// Create the sub meshes
 		mesh_instance.sub_meshes_count = shapes.size();
 		mesh_instance.sub_meshes = new SubMesh[mesh_instance.sub_meshes_count];

@@ -20,6 +20,26 @@ namespace ComponentEngine
 	};
 
 	template<class T>
+	class OnComponentExit : public TemplateType<T>
+	{
+	public:
+		OnComponentExit(T* component);
+		T& GetComponent();
+	private:
+		T * m_component;
+	};
+	template<class T>
+	inline OnComponentExit<T>::OnComponentExit(T * component)
+	{
+		m_component = component;
+	}
+	template<class T>
+	inline T & OnComponentExit<T>::GetComponent()
+	{
+		return *m_component;
+	}
+
+	template<class T>
 	class OnComponentEnter : public TemplateType<T>
 	{
 	public:

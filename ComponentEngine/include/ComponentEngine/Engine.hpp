@@ -4,6 +4,7 @@
 #include <renderer\IRenderer.hpp>
 
 #include <ComponentEngine\Components\Transformation.hpp>
+#include <ComponentEngine\Components\Indestructable.hpp>
 #include <ComponentEngine\Components\Camera.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <ComponentEngine\ThreadHandler.hpp>

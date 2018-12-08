@@ -1,5 +1,4 @@
 ﻿#include <ComponentEngine\UIManager.hpp>
-#include <ComponentEngine\Components\Indestructable.hpp>
 #include <ComponentEngine\Components\UI.hpp>
 
 #include <imgui.h>
@@ -202,7 +201,7 @@ void ComponentEngine::UIMaanger::RenderEntityTreeNode(Entity * entity)
 
 void ComponentEngine::UIMaanger::RenderEntity(Entity * entity)
 {
-	ImGui::Text("Component Count:%i", 0);
+	ImGui::Text("Component Count:%i", entity->GetComponentCount());
 	if (ImGui::Button("Add Component"))
 	{
 		m_open[ADD_COMPONENT] = true;

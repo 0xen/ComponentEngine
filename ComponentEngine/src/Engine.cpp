@@ -3,7 +3,6 @@
 
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
-#include <ComponentEngine\Components\Indestructable.hpp>
 #include <ComponentEngine\UIManager.hpp>
 
 #include <lodepng.h>
@@ -395,7 +394,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	// Define what base classes each one of these components have
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
 	RegisterBase<RendererComponent, UI>();
-	RegisterBase<Mesh, Logic, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>>();
+	RegisterBase<Mesh, Logic, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -532,7 +531,7 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
 	
 
-	RegisterComponentBase("Indestructable", nullptr, Indestructable::EntityHook);
+	RegisterComponentBase("Indestructable", nullptr, nullptr);
 }
 
 void ComponentEngine::Engine::UpdateCameraProjection()

@@ -60,6 +60,7 @@ namespace ComponentEngine
 	// a sub-mesh of the main mesh
 	struct SubMesh
 	{
+		//std::vector<MaterialMesh> material_meshes;
 		MaterialMesh* material_meshes;
 		unsigned int material_meshes_count = 0;
 	};
@@ -68,12 +69,14 @@ namespace ComponentEngine
 	struct MeshInstance
 	{
 		~MeshInstance();
+		//std::vector<SubMesh> sub_meshes;
 		SubMesh* sub_meshes;
 		unsigned int sub_meshes_count = 0;
 
 		unsigned int total_pool_allocation = 0;
 
-		glm::mat4* model_position_array;
+		//glm::mat4* model_position_array;
+		std::vector<glm::mat4> model_position_array;
 		Renderer::IUniformBuffer* model_position_buffer;
 
 		unsigned int used_instances = 0;
@@ -82,7 +85,8 @@ namespace ComponentEngine
 
 	class Transformation;
 
-	class Mesh : /*public MsgSend,*/ public MsgRecive<RenderStatus>, public UI , public Logic, public MsgRecive<OnComponentEnter<Transformation>>
+	class Mesh : public MsgRecive<RenderStatus>, public UI , public Logic, 
+		public MsgRecive<OnComponentEnter<Transformation>>, public MsgRecive<OnComponentExit<Transformation>>
 	{
 	public:
 		Mesh(enteez::Entity* entity, std::string path);
@@ -92,6 +96,7 @@ namespace ComponentEngine
 		bool Loaded();
 		virtual void ReciveMessage(enteez::Entity* sender, RenderStatus& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<Transformation>& message);
+		virtual void ReciveMessage(enteez::Entity* sender, OnComponentExit<Transformation>& message);
 		virtual void Update();
 		virtual void Display();
 		static void UpdateBuffers();

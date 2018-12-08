@@ -4,6 +4,7 @@
 
 namespace ComponentEngine
 {
+
 	struct CurrentSceneFocus
 	{
 		enteez::Entity* entity = nullptr;

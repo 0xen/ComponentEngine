@@ -16,7 +16,7 @@ namespace ComponentEngine
 	{
 	public:
 
-		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
+		//static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 
 
 	private:

@@ -5,8 +5,8 @@
 
 using namespace ComponentEngine;
 
-void ComponentEngine::Indestructable::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
+/*void ComponentEngine::Indestructable::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
 {
 	enteez::ComponentWrapper<Indestructable>* inde_wrapper = entity.AddComponent<Indestructable>();
 	inde_wrapper->SetName("Indestructable");
-}
+}*/
