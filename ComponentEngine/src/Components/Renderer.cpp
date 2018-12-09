@@ -38,3 +38,4 @@ void ComponentEngine::RendererComponent::Display()
 		Send(m_entity, RenderStatus(m_render));
 	}
 }
+

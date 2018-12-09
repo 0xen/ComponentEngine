@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <ComponentEngine\Components\MsgRecive.hpp>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -34,9 +35,6 @@ namespace ComponentEngine
 			m_entity = entity;
 			m_mat4 = new glm::mat4(1.0f);
 			m_origional = true;
-			m_position = glm::vec3();
-			m_rotation = glm::vec3();
-			m_scale = glm::vec3();
 			Send(m_entity, OnComponentEnter<Transformation>(this));
 		}
 		Transformation(enteez::Entity* entity, glm::mat4* mat4)
@@ -44,9 +42,6 @@ namespace ComponentEngine
 			m_entity = entity;
 			m_mat4 = mat4;
 			m_origional = false;
-			m_position = glm::vec3();
-			m_rotation = glm::vec3();
-			m_scale = glm::vec3();
 			//Send(m_entity, OnComponentEnter<Transformation>());
 		}
 		~Transformation()
@@ -74,9 +69,6 @@ namespace ComponentEngine
 	private:
 		enteez::Entity* m_entity;
 		glm::mat4* m_mat4;
-		glm::vec3 m_position;
-		glm::vec3 m_rotation;
-		glm::vec3 m_scale;
 		Transformation* m_parent = nullptr;
 		bool m_origional;
 	};

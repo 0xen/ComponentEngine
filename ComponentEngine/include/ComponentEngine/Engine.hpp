@@ -45,6 +45,7 @@ namespace ComponentEngine
 		void Stop();
 		void Join();
 		bool Running();
+		bool Running(int ups);
 		void Update();
 		void UpdateScene();
 		void UpdateUI();
@@ -94,6 +95,7 @@ namespace ComponentEngine
 		void InitThread(const char* name, std::thread::id id);
 
 		void NewThreadUpdatePass();
+		void RequestStop();
 
 		// Singlton instance of engine
 		static Engine* m_engine;
@@ -105,6 +107,10 @@ namespace ComponentEngine
 		const char* m_title; 
 		int m_width;
 		int m_height;
+
+		bool m_running = false;
+		bool m_request_stop = false;
+		std::thread::id m_main_thread;
 
 		UIManager* m_ui;
 
@@ -162,6 +168,8 @@ namespace ComponentEngine
 			float delta_loop_time;
 			float loop_time;
 			float loop_time_average;
+			// Requested Update Per Second
+			unsigned int requested_ups = 60; // Check for a average of 60 updates per second
 
 			const char* name;
 		};

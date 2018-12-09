@@ -8,5 +8,5 @@ Ka 0.0000 0.0000 0.0000
 Kd 0.5880 0.5880 0.5880
 Ks 0.0000 0.0000 0.0000
 Ke 0.0000 0.0000 0.0000
-map_Ka cobble.png
-map_Kd cobble.png
+map_Ka grass.png
+map_Kd grass.png

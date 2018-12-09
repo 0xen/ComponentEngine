@@ -4,7 +4,7 @@
 		<Scene>
 
 		
-			<GameObject name="Cube">
+			<GameObject name="Cube1">
 				<Component name="Transformation">
 					<Position x="2.0f" y="1.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
@@ -16,7 +16,7 @@
 				<Component name="Renderer"/>
 			</GameObject>
 
-			<GameObject name="Cube">
+			<GameObject name="Cube2">
 				<Component name="Transformation">
 					<Position x="-2.0f" y="1.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
@@ -28,10 +28,10 @@
 				<Component name="Renderer"/>
 			</GameObject>
 
-			<GameObject name="Cube">
+			<GameObject name="Cessna">
 				<Component name="Transformation">
 					<Position x="0.0f" y="2.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="90.0f" z="0.0f"/>
 					<Scale x="0.1f" y="0.1f" z="0.1f"/>
 				</Component>
 				<Component name="Mesh">
@@ -41,7 +41,7 @@
 			</GameObject>
 
 
-			<GameObject name="Cube">
+			<GameObject name="Floor">
 				<Component name="Transformation">
 					<Position x="0.0f" y="0.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>

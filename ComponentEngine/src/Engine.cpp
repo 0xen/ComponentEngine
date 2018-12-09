@@ -51,7 +51,9 @@ void ComponentEngine::Engine::Start()
 	InitEnteeZ();
 	InitRenderer();
 	InitComponentHooks();
-	InitThread("Renderer", std::this_thread::get_id());
+	m_main_thread = std::this_thread::get_id();
+	InitThread("Renderer", m_main_thread);
+	m_running = true;
 }
 
 void ComponentEngine::Engine::AddThread(void(*function)(), const char* name)
@@ -63,7 +65,14 @@ void ComponentEngine::Engine::AddThread(void(*function)(), const char* name)
 
 void ComponentEngine::Engine::Stop()
 {
-	if (!Running())return;
+	if (!Running())
+	{
+		return;
+	}
+	{
+		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+		m_running = false;
+	}
 	GetRendererMutex().lock();
 	GetEntityManager().Clear();
 	DeInitEnteeZ();
@@ -82,11 +91,32 @@ void ComponentEngine::Engine::Join()
 
 bool ComponentEngine::Engine::Running()
 {
-	GetRendererMutex().lock();
-	bool result = m_renderer != nullptr && m_renderer->IsRunning();
-	GetRendererMutex().unlock();
 	NewThreadUpdatePass();
-	return result;
+	if (m_main_thread == std::this_thread::get_id())
+	{
+			if (m_request_stop)
+			{
+				m_request_stop = false;
+				Stop();
+			}
+			std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+			bool result = m_renderer != nullptr && m_renderer->IsRunning();
+		
+		//GetRendererMutex().lock();
+		//GetRendererMutex().unlock();
+		return result;
+	}
+	else
+	{
+		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+		return m_running;
+	}
+}
+
+bool ComponentEngine::Engine::Running(int ups)
+{
+	Sync(ups);
+	return Running();
 }
 
 void ComponentEngine::Engine::Update()
@@ -139,6 +169,7 @@ float ComponentEngine::Engine::Sync(int ups)
 
 	std::thread::id id = std::this_thread::get_id();
 	ThreadData& data = m_thread_data[id];
+	data.requested_ups = ups;
 
 	float stop_time = GetThreadDeltaTime();
 	data.delta_process_time += stop_time;
@@ -374,6 +405,7 @@ void ComponentEngine::Engine::UpdateWindow()
 
 void ComponentEngine::Engine::DeInitWindow()
 {
+	SDL_RestoreWindow(m_window);
 	SDL_DestroyWindow(m_window);
 	//SDL_ShowWindow
 	delete m_window_handle;
@@ -687,8 +719,11 @@ void ComponentEngine::Engine::UpdateImGUI()
 
 
 	GetRendererMutex().lock();
-	m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
-	m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
+	if (Running())
+	{
+		m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
+		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
+	}
 	GetRendererMutex().unlock();
 }
 
@@ -755,4 +790,10 @@ void ComponentEngine::Engine::NewThreadUpdatePass()
 	// Reset the process time delta and delta loop time for this loop
 	data.delta_process_time = 0.0f;
 	data.delta_loop_time = 0.0f; 
+}
+
+
+void ComponentEngine::Engine::RequestStop()
+{
+	m_request_stop = true;
 }

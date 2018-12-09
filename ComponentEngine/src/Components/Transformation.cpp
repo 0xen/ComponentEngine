@@ -27,13 +27,11 @@ glm::mat4 & Transformation::Get()
 
 void Transformation::Translate(glm::vec3 translation)
 {
-	m_position += translation;
 	*m_mat4 = glm::translate(*m_mat4, translation);
 }
 
 void Transformation::Scale(glm::vec3 scale)
 {
-	m_scale *= scale;
 	*m_mat4 = glm::scale(*m_mat4, scale);
 }
 
@@ -50,31 +48,64 @@ void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, Tra
 
 void ComponentEngine::Transformation::Display()
 {
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(*m_mat4, scale, rotation, translation, skew, perspective);
+	rotation = glm::conjugate(rotation);
+
+	ImGui::PushItemWidth(ImGui::GetWindowContentRegionWidth() - 10);
 	{
 		ImGui::PushID(0);
 		ImGui::Text("Position");
-		bool changed = ImGui::InputFloat3("", (float*)&m_position);
+		glm::vec3 change = translation;
+		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			*m_mat4 = glm::mat4(1.0f);
+			*m_mat4 = glm::translate(*m_mat4, change);
+			*m_mat4 *= glm::inverse(glm::toMat4(rotation));
+			*m_mat4 = glm::scale(*m_mat4, scale);
+		}
 		ImGui::PopID();
 	}
 	{
 		ImGui::PushID(1);
 		ImGui::Text("Rotation");
-		bool changed = ImGui::InputFloat3("", (float*)&m_rotation);
+
+		glm::vec3 euler = glm::eulerAngles(rotation);
+		glm::vec3 change = glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z));
+		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			*m_mat4 = glm::mat4(1.0f);
+			*m_mat4 = glm::translate(*m_mat4, translation);
+			*m_mat4 *= glm::inverse(glm::toMat4(glm::quat(glm::vec3(glm::radians(change.x), glm::radians(change.y), glm::radians(change.z)))));
+			*m_mat4 = glm::scale(*m_mat4, scale);
+		}
 		ImGui::PopID();
 	}
 	{
 		ImGui::PushID(2);
 		ImGui::Text("Scale");
-		bool changed = ImGui::InputFloat3("", (float*)&m_scale);
+		glm::vec3 change = scale;
+		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			*m_mat4 = glm::mat4(1.0f);
+			*m_mat4 = glm::translate(*m_mat4, translation);
+			*m_mat4 *= glm::inverse(glm::toMat4(rotation));
+			*m_mat4 = glm::scale(*m_mat4, change);
+		}
+		ImGui::PushItemWidth(-(ImGui::GetWindowContentRegionWidth() - ImGui::CalcItemWidth()));
 		ImGui::PopID();
 	}
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)
 {
-	Rotate(glm::vec3(1.0f, 0.0f, 0.0f), angles.x);
-	Rotate(glm::vec3(0.0f, 1.0f, 0.0f), angles.y);
-	Rotate(glm::vec3(0.0f, 0.0f, 1.0f), angles.z);
+	Rotate(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(angles.x));
+	Rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(angles.y));
+	Rotate(glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(angles.z));
 }
 
 void ComponentEngine::Transformation::SetParent(Transformation* parent)

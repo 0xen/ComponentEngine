@@ -37,7 +37,9 @@ void ComponentEngine::UIManager::RenderMainMenu()
 		{
 			if (ImGui::MenuItem("Exit"))
 			{
-				m_engine->Stop();
+				m_engine->GetRendererMutex().lock();
+				m_engine->RequestStop();
+				m_engine->GetRendererMutex().unlock();
 			}
 			ImGui::EndMenu();
 		}
@@ -74,7 +76,7 @@ void ComponentEngine::UIManager::RenderFPSCounter()
 				{
 					m_thread_times_miliseconds[it->first].resize(20);
 				}
-				m_thread_times_fraction_last[it->first] = it->second.process_time_average;
+				m_thread_times_fraction_last[it->first] = it->second.loop_time;
 
 				m_thread_times_miliseconds[it->first].push_back(1000 * it->second.process_time_average);
 				m_thread_times_miliseconds[it->first].erase(m_thread_times_miliseconds[it->first].begin());
@@ -84,8 +86,6 @@ void ComponentEngine::UIManager::RenderFPSCounter()
 
 		for (auto it = m_engine->m_thread_data.begin(); it != m_engine->m_thread_data.end(); it++)
 		{
-
-
 			ImGui::PlotLines(
 				"", // Label
 				m_thread_times_miliseconds[it->first].data(), // Line data
@@ -93,12 +93,12 @@ void ComponentEngine::UIManager::RenderFPSCounter()
 				0,
 				"",
 				0.0f,
-				70.0f
+				(float)(1000 / it->second.requested_ups) // Calculate the slowest the thread would have to run to meet the Updates Per Second
 			);
 
 			ImGui::SameLine();
 
-			ImGui::Text("~%04d:%s", (int)(1.0f / m_thread_times_fraction_last[it->first]), it->second.name);
+			ImGui::Text("~%04d/s:%s", (int)(1.0f / m_thread_times_fraction_last[it->first]), it->second.name);
 
 		}
 	}
@@ -109,6 +109,7 @@ void ComponentEngine::UIManager::RenderScene()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	//ImGui::SetNextWindowPos(ImVec2(10, 110));
 	if (ImGui::Begin("Scene Manager", &m_open[SCENE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
 	{
 		EntityManager& em = m_engine->GetEntityManager();
@@ -277,6 +278,9 @@ void ComponentEngine::UIManager::RenderComponent()
 
 void ComponentEngine::UIManager::RenderAddComponent()
 {
+	static int window_height = 80;
+	ImGui::SetNextWindowSize(ImVec2(226, window_height));
+	//ImGui::SetNextWindowPos(ImVec2(362, 25));
 	if (ImGui::Begin("Add Component", &m_open[ADD_COMPONENT], ImGuiWindowFlags_NoCollapse))
 	{
 		if (m_current_scene_focus.entity == nullptr) // No entity selected

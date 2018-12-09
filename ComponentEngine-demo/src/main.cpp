@@ -18,16 +18,16 @@ Transformation* camera;
 
 void UIThreadLoop()
 {
-	engine->Sync(kUIUPS);
 	engine->UpdateUI();
 }
 
 void UIThread()
 {
-	while (engine->Running())
+	while (engine->Running(kUIUPS))
 	{
 		UIThreadLoop();
 	}
+	std::cout << "b" << std::endl;
 }
 
 void LogicThreadInit()
@@ -35,51 +35,18 @@ void LogicThreadInit()
 	engine->GetRendererMutex().lock();
 	// Load the scene
 	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
-
 	
-	EntityManager& em = engine->GetEntityManager();
-	/*for (int x = -5; x < 5; x++)
-	{
-		for (int y = -5; y < 5; y++)
-		{
-
-			for (int z = 0; z < 2; z++)
-			{
-				enteez::Entity* ent = em.CreateEntity("Cube");
-				{
-					enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>(ent);
-					trans_wrapper->SetName("Transformation");
-					trans_wrapper->Get().Translate(glm::vec3(x, y, 0.0f - 10.0f));
-					trans_wrapper->Get().Scale(glm::vec3(0.8f, 0.8f, 0.8f));
-				}
-				{
-					enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
-					mesh->SetName("Mesh");
-				}
-				{
-					enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
-					renderer->SetName("Renderer");
-				}
-			}
-		}
-	}*/
-
-
 	camera = engine->GetCameraTransformation();
 	camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
 	engine->GetRendererMutex().unlock();
 }
 
-void LogicThreadLoop()
+void LogicThreadLoop(float thread_time)
 {
 	EntityManager& em = engine->GetEntityManager();
-	float thread_time = engine->Sync(kUPS);
-	em.ForEach<Transformation, Mesh>([thread_time](enteez::Entity* entity, Transformation& transformation, Mesh& mesh)
+	em.ForEach<Transformation, Mesh, RendererComponent>([thread_time](enteez::Entity* entity, Transformation& transformation, Mesh& mesh, RendererComponent& renderer)
 	{
-		if (&transformation != camera)
-		{
-			transformation.Rotate(glm::vec3(0.0f, 1.0f, 0.0f), 1.0f * thread_time);
-		}
+
 	}, true);
 	engine->UpdateScene();
 }
@@ -89,10 +56,11 @@ void LogicThread()
 	LogicThreadInit();
 	// Logic Updating
 	engine->UpdateScene();
-	while (engine->Running())
+	while (engine->Running(kUPS))
 	{
-		LogicThreadLoop();
+		LogicThreadLoop(engine->GetLastThreadTime());
 	}
+	std::cout << "a" << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -100,18 +68,34 @@ int main(int argc, char **argv)
 
 	engine = Engine::Singlton();
 	engine->Start();
-	engine->AddThread(LogicThread,"Logic");
-	engine->AddThread(UIThread,"UI");
-	EntityManager& em = engine->GetEntityManager();
 
-	// Rendering
-	while (engine->Running())
+	EntityManager& em = engine->GetEntityManager();
 	{
-		engine->RenderFrame();
-		engine->Update();
+		/*LogicThreadInit();
+		// Rendering
+		while (engine->Running())
+		{
+			UIThreadLoop();
+			LogicThreadLoop(engine->GetLastThreadTime());
+			engine->RenderFrame();
+			engine->Update();
+		}*/
 	}
-	engine->Stop();
+	{
+		engine->AddThread(LogicThread, "Logic");
+		engine->AddThread(UIThread, "UI");
+		EntityManager& em = engine->GetEntityManager();
+		// Rendering
+		while (engine->Running(60))
+		{
+			engine->RenderFrame();
+			engine->Update();
+		}
+	}
+
+
 	engine->Join();
+	engine->Stop();
 	delete engine;
     return 0;
 }
