@@ -182,6 +182,9 @@ namespace ComponentEngine
 
 			const char* name;
 
+
+			ordered_lock data_lock;
+
 			ThreadHandler* thread_instance = nullptr;
 		};
 

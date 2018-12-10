@@ -54,15 +54,15 @@ void ComponentEngine::Engine::Start()
 	m_main_thread = std::this_thread::get_id();
 	m_running = true;
 
-	m_thread_data_lock.lock();
 	ThreadData* data = new ThreadData();
+	data->data_lock.lock();
 	data->thread_instance = nullptr;
 	data->name = "Renderer";
 	data->delta_time = SDL_GetPerformanceCounter();
 	data->frame_limited = true;
 	m_thread_data.push_back(data);
 	m_thread_linker[m_main_thread] = data;
-	m_thread_data_lock.unlock();
+	data->data_lock.unlock();
 }
 
 void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name)
@@ -70,9 +70,9 @@ void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name
 	if (m_threading)
 	{
 
-		m_thread_data_lock.lock();
-		handler->StartThread();
 		ThreadData* data = new ThreadData();
+		data->data_lock.lock();
+		handler->StartThread();
 		data->thread_instance = handler;
 		data->name = name;
 		data->delta_time = SDL_GetPerformanceCounter();
@@ -80,7 +80,7 @@ void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name
 		std::thread::id id = data->thread_instance->GetID();
 		m_thread_linker[id] = data;
 		m_thread_data.push_back(data);
-		m_thread_data_lock.unlock();
+		data->data_lock.unlock();
 	}
 
 }
@@ -212,8 +212,10 @@ void ComponentEngine::Engine::RenderFrame()
 float ComponentEngine::Engine::Sync(int ups)
 {
 	std::thread::id id = std::this_thread::get_id();
-	m_thread_data_lock.lock();
+	auto it = m_thread_linker.find(id);
+	if (it == m_thread_linker.end())return 0.0f;
 	ThreadData*& data = m_thread_linker[id];
+	data->data_lock.lock();
 	data->requested_ups = ups;
 
 	float stop_time = GetThreadDeltaTime();
@@ -224,7 +226,7 @@ float ComponentEngine::Engine::Sync(int ups)
 		std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
 		if (!data->frame_limited)
 		{
-			m_thread_data_lock.unlock();
+			data->data_lock.unlock();
 			return data->loop_time;
 		}
 			
@@ -232,14 +234,14 @@ float ComponentEngine::Engine::Sync(int ups)
 
 	int pause_time = (int)(1000 / ups);
 	pause_time -= (int)(data->process_time * 1000.0f);
-	m_thread_data_lock.unlock();
+	data->data_lock.unlock();
 	std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
-	m_thread_data_lock.lock();
+	data->data_lock.lock();
 	float start_time = GetThreadDeltaTime();
 	data->delta_loop_time += start_time;
 
 	float loop_time = data->loop_time;
-	m_thread_data_lock.unlock();
+	data->data_lock.unlock();
 	return loop_time;
 }
 
@@ -305,21 +307,26 @@ float ComponentEngine::Engine::GetThreadDeltaTime()
 {
 	std::thread::id id = std::this_thread::get_id();
 	Uint64 now = SDL_GetPerformanceCounter();
-	m_thread_data_lock.lock();
+	auto it = m_thread_linker.find(id);
+	if (it == m_thread_linker.end())return 0.0f;
 	ThreadData*& data = m_thread_linker[id];
+	data->data_lock.lock();
 	Uint64 last = data->delta_time;
 	data->delta_time = now;
 	float temp = static_cast<float>((now - last) / (float)SDL_GetPerformanceFrequency());
-	m_thread_data_lock.unlock();
+	data->data_lock.unlock();
 	return temp;
 }
 
 float ComponentEngine::Engine::GetLastThreadTime()
 {
 	std::thread::id id = std::this_thread::get_id();
-	m_thread_data_lock.lock();
+	auto it = m_thread_linker.find(id);
+	if (it == m_thread_linker.end())return 0.0f;
+	ThreadData*& data = m_thread_linker[id];
+	data->data_lock.lock();
 	float loop_time = m_thread_linker[id]->loop_time;
-	m_thread_data_lock.unlock();
+	data->data_lock.unlock();
 	return loop_time;
 }
 
@@ -813,6 +820,10 @@ void ComponentEngine::Engine::DeInitImGUI()
 void ComponentEngine::Engine::NewThreadUpdatePass()
 {
 	std::thread::id id = std::this_thread::get_id();
+
+	auto it = m_thread_linker.find(id);
+	if (it == m_thread_linker.end())return;
+
 	ThreadData*& data = m_thread_linker[id];
 	float thread_last = GetThreadDeltaTime(); // Get the time from the last call to Sync or NewThreadUpdatePass
 	data->process_time = thread_last + data->delta_process_time; // Set the final time for data.process_time for this loop
@@ -857,6 +868,8 @@ void ComponentEngine::Engine::ToggleFrameLimiting()
 {
 	std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
 	std::thread::id id = std::this_thread::get_id();
+	auto it = m_thread_linker.find(id);
+	if (it == m_thread_linker.end())return;
 	ThreadData*& data = m_thread_linker[id];
 	data->frame_limited = !data->frame_limited;
 }
@@ -886,25 +899,25 @@ void ComponentEngine::Engine::ToggleThreading()
 
 				data->thread_instance->Join();
 
-				m_thread_data_lock.lock();
+				data->data_lock.lock();
 
 				auto find = m_thread_linker.find(id);
 				if (find != m_thread_linker.end())
 				{
 					m_thread_linker.erase(find);
 				}
-				m_thread_data_lock.unlock();
+				data->data_lock.unlock();
 			}
 			else
 			{
-				m_thread_data_lock.lock();
+				data->data_lock.lock();
 
 				data->thread_instance->StartThread();
 				// Thread has to be stored this way otherwise it plays up and points to the wrong thing
 				std::thread::id id = data->thread_instance->GetID();
 
 				m_thread_linker[id] = data;
-				m_thread_data_lock.unlock();
+				data->data_lock.unlock();
 			}
 
 
