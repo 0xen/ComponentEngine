@@ -35,6 +35,8 @@ namespace ComponentEngine
 		void ResetSceneFocusEntity();
 		void ResetSceneFocusComponent();
 
+		void Tooltip(const char* text);
+
 		Engine* m_engine;
 		CurrentSceneFocus m_current_scene_focus;
 		unsigned int m_indestructable_component_id = 0;
@@ -42,8 +44,8 @@ namespace ComponentEngine
 		static const unsigned int ADD_COMPONENT;
 
 		float m_thread_time_update_delay;
-		std::map<std::thread::id, std::vector<float>> m_thread_times_miliseconds;
-		std::map<std::thread::id, float> m_thread_times_fraction_last;
+		std::map<Engine::ThreadData*, std::vector<float>> m_thread_times_miliseconds;
+		std::map<Engine::ThreadData*, float> m_thread_times_fraction_last;
 
 		bool m_open[2];
 	};

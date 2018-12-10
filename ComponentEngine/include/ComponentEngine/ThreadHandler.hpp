@@ -64,7 +64,7 @@ public:
 	}
 };
 
-
+/*
 class ThreadHandler : public std::thread
 {
 public:
@@ -74,4 +74,35 @@ public:
 private:
 	ordered_lock m_thread_lock;
 };
+*/
 
+class ThreadHandler
+{
+public:
+	ThreadHandler(int ups);
+	~ThreadHandler();
+	void StartThread();
+	virtual void Initilize() = 0;
+	virtual void Loop() = 0;
+	virtual void Cleanup() = 0;
+	void Join();
+	bool Joined();
+	std::thread::id& GetID();
+private:
+	void ThreadMain();
+	bool GetThreading();
+	bool GetRunning();
+	bool GetTogglingState();
+	void SetThreading(bool res);
+	void SetRunning(bool res);
+	void SetTogglingState(bool res);
+
+
+	int m_ups;
+	bool m_threading;
+	bool m_running;
+	bool m_toggling_state;
+	ordered_lock m_thread_lock;
+	std::thread::id m_id;
+	std::thread* thread = nullptr;
+};

@@ -44,12 +44,25 @@ void ComponentEngine::UIManager::RenderMainMenu()
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("Edit"))
+		{
+			bool test = m_engine->Threading();
+			if (ImGui::MenuItem("Toggle Threading", NULL, &test))
+			{
+				m_engine->GetRendererMutex().lock();
+				m_engine->RequestToggleThreading();
+				m_engine->GetRendererMutex().unlock();
+			}
+			ImGui::EndMenu();
+		}
+
 		if (ImGui::BeginMenu("Window"))
 		{
 			ImGui::MenuItem("Scene Manager", NULL, &m_open[SCENE]);
 			ImGui::MenuItem("Add Component", NULL, &m_open[ADD_COMPONENT]);
 			ImGui::EndMenu();
 		}
+
 		ImGui::EndMainMenuBar();
 	}
 }
@@ -69,37 +82,55 @@ void ComponentEngine::UIManager::RenderFPSCounter()
 		if (m_thread_time_update_delay < 0.0f)
 		{
 			m_thread_time_update_delay = 1.0f;
-			//m_thread_data[id].
-			for (auto it = m_engine->m_thread_data.begin(); it != m_engine->m_thread_data.end(); it++)
-			{
-				if (m_thread_times_miliseconds[it->first].size() == 0)
-				{
-					m_thread_times_miliseconds[it->first].resize(20);
-				}
-				m_thread_times_fraction_last[it->first] = it->second.loop_time;
 
-				m_thread_times_miliseconds[it->first].push_back(1000 * it->second.process_time_average);
-				m_thread_times_miliseconds[it->first].erase(m_thread_times_miliseconds[it->first].begin());
+			for (auto it : m_engine->m_thread_data)
+			{
+				if (m_thread_times_miliseconds[it].size() == 0)
+				{
+					m_thread_times_miliseconds[it].resize(20);
+				}
+				m_thread_times_fraction_last[it] = it->loop_time;
+
+				m_thread_times_miliseconds[it].push_back(1000 * it->process_time_average);
+				m_thread_times_miliseconds[it].erase(m_thread_times_miliseconds[it].begin());
 
 			}
 		}
-
-		for (auto it = m_engine->m_thread_data.begin(); it != m_engine->m_thread_data.end(); it++)
+		int i = 0;
+		for (auto it : m_engine->m_thread_data)
 		{
-			ImGui::PlotLines(
-				"", // Label
-				m_thread_times_miliseconds[it->first].data(), // Line data
-				m_thread_times_miliseconds[it->first].size(), // Line count
-				0,
-				"",
-				0.0f,
-				(float)(1000 / it->second.requested_ups) // Calculate the slowest the thread would have to run to meet the Updates Per Second
-			);
+			// Check to see if the current thread is the renderer or we are multi threading, if so, display
+			if (m_engine->m_threading || it->thread_instance == nullptr)
+			{
 
-			ImGui::SameLine();
+				ImGui::PushID(i);
+				bool temp = it->frame_limited;
+				if (ImGui::Checkbox("", &temp))
+				{
+					it->frame_limited = !it->frame_limited;
+				}
+				Tooltip("Should thread be speed limited");
 
-			ImGui::Text("~%04d/s:%s", (int)(1.0f / m_thread_times_fraction_last[it->first]), it->second.name);
+				ImGui::SameLine();
+				ImGui::PlotLines(
+					"", // Label
+					m_thread_times_miliseconds[it].data(), // Line data
+					m_thread_times_miliseconds[it].size(), // Line count
+					0,
+					"",
+					0.0f,
+					(float)(1000 / it->requested_ups) // Calculate the slowest the thread would have to run to meet the Updates Per Second
+				);
 
+				ImGui::SameLine();
+
+				ImGui::Text("~%04d/s:%s", (int)(1.0f / m_thread_times_fraction_last[it]), it->name);
+
+				Tooltip("Estimated UPS based on last recorded thread-time");
+
+				ImGui::PopID();
+				i++;
+			}
 		}
 	}
 	ImGui::End();
@@ -386,4 +417,16 @@ void ComponentEngine::UIManager::ResetSceneFocusEntity()
 void ComponentEngine::UIManager::ResetSceneFocusComponent()
 {
 	m_current_scene_focus.component = nullptr;
+}
+
+void ComponentEngine::UIManager::Tooltip(const char * text)
+{
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(text);
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
 }

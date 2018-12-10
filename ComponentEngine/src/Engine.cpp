@@ -15,7 +15,7 @@ using namespace enteez;
 using namespace Renderer;
 
 const unsigned int Engine::IS_RUNNING_LOCK = 0;
-const unsigned int Engine::THREAD_DATA_LOCK = 1;
+const unsigned int Engine::TOGGLE_FRAME_LIMITING = 1;
 
 Engine* Engine::m_engine = nullptr;
 
@@ -35,9 +35,9 @@ Engine* ComponentEngine::Engine::Singlton()
 ComponentEngine::Engine::~Engine()
 {
 	Stop();
-	for (auto i : m_threads)
+	for (auto i : m_thread_data)
 	{
-		delete i;
+		delete i->thread_instance;
 	}
 }
 
@@ -52,15 +52,37 @@ void ComponentEngine::Engine::Start()
 	InitRenderer();
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
-	InitThread("Renderer", m_main_thread);
 	m_running = true;
+
+	m_thread_data_lock.lock();
+	ThreadData* data = new ThreadData();
+	data->thread_instance = nullptr;
+	data->name = "Renderer";
+	data->delta_time = SDL_GetPerformanceCounter();
+	data->frame_limited = true;
+	m_thread_data.push_back(data);
+	m_thread_linker[m_main_thread] = data;
+	m_thread_data_lock.unlock();
 }
 
-void ComponentEngine::Engine::AddThread(void(*function)(), const char* name)
+void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name)
 {
-	m_threads.push_back(new ThreadHandler(function));
+	if (m_threading)
+	{
 
-	InitThread(name, m_threads[m_threads.size() - 1]->get_id());
+		m_thread_data_lock.lock();
+		handler->StartThread();
+		ThreadData* data = new ThreadData();
+		data->thread_instance = handler;
+		data->name = name;
+		data->delta_time = SDL_GetPerformanceCounter();
+		data->frame_limited = true;
+		std::thread::id id = data->thread_instance->GetID();
+		m_thread_linker[id] = data;
+		m_thread_data.push_back(data);
+		m_thread_data_lock.unlock();
+	}
+
 }
 
 void ComponentEngine::Engine::Stop()
@@ -83,9 +105,12 @@ void ComponentEngine::Engine::Stop()
 
 void ComponentEngine::Engine::Join()
 {
-	for (auto i : m_threads)
+	for (auto i : m_thread_data)
 	{
-		i->join();
+		if (i->thread_instance != nullptr)
+		{
+			i->thread_instance->Join();
+		}
 	}
 }
 
@@ -94,13 +119,18 @@ bool ComponentEngine::Engine::Running()
 	NewThreadUpdatePass();
 	if (m_main_thread == std::this_thread::get_id())
 	{
-			if (m_request_stop)
-			{
-				m_request_stop = false;
-				Stop();
-			}
-			std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
-			bool result = m_renderer != nullptr && m_renderer->IsRunning();
+		if (m_request_stop)
+		{
+			m_request_stop = false;
+			Stop();
+		}
+		else if (m_request_toggle_threading)
+		{
+			m_request_toggle_threading = false;
+			ToggleThreading();
+		}
+		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+		bool result = m_renderer != nullptr && m_renderer->IsRunning();
 		
 		//GetRendererMutex().lock();
 		//GetRendererMutex().unlock();
@@ -122,6 +152,21 @@ bool ComponentEngine::Engine::Running(int ups)
 void ComponentEngine::Engine::Update()
 {
 	GetRendererMutex().lock();
+
+	if (m_main_thread == std::this_thread::get_id())
+	{
+		for (auto i : m_thread_data)
+		{
+			if (i->thread_instance != nullptr)
+			{
+				if (i->thread_instance->Joined())
+				{
+					i->thread_instance->Loop();
+				}
+			}
+		}
+	}
+
 	UpdateWindow();
 	GetRendererMutex().unlock();
 }
@@ -166,23 +211,36 @@ void ComponentEngine::Engine::RenderFrame()
 
 float ComponentEngine::Engine::Sync(int ups)
 {
-
 	std::thread::id id = std::this_thread::get_id();
-	ThreadData& data = m_thread_data[id];
-	data.requested_ups = ups;
+	m_thread_data_lock.lock();
+	ThreadData*& data = m_thread_linker[id];
+	data->requested_ups = ups;
 
 	float stop_time = GetThreadDeltaTime();
-	data.delta_process_time += stop_time;
-	data.delta_loop_time += stop_time;
+	data->delta_process_time += stop_time;
+	data->delta_loop_time += stop_time;
+
+	{
+		std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
+		if (!data->frame_limited)
+		{
+			m_thread_data_lock.unlock();
+			return data->loop_time;
+		}
+			
+	}
 
 	int pause_time = (int)(1000 / ups);
-	pause_time -= (int)(data.process_time * 1000.0f);
+	pause_time -= (int)(data->process_time * 1000.0f);
+	m_thread_data_lock.unlock();
 	std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
-
+	m_thread_data_lock.lock();
 	float start_time = GetThreadDeltaTime();
-	data.delta_loop_time += start_time;
+	data->delta_loop_time += start_time;
 
-	return data.loop_time;
+	float loop_time = data->loop_time;
+	m_thread_data_lock.unlock();
+	return loop_time;
 }
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
@@ -247,19 +305,22 @@ float ComponentEngine::Engine::GetThreadDeltaTime()
 {
 	std::thread::id id = std::this_thread::get_id();
 	Uint64 now = SDL_GetPerformanceCounter();
-	std::lock_guard<std::mutex> guard(m_locks[THREAD_DATA_LOCK]);
-	ThreadData& data = m_thread_data[id];
-	Uint64 last = data.delta_time;
-	data.delta_time = now;
+	m_thread_data_lock.lock();
+	ThreadData*& data = m_thread_linker[id];
+	Uint64 last = data->delta_time;
+	data->delta_time = now;
 	float temp = static_cast<float>((now - last) / (float)SDL_GetPerformanceFrequency());
+	m_thread_data_lock.unlock();
 	return temp;
 }
 
 float ComponentEngine::Engine::GetLastThreadTime()
 {
 	std::thread::id id = std::this_thread::get_id();
-	std::lock_guard<std::mutex> guard(m_locks[THREAD_DATA_LOCK]);
-	return m_thread_data[id].loop_time;
+	m_thread_data_lock.lock();
+	float loop_time = m_thread_linker[id]->loop_time;
+	m_thread_data_lock.unlock();
+	return loop_time;
 }
 
 ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
@@ -748,52 +809,120 @@ void ComponentEngine::Engine::DeInitImGUI()
 
 }
 
-void ComponentEngine::Engine::InitThread(const char * name, std::thread::id id)
-{
-	std::lock_guard<std::mutex> guard(m_locks[THREAD_DATA_LOCK]);
-	ThreadData& data = m_thread_data[id];
-	data.name = name;
-	data.delta_time = SDL_GetPerformanceCounter();
-
-
-
-}
-
 
 void ComponentEngine::Engine::NewThreadUpdatePass()
 {
 	std::thread::id id = std::this_thread::get_id();
-	ThreadData& data = m_thread_data[id];
+	ThreadData*& data = m_thread_linker[id];
 	float thread_last = GetThreadDeltaTime(); // Get the time from the last call to Sync or NewThreadUpdatePass
-	data.process_time = thread_last + data.delta_process_time; // Set the final time for data.process_time for this loop
-	data.loop_time = thread_last + data.delta_loop_time; // Set the final time for data.delta_loop_time for this loop
+	data->process_time = thread_last + data->delta_process_time; // Set the final time for data.process_time for this loop
+	data->loop_time = thread_last + data->delta_loop_time; // Set the final time for data.delta_loop_time for this loop
 
 
 
-	data.process_time_average_storage.push_back(data.process_time);
-	data.loop_time_average_storage.push_back(data.loop_time);
+	data->process_time_average_storage.push_back(data->process_time);
+	data->loop_time_average_storage.push_back(data->loop_time);
 
-	if (data.process_time_average_storage.size() >= 10)
+	if (data->process_time_average_storage.size() >= 10)
 	{
-		data.process_time_average = 0.0f;
-		data.loop_time_average = 0.0f;
-		for (int i = 0; i < data.process_time_average_storage.size(); i++)
+		data->process_time_average = 0.0f;
+		data->loop_time_average = 0.0f;
+		for (int i = 0; i < data->process_time_average_storage.size(); i++)
 		{
-			data.process_time_average += data.process_time_average_storage[i];
-			data.loop_time_average += data.loop_time_average_storage[i];
+			data->process_time_average += data->process_time_average_storage[i];
+			data->loop_time_average += data->loop_time_average_storage[i];
 		}
-		data.process_time_average /= data.process_time_average_storage.size();
-		data.loop_time_average /= data.loop_time_average_storage.size();
-		data.process_time_average_storage.clear();
-		data.loop_time_average_storage.clear();
+		data->process_time_average /= data->process_time_average_storage.size();
+		data->loop_time_average /= data->loop_time_average_storage.size();
+		data->process_time_average_storage.clear();
+		data->loop_time_average_storage.clear();
 	}
 	// Reset the process time delta and delta loop time for this loop
-	data.delta_process_time = 0.0f;
-	data.delta_loop_time = 0.0f; 
+	data->delta_process_time = 0.0f;
+	data->delta_loop_time = 0.0f;
 }
 
 
 void ComponentEngine::Engine::RequestStop()
 {
 	m_request_stop = true;
+}
+
+void ComponentEngine::Engine::RequestToggleThreading()
+{
+	m_request_toggle_threading = true;
+}
+
+void ComponentEngine::Engine::ToggleFrameLimiting()
+{
+	std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
+	std::thread::id id = std::this_thread::get_id();
+	ThreadData*& data = m_thread_linker[id];
+	data->frame_limited = !data->frame_limited;
+}
+
+bool ComponentEngine::Engine::Threading()
+{
+	return m_threading;
+}
+
+void ComponentEngine::Engine::ToggleThreading()
+{
+	m_threading = !m_threading;
+
+	for (int i = m_thread_data.size() - 1; i >= 0 ; i--)
+	{
+		auto it = m_thread_data.begin() + i;
+
+		ThreadData* data = *it;
+		data->ResetTimers();
+		if (data->thread_instance != nullptr)
+		{
+
+			if (!m_threading)
+			{
+				// Thread has to be stored this way otherwise it plays up and points to the wrong thing
+				std::thread::id id = data->thread_instance->GetID();
+
+				data->thread_instance->Join();
+
+				m_thread_data_lock.lock();
+
+				auto find = m_thread_linker.find(id);
+				if (find != m_thread_linker.end())
+				{
+					m_thread_linker.erase(find);
+				}
+				m_thread_data_lock.unlock();
+			}
+			else
+			{
+				m_thread_data_lock.lock();
+
+				data->thread_instance->StartThread();
+				// Thread has to be stored this way otherwise it plays up and points to the wrong thing
+				std::thread::id id = data->thread_instance->GetID();
+
+				m_thread_linker[id] = data;
+				m_thread_data_lock.unlock();
+			}
+
+
+
+
+		}
+
+	}
+
+}
+
+void ComponentEngine::Engine::ThreadData::ResetTimers()
+{
+	delta_process_time = 0.0f;
+	process_time = 0.0f;
+	process_time_average = 0.0f;
+	delta_loop_time = 0.0f;
+	loop_time = 0.0f;
+	loop_time_average = 0.0f;
+	delta_time = SDL_GetPerformanceCounter();
 }

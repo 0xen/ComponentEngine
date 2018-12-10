@@ -41,7 +41,7 @@ namespace ComponentEngine
 		static Engine* Singlton();
 		~Engine();
 		void Start();
-		void AddThread(void(*function)(), const char* name = (const char*)0);
+		void AddThread(ThreadHandler* handler, const char* name = (const char*)0);
 		void Stop();
 		void Join();
 		bool Running();
@@ -61,6 +61,7 @@ namespace ComponentEngine
 		IDescriptorPool* GetCameraPool();
 		IDescriptorSet* GetCameraDescriptorSet();
 		IDescriptorPool* GetTextureMapsPool();
+
 		float GetThreadDeltaTime();
 		float GetLastThreadTime();
 		ITextureBuffer* GetTexture(std::string path);
@@ -92,10 +93,13 @@ namespace ComponentEngine
 		void UpdateImGUI();
 		void DeInitImGUI();
 
-		void InitThread(const char* name, std::thread::id id);
-
 		void NewThreadUpdatePass();
 		void RequestStop();
+		void RequestToggleThreading();
+
+		void ToggleFrameLimiting();
+		bool Threading();
+		void ToggleThreading();
 
 		// Singlton instance of engine
 		static Engine* m_engine;
@@ -110,6 +114,9 @@ namespace ComponentEngine
 
 		bool m_running = false;
 		bool m_request_stop = false;
+		bool m_request_toggle_threading = false;
+		bool m_threading = true;
+
 		std::thread::id m_main_thread;
 
 		UIManager* m_ui;
@@ -150,14 +157,14 @@ namespace ComponentEngine
 			IModel* model = nullptr;
 		}m_imgui;
 
-		std::vector<ThreadHandler*> m_threads;
-		ordered_lock m_renderer_thread;
 
 
 
 		struct ThreadData
 		{
 			Uint64 delta_time;
+
+			void ResetTimers();
 
 			std::vector<float> process_time_average_storage;
 			float delta_process_time;
@@ -171,10 +178,18 @@ namespace ComponentEngine
 			// Requested Update Per Second
 			unsigned int requested_ups = 60; // Check for a average of 60 updates per second
 
+			bool frame_limited;
+
 			const char* name;
+
+			ThreadHandler* thread_instance = nullptr;
 		};
 
-		std::map<std::thread::id, ThreadData> m_thread_data;
+		ordered_lock m_renderer_thread;
+		ordered_lock m_thread_data_lock;
+
+		std::vector<ThreadData*> m_thread_data;
+		std::map<std::thread::id, ThreadData*> m_thread_linker;
 
 		std::map<std::string, ComponentTemplate> m_component_register;
 
@@ -183,7 +198,7 @@ namespace ComponentEngine
 
 
 		static const unsigned int IS_RUNNING_LOCK;
-		static const unsigned int THREAD_DATA_LOCK;
+		static const unsigned int TOGGLE_FRAME_LIMITING;
 
 		// Store the various locks that will be needed
 		std::mutex m_locks[2];

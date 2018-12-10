@@ -16,52 +16,86 @@ const int kUIUPS = 15;
 // Camera
 Transformation* camera;
 
-void UIThreadLoop()
+class UIThread : public ThreadHandler
 {
-	engine->UpdateUI();
-}
-
-void UIThread()
-{
-	while (engine->Running(kUIUPS))
+public:
+	UIThread() : ThreadHandler(kUIUPS) {}
+	virtual void Initilize()
 	{
-		UIThreadLoop();
-	}
-	std::cout << "b" << std::endl;
-}
 
-void LogicThreadInit()
+	}
+	virtual void Loop()
+	{
+		engine->UpdateUI();
+	}
+	virtual void Cleanup()
+	{
+		std::cout << "UI Shutdown" << std::endl;
+	}
+};
+
+class LogicThread : public ThreadHandler
 {
-	engine->GetRendererMutex().lock();
-	// Load the scene
-	engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
+public:
+	LogicThread() : ThreadHandler(kUPS) {}
+	virtual void Initilize()
+	{
+		engine->GetRendererMutex().lock();
+		// Load the scene
+		engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
 	
-	camera = engine->GetCameraTransformation();
-	camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
-	engine->GetRendererMutex().unlock();
-}
+		/*EntityManager& em = engine->GetEntityManager();
+		int width = 10;
+		int height = 10;
+		int depth = 10;
+		for (int x = -width / 2; x < width / 2; x++)
+		{
+			for (int y = -height / 2; y < height / 2; y++)
+			{
 
-void LogicThreadLoop(float thread_time)
-{
-	EntityManager& em = engine->GetEntityManager();
-	em.ForEach<Transformation, Mesh, RendererComponent>([thread_time](enteez::Entity* entity, Transformation& transformation, Mesh& mesh, RendererComponent& renderer)
-	{
+				for (int z = -depth; z < 0; z++)
+				{
+					enteez::Entity* ent = em.CreateEntity("Cube");
+					{
+						enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>(ent);
+						trans_wrapper->SetName("Transformation");
+						trans_wrapper->Get().Translate(glm::vec3(x, y, z));
+						trans_wrapper->Get().Scale(glm::vec3(0.8f, 0.8f, 0.8f));
+					}
+					{
+						enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
+						mesh->SetName("Mesh");
+					}
+					{
+						enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
+						renderer->SetName("Renderer");
+					}
+				}
+			}
+		}*/
 
-	}, true);
-	engine->UpdateScene();
-}
-
-void LogicThread()
-{
-	LogicThreadInit();
-	// Logic Updating
-	engine->UpdateScene();
-	while (engine->Running(kUPS))
-	{
-		LogicThreadLoop(engine->GetLastThreadTime());
+		camera = engine->GetCameraTransformation();
+		camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
+		engine->GetRendererMutex().unlock();
+		engine->UpdateScene();
 	}
-	std::cout << "a" << std::endl;
-}
+
+	virtual void Loop()
+	{
+		float thread_time = engine->GetLastThreadTime();
+		EntityManager& em = engine->GetEntityManager();
+		em.ForEach<Transformation, Mesh, RendererComponent>([thread_time](enteez::Entity* entity, Transformation& transformation, Mesh& mesh, RendererComponent& renderer)
+		{
+			transformation.Rotate(glm::vec3(0.0f, 90.0f * thread_time, 0.0f));
+		}, true);
+		engine->UpdateScene();
+	}
+
+	virtual void Cleanup()
+	{
+		std::cout << "Logic Shutdown" << std::endl;
+	}
+};
 
 int main(int argc, char **argv)
 {
@@ -69,30 +103,16 @@ int main(int argc, char **argv)
 	engine = Engine::Singlton();
 	engine->Start();
 
-	EntityManager& em = engine->GetEntityManager();
-	{
-		/*LogicThreadInit();
-		// Rendering
-		while (engine->Running())
-		{
-			UIThreadLoop();
-			LogicThreadLoop(engine->GetLastThreadTime());
-			engine->RenderFrame();
-			engine->Update();
-		}*/
-	}
-	{
-		engine->AddThread(LogicThread, "Logic");
-		engine->AddThread(UIThread, "UI");
-		EntityManager& em = engine->GetEntityManager();
-		// Rendering
-		while (engine->Running(60))
-		{
-			engine->RenderFrame();
-			engine->Update();
-		}
-	}
+	engine->AddThread(new LogicThread(), "Logic");
+	engine->AddThread(new UIThread(), "UI");
 
+	EntityManager& em = engine->GetEntityManager();
+	// Rendering
+	while (engine->Running(60))
+	{
+		engine->RenderFrame();
+		engine->Update();
+	}
 
 	engine->Join();
 	engine->Stop();
