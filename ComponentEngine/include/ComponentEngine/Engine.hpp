@@ -46,6 +46,7 @@ namespace ComponentEngine
 		void Join();
 		bool Running();
 		bool Running(int ups);
+		bool IsRunning(); // To be used, update safe and dose not call the thread timing reset
 		void Update();
 		void UpdateScene();
 		void UpdateUI();

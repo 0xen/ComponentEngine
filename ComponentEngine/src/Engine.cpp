@@ -19,6 +19,12 @@ const unsigned int Engine::TOGGLE_FRAME_LIMITING = 1;
 
 Engine* Engine::m_engine = nullptr;
 
+bool ComponentEngine::Engine::IsRunning()
+{
+	std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+	return m_running;
+}
+
 ComponentEngine::Engine::Engine()
 {
 }
@@ -87,7 +93,7 @@ void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name
 
 void ComponentEngine::Engine::Stop()
 {
-	if (!Running())
+	if (!IsRunning())
 	{
 		return;
 	}
@@ -131,7 +137,7 @@ bool ComponentEngine::Engine::Running()
 		}
 		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
 		bool result = m_renderer != nullptr && m_renderer->IsRunning();
-		
+
 		//GetRendererMutex().lock();
 		//GetRendererMutex().unlock();
 		return result;
@@ -218,19 +224,18 @@ float ComponentEngine::Engine::Sync(int ups)
 	data->data_lock.lock();
 	data->requested_ups = ups;
 
-	float stop_time = GetThreadDeltaTime();
-	data->delta_process_time += stop_time;
-	data->delta_loop_time += stop_time;
-
-	{
-		std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
+	
+		//std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
 		if (!data->frame_limited)
 		{
 			data->data_lock.unlock();
 			return data->loop_time;
 		}
-			
-	}
+	
+
+	float stop_time = GetThreadDeltaTime();
+	data->delta_process_time += stop_time;
+	data->delta_loop_time += stop_time;
 
 	int pause_time = (int)(1000 / ups);
 	pause_time -= (int)(data->process_time * 1000.0f);
@@ -313,7 +318,7 @@ float ComponentEngine::Engine::GetThreadDeltaTime()
 	data->data_lock.lock();
 	Uint64 last = data->delta_time;
 	data->delta_time = now;
-	float temp = static_cast<float>((now - last) / (float)SDL_GetPerformanceFrequency());
+	float temp = static_cast<float>((float)(now - last) / SDL_GetPerformanceFrequency());
 	data->data_lock.unlock();
 	return temp;
 }
@@ -325,7 +330,7 @@ float ComponentEngine::Engine::GetLastThreadTime()
 	if (it == m_thread_linker.end())return 0.0f;
 	ThreadData*& data = m_thread_linker[id];
 	data->data_lock.lock();
-	float loop_time = m_thread_linker[id]->loop_time;
+	float loop_time = data->loop_time;
 	data->data_lock.unlock();
 	return loop_time;
 }
@@ -787,7 +792,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 
 
 	GetRendererMutex().lock();
-	if (Running())
+	if (IsRunning())
 	{
 		m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
 		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
