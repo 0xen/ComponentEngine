@@ -85,7 +85,7 @@ namespace ComponentEngine
 
 	class Transformation;
 
-	class Mesh : public MsgRecive<RenderStatus>, public UI , public Logic, 
+	class Mesh : public MsgRecive<RenderStatus>, public UI , 
 		public MsgRecive<OnComponentEnter<Transformation>>, public MsgRecive<OnComponentExit<Transformation>>
 	{
 	public:
@@ -97,7 +97,6 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, RenderStatus& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<Transformation>& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentExit<Transformation>& message);
-		virtual void Update();
 		virtual void Display();
 		static void SetBufferData();
 		static void TransferToPrimaryBuffers();

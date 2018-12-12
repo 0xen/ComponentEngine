@@ -84,11 +84,6 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEx
 	//m_mesh_instance[m_path].model_position_array.erase(it);
 }
 
-void ComponentEngine::Mesh::Update()
-{
-
-}
-
 void ComponentEngine::Mesh::Display()
 {
 	ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);

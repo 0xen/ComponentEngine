@@ -8,7 +8,7 @@ const unsigned int ComponentEngine::UIManager::ADD_COMPONENT = 1;
 
 ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 {
-	m_indestructable_component_id = engine->GetEntityManager().GetBaseIndex<Indestructable>();
+	m_indestructable_component_id = engine->GetEntityManager().GetComponentIndex<Indestructable>();
 	m_open[SCENE] = true;
 	m_open[ADD_COMPONENT] = false;
 	m_thread_time_update_delay = 0.0f;
@@ -274,8 +274,10 @@ void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 
 void ComponentEngine::UIManager::RenderEntity(Entity * entity)
 {
+	bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
+
 	ImGui::Text("Component Count:%i", entity->GetComponentCount());
-	if (ImGui::Button("Add Component"))
+	if (!hasIndestructable && ImGui::Button("Add Component"))
 	{
 		m_open[ADD_COMPONENT] = true;
 	}
@@ -312,7 +314,7 @@ void ComponentEngine::UIManager::RenderAddComponent()
 	static int window_height = 80;
 	ImGui::SetNextWindowSize(ImVec2(226, window_height));
 	//ImGui::SetNextWindowPos(ImVec2(362, 25));
-	if (ImGui::Begin("Add Component", &m_open[ADD_COMPONENT], ImGuiWindowFlags_NoCollapse))
+	if (ImGui::Begin("Add Component", &m_open[ADD_COMPONENT], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
 	{
 		if (m_current_scene_focus.entity == nullptr) // No entity selected
 		{

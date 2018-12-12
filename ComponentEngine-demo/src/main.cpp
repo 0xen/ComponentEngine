@@ -2,7 +2,9 @@
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
 #include <EnteeZ\EnteeZ.hpp>
+#include <ItemHover.hpp>
 #include <iostream>
+
 using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
@@ -43,37 +45,6 @@ public:
 		engine->GetRendererMutex().lock();
 		// Load the scene
 		engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
-	
-		/*EntityManager& em = engine->GetEntityManager();
-		int width = 10;
-		int height = 10;
-		int depth = 10;
-		for (int x = -width / 2; x < width / 2; x++)
-		{
-			for (int y = -height / 2; y < height / 2; y++)
-			{
-
-				for (int z = -depth; z < 0; z++)
-				{
-					enteez::Entity* ent = em.CreateEntity("Cube");
-					{
-						enteez::ComponentWrapper<Transformation>* trans_wrapper = ent->AddComponent<Transformation>(ent);
-						trans_wrapper->SetName("Transformation");
-						trans_wrapper->Get().Translate(glm::vec3(x, y, z));
-						trans_wrapper->Get().Scale(glm::vec3(0.8f, 0.8f, 0.8f));
-					}
-					{
-						enteez::ComponentWrapper<Mesh>* mesh = ent->AddComponent<Mesh>(ent, "../../ComponentEngine-demo/Resources/Models/cube.obj");
-						mesh->SetName("Mesh");
-					}
-					{
-						enteez::ComponentWrapper<RendererComponent>* renderer = ent->AddComponent<RendererComponent>(ent);
-						renderer->SetName("Renderer");
-					}
-				}
-			}
-		}*/
-
 		camera = engine->GetCameraTransformation();
 		camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
 		engine->GetRendererMutex().unlock();
@@ -84,10 +55,15 @@ public:
 	{
 		float thread_time = engine->GetLastThreadTime();
 		EntityManager& em = engine->GetEntityManager();
-		em.ForEach<Transformation, Mesh, RendererComponent>([thread_time](enteez::Entity* entity, Transformation& transformation, Mesh& mesh, RendererComponent& renderer)
+
+		for (auto e : em.GetEntitys())
 		{
-			transformation.Rotate(glm::vec3(0.0f, 90.0f * thread_time, 0.0f));
-		}, true);
+			e->ForEach<Logic>([&](enteez::Entity* entity, Logic& logic)
+			{
+				logic.Update(thread_time);
+			});
+		}
+
 		engine->UpdateScene();
 	}
 
@@ -97,11 +73,19 @@ public:
 	}
 };
 
+void RegisterCustomComponents()
+{
+	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
+	engine->RegisterBase<ItemHover, Logic>();
+}
+
 int main(int argc, char **argv)
 {
 
 	engine = Engine::Singlton();
 	engine->Start();
+
+	RegisterCustomComponents();
 
 	// Render a frame so you know it has not crashed xD
 	engine->RenderFrame();

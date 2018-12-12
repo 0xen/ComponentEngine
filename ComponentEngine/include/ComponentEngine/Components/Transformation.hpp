@@ -52,6 +52,12 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
 		void Translate(glm::vec3 translation);
+		void SetWorldX(float x);
+		void SetWorldY(float y);
+		void SetWorldZ(float z);
+		float GetWorldX();
+		float GetWorldY();
+		float GetWorldZ();
 		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);
 		void Rotate(glm::vec3 angles);

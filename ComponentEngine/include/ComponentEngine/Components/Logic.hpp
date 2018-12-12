@@ -5,6 +5,6 @@ namespace ComponentEngine
 	class Logic
 	{
 	public:
-		virtual void Update() = 0;
+		virtual void Update(float frame_time) = 0;
 	};
 }

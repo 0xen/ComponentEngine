@@ -7,9 +7,11 @@ set(HAVE_LIBC TRUE)
 
 set(src
     src/main.cpp
+    src/ItemHover.cpp
 )
 
 set(headers
+    include/ItemHover.hpp
 )
 
 

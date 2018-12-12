@@ -489,7 +489,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	// Define what base classes each one of these components have
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
 	RegisterBase<RendererComponent, UI>();
-	RegisterBase<Mesh, Logic, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
+	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -677,8 +677,36 @@ void ComponentEngine::Engine::InitImGUI()
 	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 
+
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// light style from Pacôme Danhiez (user itamago) https://github.com/ocornut/imgui/pull/511#issuecomment-175719267
+	style.Alpha = 1.0f;
+	style.FrameRounding = 3.0f;
+	style.WindowBorderSize = 0.0f;
+
+	style.WindowRounding = 3.0f;
+	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
+
+
+	io.KeyMap[ImGuiKey_Tab] = SDL_SCANCODE_TAB;
+	io.KeyMap[ImGuiKey_LeftArrow] = SDL_SCANCODE_LEFT;
+	io.KeyMap[ImGuiKey_RightArrow] = SDL_SCANCODE_RIGHT;
+	io.KeyMap[ImGuiKey_UpArrow] = SDL_SCANCODE_UP;
+	io.KeyMap[ImGuiKey_DownArrow] = SDL_SCANCODE_DOWN;
+	io.KeyMap[ImGuiKey_End] = SDL_SCANCODE_END;
+	io.KeyMap[ImGuiKey_Insert] = SDL_SCANCODE_INSERT;
+	io.KeyMap[ImGuiKey_Delete] = SDL_SCANCODE_DELETE;
 	io.KeyMap[ImGuiKey_Backspace] = SDL_SCANCODE_BACKSPACE;
+	io.KeyMap[ImGuiKey_Space] = SDL_SCANCODE_SPACE;
 	io.KeyMap[ImGuiKey_Enter] = SDL_SCANCODE_RETURN;
+	io.KeyMap[ImGuiKey_Escape] = SDL_SCANCODE_ESCAPE;
+	io.KeyMap[ImGuiKey_A] = SDL_SCANCODE_A;
+	io.KeyMap[ImGuiKey_C] = SDL_SCANCODE_C;
+	io.KeyMap[ImGuiKey_V] = SDL_SCANCODE_V;
+	io.KeyMap[ImGuiKey_X] = SDL_SCANCODE_X;
+	io.KeyMap[ImGuiKey_Y] = SDL_SCANCODE_Y;
+	io.KeyMap[ImGuiKey_Z] = SDL_SCANCODE_Z;
 
 	// Init Screen Dim
 	m_imgui.m_screen_dim = glm::vec2(1080, 720);

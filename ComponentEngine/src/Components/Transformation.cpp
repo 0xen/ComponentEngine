@@ -30,6 +30,36 @@ void Transformation::Translate(glm::vec3 translation)
 	*m_mat4 = glm::translate(*m_mat4, translation);
 }
 
+void ComponentEngine::Transformation::SetWorldX(float x)
+{
+	(*m_mat4)[3][0] = x;
+}
+
+void ComponentEngine::Transformation::SetWorldY(float y)
+{
+	(*m_mat4)[3][1] = y;
+}
+
+void ComponentEngine::Transformation::SetWorldZ(float z)
+{
+	(*m_mat4)[3][2] = z;
+}
+
+float ComponentEngine::Transformation::GetWorldX()
+{
+	return (*m_mat4)[3][0];
+}
+
+float ComponentEngine::Transformation::GetWorldY()
+{
+	return (*m_mat4)[3][1];
+}
+
+float ComponentEngine::Transformation::GetWorldZ()
+{
+	return (*m_mat4)[3][2];
+}
+
 void Transformation::Scale(glm::vec3 scale)
 {
 	*m_mat4 = glm::scale(*m_mat4, scale);
