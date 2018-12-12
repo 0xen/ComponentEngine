@@ -4,6 +4,7 @@
 
 #include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
+#include <imgui.h>
 
 ComponentEngine::ItemHover::ItemHover(enteez::Entity * entity)
 {
@@ -11,6 +12,7 @@ ComponentEngine::ItemHover::ItemHover(enteez::Entity * entity)
 	m_delta_time = 0.0f;
 	m_last_move_distance = 0.0f;
 	m_move_distance = 0.5f;
+	m_spin_speed = 90.0f;
 }
 
 void ComponentEngine::ItemHover::Update(float frame_time)
@@ -27,8 +29,36 @@ void ComponentEngine::ItemHover::Update(float frame_time)
 	m_entity->GetComponent<Transformation>().SetWorldY(center_y_pos + m_last_move_distance);
 
 	// Rotate the object around the world Y
-	m_entity->GetComponent<Transformation>().Rotate(glm::vec3(0.0f, 90.0f * frame_time, 0.0f));
+	m_entity->GetComponent<Transformation>().Rotate(glm::vec3(0.0f, m_spin_speed * frame_time, 0.0f));
 }
+
+void ComponentEngine::ItemHover::Display()
+{
+	{
+		ImGui::PushID(0);
+		ImGui::Text("Move Distance");
+		float change = m_move_distance;
+		if (ImGui::InputFloat("", &change, 0.01f, 0.1f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			// Move the temp, but changed value into the main one
+			m_move_distance = change;
+		}
+		ImGui::PushItemWidth(-(ImGui::GetWindowContentRegionWidth() - ImGui::CalcItemWidth()));
+		ImGui::PopID();
+	}
+	{
+		ImGui::PushID(1);
+		ImGui::Text("Spin Speed");
+		float change = m_spin_speed;
+		if (ImGui::InputFloat("", &change, 1.0f, 10.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			// Move the temp, but changed value into the main one
+			m_spin_speed = change;
+		}
+		ImGui::PushItemWidth(-(ImGui::GetWindowContentRegionWidth() - ImGui::CalcItemWidth()));
+		ImGui::PopID();
+	}
+}//
 
 void ComponentEngine::ItemHover::EntityHookDefault(enteez::Entity & entity)
 {

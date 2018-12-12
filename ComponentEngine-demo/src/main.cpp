@@ -76,7 +76,7 @@ public:
 void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
-	engine->RegisterBase<ItemHover, Logic>();
+	engine->RegisterBase<ItemHover, Logic, UI>();
 }
 
 int main(int argc, char **argv)
