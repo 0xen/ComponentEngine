@@ -23,8 +23,10 @@ namespace ComponentEngine
 		float m_move_distance;
 		float m_last_move_distance;
 		float m_spin_speed;
+		float m_animation_duration_scalar;
+		bool m_running;
 	public:
-		ItemHover(enteez::Entity* entity);
+		ItemHover(enteez::Entity* entity, bool running = true);
 		virtual void Update(float frame_time);
 		virtual void Display();
 		static void EntityHookDefault(enteez::Entity& entity);
