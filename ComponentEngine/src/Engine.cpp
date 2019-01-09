@@ -642,13 +642,27 @@ void ComponentEngine::Engine::UpdateCameraProjection()
 	m_camera_component.projection[1][1] *= -1;
 }
 
-void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity)
+void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity, Entity* parent)
 {
 	std::string name = xml_entity.attribute("name").as_string();
 	enteez::Entity* entity = GetEntityManager().CreateEntity(name.size() > 0 ? name : "Object");
+
+	// For now manualy add transformation by default
+	Transformation::EntityHookDefault(*entity);
+
+
 	for (pugi::xml_node node : xml_entity.children("Component"))
 	{
 		AttachXMLComponent(node, entity);
+	}
+	for (pugi::xml_node node : xml_entity.children("GameObject"))
+	{
+		LoadXMLGameObject(node, entity);
+	}
+	// If this object has a parent, add it to the object
+	if (parent != nullptr)
+	{
+		entity->GetComponent<Transformation>().SetParent(parent);
 	}
 }
 

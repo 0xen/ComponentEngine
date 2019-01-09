@@ -33,12 +33,14 @@ namespace ComponentEngine
 		{
 			//MsgRecive<OnComponentEnter<Transformation>>
 			m_entity = entity;
+			m_local_mat4 = glm::mat4(1.0f);
 			m_mat4 = new glm::mat4(1.0f);
 			m_origional = true;
 			Send(m_entity, OnComponentEnter<Transformation>(this));
 		}
 		Transformation(enteez::Entity* entity, glm::mat4* mat4)
 		{
+			m_local_mat4 = glm::mat4(1.0f);
 			m_entity = entity;
 			m_mat4 = mat4;
 			m_origional = false;
@@ -61,11 +63,11 @@ namespace ComponentEngine
 		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);
 		void Rotate(glm::vec3 angles);
-		void SetParent(Transformation* parent);
+		void SetParent(enteez::Entity* parent);
 		// We are not responsible for the new memory. Needs 3rd part memory managment
 		void MemoryPointTo(glm::mat4* new_mat4, bool transfer_old_data = false);
 		glm::mat4& Get();
-		Transformation* GetParent();
+		enteez::Entity* GetParent();
 
 
 		static void EntityHookDefault(enteez::Entity& entity);
@@ -73,9 +75,13 @@ namespace ComponentEngine
 
 		friend class Mesh;
 	private:
+		void AddChild(Transformation* trans);
+		void PushToPositionArray();
 		enteez::Entity* m_entity;
 		glm::mat4* m_mat4;
-		Transformation* m_parent = nullptr;
+		glm::mat4 m_local_mat4;
+		enteez::Entity* m_parent = nullptr;
+		std::vector<Transformation*> m_children;
 		bool m_origional;
 	};
 }

@@ -87,7 +87,7 @@ namespace ComponentEngine
 
 		void UpdateCameraProjection();
 
-		void LoadXMLGameObject(pugi::xml_node& xml_entity);
+		void LoadXMLGameObject(pugi::xml_node& xml_entity, Entity* parent = nullptr);
 		void AttachXMLComponent(pugi::xml_node& xml_component, enteez::Entity* entity);
 
 		void InitImGUI();

@@ -17,58 +17,64 @@ void ComponentEngine::Transformation::MemoryPointTo(glm::mat4 * new_mat4, bool t
 		delete m_mat4;
 	}
 	m_mat4 = new_mat4;
+	PushToPositionArray();
 }
 
 glm::mat4 & Transformation::Get()
 {
-	if (m_parent == nullptr)return *m_mat4;
-	return *m_mat4 * m_parent->Get();
+	return *m_mat4;
 }
 
 void Transformation::Translate(glm::vec3 translation)
 {
-	*m_mat4 = glm::translate(*m_mat4, translation);
+	m_local_mat4 = glm::translate(m_local_mat4, translation);
+	PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::SetWorldX(float x)
 {
-	(*m_mat4)[3][0] = x;
+	(m_local_mat4)[3][0] = x;
+	PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::SetWorldY(float y)
 {
-	(*m_mat4)[3][1] = y;
+	(m_local_mat4)[3][1] = y;
+	PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::SetWorldZ(float z)
 {
-	(*m_mat4)[3][2] = z;
+	(m_local_mat4)[3][2] = z;
+	PushToPositionArray();
 }
 
 float ComponentEngine::Transformation::GetWorldX()
 {
-	return (*m_mat4)[3][0];
+	return (m_local_mat4)[3][0];
 }
 
 float ComponentEngine::Transformation::GetWorldY()
 {
-	return (*m_mat4)[3][1];
+	return (m_local_mat4)[3][1];
 }
 
 float ComponentEngine::Transformation::GetWorldZ()
 {
-	return (*m_mat4)[3][2];
+	return (m_local_mat4)[3][2];
 }
 
 void Transformation::Scale(glm::vec3 scale)
 {
-	*m_mat4 = glm::scale(*m_mat4, scale);
+	m_local_mat4 = glm::scale(m_local_mat4, scale);
+	PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 {
 	//m_rotation
-	*m_mat4 = glm::rotate(*m_mat4, angle, axis);
+	m_local_mat4 = glm::rotate(m_local_mat4, angle, axis);
+	PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, TransformationPtrRedirect & message)
@@ -83,7 +89,7 @@ void ComponentEngine::Transformation::Display()
 	glm::vec3 translation;
 	glm::vec3 skew;
 	glm::vec4 perspective;
-	glm::decompose(*m_mat4, scale, rotation, translation, skew, perspective);
+	glm::decompose(m_local_mat4, scale, rotation, translation, skew, perspective);
 	rotation = glm::conjugate(rotation);
 
 	ImGui::PushItemWidth(ImGui::GetWindowContentRegionWidth() - 10);
@@ -93,10 +99,11 @@ void ComponentEngine::Transformation::Display()
 		glm::vec3 change = translation;
 		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			*m_mat4 = glm::mat4(1.0f);
-			*m_mat4 = glm::translate(*m_mat4, change);
-			*m_mat4 *= glm::inverse(glm::toMat4(rotation));
-			*m_mat4 = glm::scale(*m_mat4, scale);
+			m_local_mat4 = glm::mat4(1.0f);
+			m_local_mat4 = glm::translate(m_local_mat4, change);
+			m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
+			m_local_mat4 = glm::scale(m_local_mat4, scale);
+			PushToPositionArray();
 		}
 		ImGui::PopID();
 	}
@@ -108,10 +115,11 @@ void ComponentEngine::Transformation::Display()
 		glm::vec3 change = glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z));
 		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			*m_mat4 = glm::mat4(1.0f);
-			*m_mat4 = glm::translate(*m_mat4, translation);
-			*m_mat4 *= glm::inverse(glm::toMat4(glm::quat(glm::vec3(glm::radians(change.x), glm::radians(change.y), glm::radians(change.z)))));
-			*m_mat4 = glm::scale(*m_mat4, scale);
+			m_local_mat4 = glm::mat4(1.0f);
+			m_local_mat4 = glm::translate(m_local_mat4, translation);
+			m_local_mat4 *= glm::inverse(glm::toMat4(glm::quat(glm::vec3(glm::radians(change.x), glm::radians(change.y), glm::radians(change.z)))));
+			m_local_mat4 = glm::scale(m_local_mat4, scale);
+			PushToPositionArray();
 		}
 		ImGui::PopID();
 	}
@@ -121,10 +129,11 @@ void ComponentEngine::Transformation::Display()
 		glm::vec3 change = scale;
 		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			*m_mat4 = glm::mat4(1.0f);
-			*m_mat4 = glm::translate(*m_mat4, translation);
-			*m_mat4 *= glm::inverse(glm::toMat4(rotation));
-			*m_mat4 = glm::scale(*m_mat4, change);
+			m_local_mat4 = glm::mat4(1.0f);
+			m_local_mat4 = glm::translate(m_local_mat4, translation);
+			m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
+			m_local_mat4 = glm::scale(m_local_mat4, change);
+			PushToPositionArray();
 		}
 		ImGui::PushItemWidth(-(ImGui::GetWindowContentRegionWidth() - ImGui::CalcItemWidth()));
 		ImGui::PopID();
@@ -138,12 +147,14 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 angles)
 	Rotate(glm::vec3(0.0f, 0.0f, 1.0f), glm::radians(angles.z));
 }
 
-void ComponentEngine::Transformation::SetParent(Transformation* parent)
+void ComponentEngine::Transformation::SetParent(enteez::Entity* parent)
 {
 	m_parent = parent;
+	m_parent->GetComponent<Transformation>().AddChild(this);
+	PushToPositionArray();
 }
 
-Transformation* ComponentEngine::Transformation::GetParent()
+enteez::Entity* ComponentEngine::Transformation::GetParent()
 {
 	return m_parent;
 }
@@ -188,5 +199,22 @@ void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pug
 	}
 
 
+}
+
+void ComponentEngine::Transformation::AddChild(Transformation * trans)
+{
+	m_children.push_back(trans);
+}
+
+void ComponentEngine::Transformation::PushToPositionArray()
+{
+	*m_mat4 = m_local_mat4;
+	if (m_parent != nullptr && m_parent->HasComponent<Transformation>())
+		(*m_mat4) *= m_parent->GetComponent<Transformation>().Get();
+
+	for (int i = 0; i < m_children.size(); i++)
+	{
+		m_children[i]->PushToPositionArray();
+	}
 }
 
