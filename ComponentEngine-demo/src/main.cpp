@@ -73,6 +73,7 @@ public:
 	}
 };
 
+
 void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);

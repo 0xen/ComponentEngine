@@ -210,7 +210,7 @@ void ComponentEngine::Transformation::PushToPositionArray()
 {
 	*m_mat4 = m_local_mat4;
 	if (m_parent != nullptr && m_parent->HasComponent<Transformation>())
-		(*m_mat4) *= m_parent->GetComponent<Transformation>().Get();
+		(*m_mat4) = m_parent->GetComponent<Transformation>().Get() * m_local_mat4;
 
 	for (int i = 0; i < m_children.size(); i++)
 	{

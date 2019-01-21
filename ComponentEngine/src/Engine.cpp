@@ -3,6 +3,7 @@
 
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
+#include <ComponentEngine\Components\ParticalSystem.hpp>
 #include <ComponentEngine\UIManager.hpp>
 
 #include <lodepng.h>
@@ -490,6 +491,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
 	RegisterBase<RendererComponent, UI>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
+	RegisterBase<ParticalSystem, Logic, UI>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -515,6 +517,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	m_camera_entity = this->GetEntityManager().CreateEntity("Camera");
 	//m_camera_entity->AddComponent(&m_camera_component);
+
 	ComponentWrapper<Indestructable>* indestructable_transformation = m_camera_entity->AddComponent<Indestructable>();
 	indestructable_transformation->SetName("Indestructable");
 	ComponentWrapper<Transformation>* camera_transformation = m_camera_entity->AddComponent<Transformation>(m_camera_entity);
@@ -624,6 +627,7 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
 	RegisterComponentBase("Mesh",nullptr, Mesh::EntityHook);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
+	RegisterComponentBase("ParticalSystem", ParticalSystem::EntityHookDefault, nullptr);
 	
 
 	RegisterComponentBase("Indestructable", nullptr, nullptr);
