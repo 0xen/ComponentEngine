@@ -64,6 +64,16 @@ float ComponentEngine::Transformation::GetWorldZ()
 	return (m_local_mat4)[3][2];
 }
 
+glm::vec3 ComponentEngine::Transformation::GetLocalPosition()
+{
+	return (m_local_mat4)[3];
+}
+
+glm::vec3 ComponentEngine::Transformation::GetWorldPosition()
+{
+	return (*m_mat4)[3];
+}
+
 void Transformation::Scale(glm::vec3 scale)
 {
 	m_local_mat4 = glm::scale(m_local_mat4, scale);

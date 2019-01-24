@@ -491,7 +491,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
 	RegisterBase<RendererComponent, UI>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
-	RegisterBase<ParticalSystem, Logic, UI>();
+	RegisterBase<ParticleSystem, Logic, UI>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -627,7 +627,7 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
 	RegisterComponentBase("Mesh",nullptr, Mesh::EntityHook);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
-	RegisterComponentBase("ParticalSystem", ParticalSystem::EntityHookDefault, nullptr);
+	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
 	
 
 	RegisterComponentBase("Indestructable", nullptr, nullptr);
@@ -756,7 +756,7 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline({
 		{ ShaderStage::VERTEX_SHADER, "../../ImGUI/vert.spv" },
 		{ ShaderStage::FRAGMENT_SHADER, "../../ImGUI/frag.spv" }
-		});
+		}, true);
 	m_imgui.m_imgui_pipeline->UseDepth(false);
 
 	m_imgui.m_imgui_pipeline->AttachVertexBinding({

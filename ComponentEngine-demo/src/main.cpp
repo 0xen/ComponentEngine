@@ -80,9 +80,62 @@ void RegisterCustomComponents()
 	engine->RegisterBase<ItemHover, Logic, UI>();
 }
 
+/*
+class DBConnection
+{
+	static DBConnection** m_instance;
+	static int count;
+	DBConnection()
+	{
+	}
+public:
+	static DBConnection * instance()
+	{
+		if (instance == nullptr)
+		{
+			m_instance = new DBConnection*[10];
+		}
+		if (count >= 10) return nullptr;
+		DBConnection*& ins = m_instance[count++];
+		return (ins = new DBConnection());
+	}
+};
+DBConnection** DBConnection::m_instance = nullptr;
+int DBConnection::count = 0;
+*/
+
+/*
+class DBConnection
+{
+protected:
+	DBConnection()
+	{
+
+	}
+public:
+	DBConnection * CreateInstance()
+	{
+		return new DBConnection();
+	}
+};
+
+class MySQL : public DBConnection
+{
+protected:
+	MySQL()
+	{
+
+	}
+public:
+	DBConnection * CreateInstance()
+	{
+		return new MySQL();
+	}
+};*/
+
+
 int main(int argc, char **argv)
 {
-
 	engine = Engine::Singlton();
 	engine->Start();
 

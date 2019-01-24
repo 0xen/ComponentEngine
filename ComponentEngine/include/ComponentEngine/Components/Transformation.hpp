@@ -60,6 +60,8 @@ namespace ComponentEngine
 		float GetWorldX();
 		float GetWorldY();
 		float GetWorldZ();
+		glm::vec3 GetLocalPosition();
+		glm::vec3 GetWorldPosition();
 		void Scale(glm::vec3 scale);
 		void Rotate(glm::vec3 axis, float angle);
 		void Rotate(glm::vec3 angles);

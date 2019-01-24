@@ -17,7 +17,7 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
-	//ImGui::ShowTestWindow();
+	ImGui::ShowTestWindow();
 
 	
 	RenderMainMenu();
