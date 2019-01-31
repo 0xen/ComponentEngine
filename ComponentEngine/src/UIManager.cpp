@@ -19,7 +19,7 @@ void ComponentEngine::UIManager::Render()
 	ImGui::NewFrame();
 	ImGui::ShowTestWindow();
 
-	
+
 	RenderMainMenu();
 	RenderFPSCounter();
 	if (m_open[SCENE]) RenderScene();
@@ -143,8 +143,10 @@ void ComponentEngine::UIManager::RenderScene()
 	//ImGui::SetNextWindowPos(ImVec2(10, 110));
 	if (ImGui::Begin("Scene Manager", &m_open[SCENE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
 	{
+
+
 		EntityManager& em = m_engine->GetEntityManager();
-		
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		static bool v_borders = false;
 		ImGui::Columns(2, NULL, v_borders);
@@ -155,15 +157,40 @@ void ComponentEngine::UIManager::RenderScene()
 				enteez::Entity* entity = em.CreateEntity("New Entity");
 				Transformation::EntityHookDefault(*entity);
 			}
-			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() / 2) , window_height - 50), false);
+			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() / 2), window_height - 50), false);
 			{
-				int i = 0;
-				for (auto entity : em.GetEntitys())
+
+				bool open = ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen);
+
+				if (ImGui::BeginDragDropTarget())
 				{
-					ImGui::PushID(i);
-					RenderEntityTreeNode(entity);
-					ImGui::PopID();
-					i++;
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EntityParent"))
+					{
+						IM_ASSERT(payload->DataSize == sizeof(Entity*));
+						Entity* child = *(Entity**)payload->Data;
+
+						child->GetComponent<Transformation>().SetParent(nullptr);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				if (open)
+				{
+
+					for (auto entity : em.GetEntitys())
+					{
+						if (entity->GetComponent<Transformation>().GetParent() == nullptr)
+						{
+							ImGui::PushID(entity);
+
+							RenderEntityTreeNode(entity);
+
+							ImGui::PopID();
+						}
+					}
+
+
+					ImGui::TreePop();
 				}
 				ImGui::EndChild();
 			}
@@ -210,7 +237,7 @@ void ComponentEngine::UIManager::RenderScene()
 						}
 					}
 				}
-				
+
 				if (m_current_scene_focus.component != nullptr)
 				{
 					// Title
@@ -252,7 +279,9 @@ void ComponentEngine::UIManager::RenderScene()
 
 void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 {
-	bool node_open = ImGui::TreeNode("GameObject", "%s", entity->GetName().c_str());
+
+
+	bool open = ImGui::TreeNodeEx("GameObject", ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow, "%s", entity->GetName().c_str());
 
 
 	if (ElementClicked())
@@ -262,13 +291,68 @@ void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 		ResetSceneFocusComponent();
 	}
 
-	if (node_open)
+	// Our buttons are both drag sources and drag targets here!
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 	{
+		ImGui::SetDragDropPayload("EntityParent", &entity, sizeof(Entity**));        // Set payload to carry the index of our item (could be anything)
+		ImGui::Text("Move %s", entity->GetName().c_str());
+		ImGui::EndDragDropSource();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EntityParent"))
+		{
+			IM_ASSERT(payload->DataSize == sizeof(Entity*));
+			Entity* child = *(Entity**)payload->Data;
+
+
+			bool notLooped = true;
+			Entity* currentParent = entity->GetComponent<Transformation>().GetParent();
+			while (currentParent != nullptr)
+			{
+				if (currentParent == child)
+				{
+					notLooped = false;
+					break;
+				}
+				currentParent = currentParent->GetComponent<Transformation>().GetParent();
+			}
+
+			if (notLooped)
+			{
+				child->GetComponent<Transformation>().SetParent(entity);
+			}
+
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+
+	if (open)
+	{
+
+
+		std::vector<Transformation*> children = entity->GetComponent<Transformation>().GetChildren();
+		for (auto child : children)
+		{
+			ImGui::PushID(child->GetEntity());
+
+			RenderEntityTreeNode(child->GetEntity());
+
+			ImGui::PopID();
+		}
+
+
+
 		entity->ForEach([entity, this](BaseComponentWrapper& wrapper)
 		{
-			if(wrapper.GetID() != m_indestructable_component_id)RenderComponentTreeNode(entity, wrapper);
+			if (wrapper.GetID() != m_indestructable_component_id)RenderComponentTreeNode(entity, wrapper);
 		});
+
+
 		ImGui::TreePop();
+
 	}
 }
 

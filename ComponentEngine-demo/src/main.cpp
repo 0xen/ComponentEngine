@@ -63,6 +63,19 @@ public:
 				logic.Update(thread_time);
 			});
 		}
+		
+
+		if (engine->KeyDown(SDL_SCANCODE_W))
+			engine->GetCameraTransformation()->MoveLocalZ(-10.0f * thread_time);
+		if (engine->KeyDown(SDL_SCANCODE_S))
+			engine->GetCameraTransformation()->MoveLocalZ(10.0f * thread_time);
+
+
+		if (engine->KeyDown(SDL_SCANCODE_A))
+			engine->GetCameraTransformation()->RotateWorldY(glm::radians(90.0f*thread_time));
+		if (engine->KeyDown(SDL_SCANCODE_D))
+			engine->GetCameraTransformation()->RotateWorldY(glm::radians(-90.0f*thread_time));
+
 
 		engine->UpdateScene();
 	}
@@ -74,64 +87,13 @@ public:
 };
 
 
+
 void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
 	engine->RegisterBase<ItemHover, Logic, UI>();
 }
-
-/*
-class DBConnection
-{
-	static DBConnection** m_instance;
-	static int count;
-	DBConnection()
-	{
-	}
-public:
-	static DBConnection * instance()
-	{
-		if (instance == nullptr)
-		{
-			m_instance = new DBConnection*[10];
-		}
-		if (count >= 10) return nullptr;
-		DBConnection*& ins = m_instance[count++];
-		return (ins = new DBConnection());
-	}
-};
-DBConnection** DBConnection::m_instance = nullptr;
-int DBConnection::count = 0;
-*/
-
-/*
-class DBConnection
-{
-protected:
-	DBConnection()
-	{
-
-	}
-public:
-	DBConnection * CreateInstance()
-	{
-		return new DBConnection();
-	}
-};
-
-class MySQL : public DBConnection
-{
-protected:
-	MySQL()
-	{
-
-	}
-public:
-	DBConnection * CreateInstance()
-	{
-		return new MySQL();
-	}
-};*/
+	
 
 
 int main(int argc, char **argv)
@@ -146,6 +108,7 @@ int main(int argc, char **argv)
 
 	engine->AddThread(new LogicThread(), "Logic");
 	engine->AddThread(new UIThread(), "UI");
+
 
 	// Rendering
 	while (engine->Running(60))

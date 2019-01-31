@@ -47,29 +47,18 @@ void main()
 {
 	uint ParticleIndex = gl_GlobalInvocationID.x;
 
-	if(particleConfig.maxLife / particleConfig.emmisionRate < ParticleIndex)
-	{
-		particleInstance[ParticleIndex].position.xyz = particleConfig.emiter;
-		particleInstance[ParticleIndex].position.w = 0;
-	}
-	else
-	{
-		particlePayloadsInstance[ParticleIndex].life -= particleConfig.updateTime;
+	particlePayloadsInstance[ParticleIndex].life -= particleConfig.updateTime;
 
-		if(particlePayloadsInstance[ParticleIndex].life < 0.0f)
-		{
-			particlePayloadsInstance[ParticleIndex].life += particleConfig.maxLife;
-			particlePayloadsInstance[ParticleIndex].origin = particleConfig.emiter;
-		}
+	if(particlePayloadsInstance[ParticleIndex].life < 0.0f)
+	{
+		particlePayloadsInstance[ParticleIndex].life += particleConfig.maxLife;
+		particlePayloadsInstance[ParticleIndex].origin = particleConfig.emiter;
+	}
 		
-		float mixRate = particlePayloadsInstance[ParticleIndex].life / particleConfig.maxLife;
+	float mixRate = particlePayloadsInstance[ParticleIndex].life / particleConfig.maxLife;
 
-		particleInstance[ParticleIndex].color = mix(particleConfig.endColor,particleConfig.startColor,mixRate);
-		particleInstance[ParticleIndex].position.xyz = particlePayloadsInstance[ParticleIndex].origin + (particlePayloadsInstance[ParticleIndex].velocity * (particleConfig.maxLife - particlePayloadsInstance[ParticleIndex].life));
-		particleInstance[ParticleIndex].position.w = particleConfig.scale;
-
-	}
-	
-
+	particleInstance[ParticleIndex].color = mix(particleConfig.endColor,particleConfig.startColor,mixRate);
+	particleInstance[ParticleIndex].position.xyz = particlePayloadsInstance[ParticleIndex].origin + (particlePayloadsInstance[ParticleIndex].velocity * (particleConfig.maxLife - particlePayloadsInstance[ParticleIndex].life));
+	particleInstance[ParticleIndex].position.w = particleConfig.scale;
 	
 }

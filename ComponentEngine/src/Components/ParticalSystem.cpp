@@ -12,6 +12,7 @@ ComponentEngine::ParticleSystem::ParticleSystem(enteez::Entity * entity)
 {
 	m_entity = entity;
 
+	// Initilize the system with default values
 	m_config.buffer_config.memory.updateTime = 0;
 	m_config.buffer_config.memory.totalTime = 0;
 	m_config.buffer_config.memory.maxLife = 4.0f;
@@ -26,6 +27,7 @@ ComponentEngine::ParticleSystem::ParticleSystem(enteez::Entity * entity)
 
 	m_config.directionalVelocity = 1.0f;
 
+	// Set the particle count to the count based on emission rates
 	m_particleCount = m_config.buffer_config.memory.maxLife / m_config.buffer_config.memory.emissionRate;
 
 	Build();
@@ -189,17 +191,17 @@ void ComponentEngine::ParticleSystem::Display()
 	ImGui::PushItemWidth(ImGui::GetWindowContentRegionWidth() - 10);
 	if (ImGui::CollapsingHeader("Color"))
 	{
-		static bool useColorRange = true;
+		static bool m_useColorRange = true;
 		{
-			if (ImGui::Checkbox("Use Color Range", &useColorRange))
+			if (ImGui::Checkbox("Use Color Range", &m_useColorRange))
 			{
-				if (!useColorRange)
+				if (!m_useColorRange)
 				{
 					m_config.buffer_config.memory.endColor = m_config.buffer_config.memory.startColor;
 				}
 			}
 		}
-		if (useColorRange)
+		if (m_useColorRange)
 		{
 			{ // Start color
 				ImGui::PushID(0);

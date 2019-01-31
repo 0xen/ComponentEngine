@@ -57,12 +57,26 @@ namespace ComponentEngine
 		void SetWorldX(float x);
 		void SetWorldY(float y);
 		void SetWorldZ(float z);
+
+		void MoveWorldX(float x);
+		void MoveWorldY(float y);
+		void MoveWorldZ(float z);
+
+		void MoveLocalX(float x);
+		void MoveLocalY(float y);
+		void MoveLocalZ(float z);
+
 		float GetWorldX();
 		float GetWorldY();
 		float GetWorldZ();
 		glm::vec3 GetLocalPosition();
 		glm::vec3 GetWorldPosition();
 		void Scale(glm::vec3 scale);
+
+		void RotateWorldX(float x);
+		void RotateWorldY(float y);
+		void RotateWorldZ(float z);
+
 		void Rotate(glm::vec3 axis, float angle);
 		void Rotate(glm::vec3 angles);
 		void SetParent(enteez::Entity* parent);
@@ -70,7 +84,10 @@ namespace ComponentEngine
 		void MemoryPointTo(glm::mat4* new_mat4, bool transfer_old_data = false);
 		glm::mat4& Get();
 		enteez::Entity* GetParent();
+		std::vector<Transformation*> GetChildren();
 
+
+		enteez::Entity* GetEntity();
 
 		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
@@ -78,6 +95,7 @@ namespace ComponentEngine
 		friend class Mesh;
 	private:
 		void AddChild(Transformation* trans);
+		void RemoveChild(Transformation* trans);
 		void PushToPositionArray();
 		enteez::Entity* m_entity;
 		glm::mat4* m_mat4;

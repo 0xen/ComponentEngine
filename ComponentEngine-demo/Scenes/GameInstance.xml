@@ -17,12 +17,11 @@
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
 					<Scale x="1.0f" y="1.0f" z="1.0f"/>
 				</Component>
-				<Component name="ParticleSystem">
-				</Component>
+
 
 			</GameObject>
 
-			<!--<GameObject name="Cube Parent">
+			<GameObject name="Cube Parent">
 				<Component name="Transformation">
 					<Position x="0.0f" y="1.0f" z="0.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
@@ -104,7 +103,7 @@
 					<Path value="../../ComponentEngine-demo/Resources/Models/teapot.obj"/>
 				</Component>
 				<Component name="Renderer"/>
-			</GameObject>-->
+			</GameObject>
 
 
 		</Scene>

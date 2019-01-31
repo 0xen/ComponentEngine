@@ -52,6 +52,7 @@ namespace ComponentEngine
 		void UpdateUI();
 		void Rebuild();
 		void RenderFrame();
+		bool KeyDown(int key);
 		float Sync(int ups);
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path, bool merge_scenes = false);
@@ -203,8 +204,11 @@ namespace ComponentEngine
 
 		static const unsigned int IS_RUNNING_LOCK;
 		static const unsigned int TOGGLE_FRAME_LIMITING;
+		static const unsigned int READ_KEY_PRESS;
 
 		// Store the various locks that will be needed
-		std::mutex m_locks[2];
+		std::mutex m_locks[3];
+
+		bool m_keys[256];
 	};
 }

@@ -17,6 +17,7 @@ using namespace Renderer;
 
 const unsigned int Engine::IS_RUNNING_LOCK = 0;
 const unsigned int Engine::TOGGLE_FRAME_LIMITING = 1;
+const unsigned int Engine::READ_KEY_PRESS = 2;
 
 Engine* Engine::m_engine = nullptr;
 
@@ -28,6 +29,12 @@ bool ComponentEngine::Engine::IsRunning()
 
 ComponentEngine::Engine::Engine()
 {
+	// Reset key codes
+	for (int i = 0; i < 256; i++)
+	{
+		m_keys[i] = false;
+	}
+
 }
 
 Engine* ComponentEngine::Engine::Singlton()
@@ -213,6 +220,12 @@ void ComponentEngine::Engine::RenderFrame()
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
 	GetRendererMutex().unlock();
+}
+
+bool ComponentEngine::Engine::KeyDown(int key)
+{
+	std::lock_guard<std::mutex> guard(m_locks[READ_KEY_PRESS]);
+	return m_keys[key];
 }
 
 
@@ -464,7 +477,11 @@ void ComponentEngine::Engine::UpdateWindow()
 			{
 				int key = event.key.keysym.scancode;
 				IM_ASSERT(key >= 0 && key < IM_ARRAYSIZE(io.KeysDown));
-				io.KeysDown[key] = (event.type == SDL_KEYDOWN);
+				{
+					std::lock_guard<std::mutex> guard(m_locks[READ_KEY_PRESS]);
+					// Set both our local key press array and imgui key press array
+					io.KeysDown[key] = m_keys[key] = (event.type == SDL_KEYDOWN);
+				}
 				io.KeyShift = ((SDL_GetModState() & KMOD_SHIFT) != 0);
 				io.KeyCtrl = ((SDL_GetModState() & KMOD_CTRL) != 0);
 				io.KeyAlt = ((SDL_GetModState() & KMOD_ALT) != 0);

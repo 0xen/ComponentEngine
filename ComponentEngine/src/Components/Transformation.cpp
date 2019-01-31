@@ -49,6 +49,54 @@ void ComponentEngine::Transformation::SetWorldZ(float z)
 	PushToPositionArray();
 }
 
+void ComponentEngine::Transformation::MoveWorldX(float x)
+{
+	(m_local_mat4)[3][0] += x;
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::MoveWorldY(float y)
+{
+	(m_local_mat4)[3][1] += y;
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::MoveWorldZ(float z)
+{
+	(m_local_mat4)[3][2] += z;
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::MoveLocalX(float x)
+{
+	glm::vec3 xFacing = m_local_mat4[0];
+	xFacing = glm::normalize(xFacing) * x;
+	(m_local_mat4)[3][0] += xFacing.x;
+	(m_local_mat4)[3][1] += xFacing.y;
+	(m_local_mat4)[3][2] += xFacing.z;
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::MoveLocalY(float y)
+{
+	glm::vec3 yFacing = m_local_mat4[1];
+	yFacing = glm::normalize(yFacing) * y;
+	(m_local_mat4)[3][0] += yFacing.x;
+	(m_local_mat4)[3][1] += yFacing.y;
+	(m_local_mat4)[3][2] += yFacing.z;
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::MoveLocalZ(float z)
+{
+	glm::vec3 zFacing = m_local_mat4[2];
+	zFacing = glm::normalize(zFacing) * z;
+	(m_local_mat4)[3][0] += zFacing.x;
+	(m_local_mat4)[3][1] += zFacing.y;
+	(m_local_mat4)[3][2] += zFacing.z;
+	PushToPositionArray();
+}
+
 float ComponentEngine::Transformation::GetWorldX()
 {
 	return (m_local_mat4)[3][0];
@@ -78,6 +126,21 @@ void Transformation::Scale(glm::vec3 scale)
 {
 	m_local_mat4 = glm::scale(m_local_mat4, scale);
 	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::RotateWorldX(float x)
+{
+	Rotate(glm::vec3(1.0f, 0.0f, 0.0f), x);
+}
+
+void ComponentEngine::Transformation::RotateWorldY(float y)
+{
+	Rotate(glm::vec3(0.0f, 1.0f, 0.0f), y);
+}
+
+void ComponentEngine::Transformation::RotateWorldZ(float z)
+{
+	Rotate(glm::vec3(0.0f, 0.0f, 1.0f), z);
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
@@ -159,14 +222,25 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 angles)
 
 void ComponentEngine::Transformation::SetParent(enteez::Entity* parent)
 {
+	if (m_parent != nullptr) m_parent->GetComponent<Transformation>().RemoveChild(this);
 	m_parent = parent;
-	m_parent->GetComponent<Transformation>().AddChild(this);
+	if (m_parent != nullptr) m_parent->GetComponent<Transformation>().AddChild(this);
 	PushToPositionArray();
 }
 
 enteez::Entity* ComponentEngine::Transformation::GetParent()
 {
 	return m_parent;
+}
+
+std::vector<Transformation*> ComponentEngine::Transformation::GetChildren()
+{
+	return m_children;
+}
+
+enteez::Entity * ComponentEngine::Transformation::GetEntity()
+{
+	return m_entity;
 }
 
 void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity & entity)
@@ -214,6 +288,15 @@ void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pug
 void ComponentEngine::Transformation::AddChild(Transformation * trans)
 {
 	m_children.push_back(trans);
+}
+
+void ComponentEngine::Transformation::RemoveChild(Transformation * trans)
+{
+	auto it = std::find(m_children.begin(), m_children.end(), trans);
+	if (it != m_children.end())
+	{
+		m_children.erase(it);
+	}
 }
 
 void ComponentEngine::Transformation::PushToPositionArray()

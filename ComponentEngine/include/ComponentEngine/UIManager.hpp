@@ -20,12 +20,16 @@ namespace ComponentEngine
 	private:
 		void RenderMainMenu();
 		void RenderFPSCounter();
+
 		// Scene render functions
 		void RenderScene();
 		void RenderEntityTreeNode(Entity* entity);
 		void RenderEntity(Entity* entity);
 		void RenderComponentTreeNode(Entity* entity, BaseComponentWrapper& wrapper);
 		void RenderComponent();
+
+
+
 		// Add component render functions
 		void RenderAddComponent();
 
