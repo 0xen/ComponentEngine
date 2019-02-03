@@ -39,3 +39,8 @@ void ComponentEngine::RendererComponent::Display()
 	}
 }
 
+void ComponentEngine::RendererComponent::ReciveMessage(enteez::Entity * sender, ComponentEngine::OnComponentEnter<Mesh>& message)
+{
+	Send(m_entity, RenderStatus(m_render));
+}
+

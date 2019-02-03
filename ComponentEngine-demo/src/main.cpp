@@ -44,7 +44,7 @@ public:
 	{
 		engine->GetRendererMutex().lock();
 		// Load the scene
-		engine->LoadScene("../../ComponentEngine-demo/Scenes/GameInstance.xml");
+		engine->LoadScene("../../ComponentEngine-demo/GameInstance.xml");
 		camera = engine->GetCameraTransformation();
 		camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
 		engine->GetRendererMutex().unlock();

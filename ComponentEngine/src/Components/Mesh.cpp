@@ -19,26 +19,30 @@ std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity), m_path(path), m_dir(Common::GetDir(m_path))
+ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
 {
 	m_loaded = false;
 	m_vertex_count = 0;
+	ChangePath(path);
 	LoadModel();
+
 }
 
 ComponentEngine::Mesh::~Mesh()
 {
-	// Stop rendering
-	for (int i = 0; i < m_sub_mesh_count; i++)
-	{
-		m_sub_meshes[i]->ShouldRender(false);
-	}
-	delete[] m_sub_meshes;
+	UnloadModel();
+}
+
+void ComponentEngine::Mesh::ChangePath(std::string path)
+{
+	m_file_path = DropBoxInstance<FileForms>("Mesh");
+	m_file_path.data.GenerateFileForm(path);
+	m_file_path.SetMessage(m_file_path.data.shortForm);
+	m_dir = Common::GetDir(m_file_path.data.longForm);
 }
 
 void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
 {
-
 	pugi::xml_node mesh_node = component_data.child("Path");
 	if (mesh_node)
 	{
@@ -57,7 +61,7 @@ void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node &
 
 std::string ComponentEngine::Mesh::GetPath()
 {
-	return m_path;
+	return m_file_path.data.longForm;
 }
 
 bool ComponentEngine::Mesh::Loaded()
@@ -75,7 +79,7 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, RenderStatus&
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEnter<Transformation>& message)
 {
-	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_path].model_position_array[m_mesh_index]);
+	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_file_path.data.longForm].model_position_array[m_mesh_index]);
 }
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentExit<Transformation>& message)
@@ -86,8 +90,24 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEx
 
 void ComponentEngine::Mesh::Display()
 {
+	ImGui::Text("Mesh Instance Count: %d", m_mesh_instance[m_file_path.data.longForm].used_instances);
 	ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
 	ImGui::Text("Vertex Count: %d", m_vertex_count);
+
+	DropBoxInstance<FileForms> tempFilePath = m_file_path;
+	if (UIManager::DropBox("Mesh File", "File", tempFilePath))
+	{
+		if (tempFilePath.data.extension == ".obj" && m_file_path.data.longForm != tempFilePath.data.longForm)
+		{
+			Engine::Singlton()->GetRendererMutex().lock();
+			tempFilePath.SetMessage(tempFilePath.data.shortForm);
+			UnloadModel();
+			m_file_path = tempFilePath;
+			LoadModel();
+			std::cout << m_file_path.data.longForm << std::endl;
+			Engine::Singlton()->GetRendererMutex().unlock();
+		}
+	}
 }
 
 void ComponentEngine::Mesh::SetBufferData()
@@ -108,7 +128,7 @@ void ComponentEngine::Mesh::TransferToPrimaryBuffers()
 
 void ComponentEngine::Mesh::LoadModel()
 {
-	auto it = m_mesh_instance.find(m_path);
+	auto it = m_mesh_instance.find(m_file_path.data.longForm);
 
 
 	if (it == m_mesh_instance.end())
@@ -119,7 +139,7 @@ void ComponentEngine::Mesh::LoadModel()
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
 		std::string err;
-		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, m_path.c_str(), m_dir.c_str());
+		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, m_file_path.data.longForm.c_str(), m_dir.c_str());
 		if (!err.empty())
 		{
 			std::cerr << err << std::endl;
@@ -172,7 +192,7 @@ void ComponentEngine::Mesh::LoadModel()
 		*/
 
 		// Create the mesh instance
-		MeshInstance& mesh_instance = m_mesh_instance[m_path];
+		MeshInstance& mesh_instance = m_mesh_instance[m_file_path.data.longForm];
 
 		// Create the model position buffers
 		mesh_instance.model_position_array = new glm::mat4[m_buffer_size_step];
@@ -275,7 +295,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 	}
 
-	MeshInstance& mesh_instance = m_mesh_instance[m_path];
+	MeshInstance& mesh_instance = m_mesh_instance[m_file_path.data.longForm];
 	// Store the amount of sub-meshes
 	m_sub_mesh_count = mesh_instance.total_pool_allocation;
 	// Create a imodel pointer array to store all sub-mesh materials
@@ -291,6 +311,8 @@ void ComponentEngine::Mesh::LoadModel()
 
 			IModel* model = material_meshe.model_pool->CreateModel();
 
+			m_mesh_index = model->GetModelPoolIndex();
+
 			m_vertex_count += material_meshe.model_pool->GetVertexBuffer()->GetElementCount(BufferSlot::Primary);
 
 			model->ShouldRender(false);
@@ -298,12 +320,10 @@ void ComponentEngine::Mesh::LoadModel()
 			m_sub_meshes[i++] = model;
 		}
 	}
-	
-	m_mesh_index = m_mesh_instance[m_path].used_instances;
 
 	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_index]));
 
-	m_mesh_instance[m_path].used_instances++;
+	m_mesh_instance[m_file_path.data.longForm].used_instances++;
 
 
 	/*
@@ -318,6 +338,20 @@ void ComponentEngine::Mesh::LoadModel()
 	m_model = model;
 	*/
 	m_loaded = true;
+	Send(m_entity, OnComponentEnter<Mesh>(this));
+}
+
+void ComponentEngine::Mesh::UnloadModel()
+{
+	for (int i = 0; i < m_sub_mesh_count; i++)
+	{
+		m_sub_meshes[i]->Remove();
+	}
+	delete[] m_sub_meshes;
+	m_sub_mesh_count = 0;
+	m_vertex_count = 0;
+	m_mesh_instance[m_file_path.data.longForm].used_instances--;
+	m_loaded = false;
 }
 
 void ComponentEngine::Mesh::CleanUp()

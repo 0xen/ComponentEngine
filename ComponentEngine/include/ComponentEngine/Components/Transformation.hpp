@@ -85,6 +85,7 @@ namespace ComponentEngine
 		glm::mat4& Get();
 		enteez::Entity* GetParent();
 		std::vector<Transformation*> GetChildren();
+		bool HasChildren();
 
 
 		enteez::Entity* GetEntity();

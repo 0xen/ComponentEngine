@@ -238,6 +238,11 @@ std::vector<Transformation*> ComponentEngine::Transformation::GetChildren()
 	return m_children;
 }
 
+bool ComponentEngine::Transformation::HasChildren()
+{
+	return m_children.size()>0;
+}
+
 enteez::Entity * ComponentEngine::Transformation::GetEntity()
 {
 	return m_entity;

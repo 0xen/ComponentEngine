@@ -68,6 +68,9 @@ namespace ComponentEngine
 		float GetLastThreadTime();
 		ITextureBuffer* GetTexture(std::string path);
 
+		std::string GetCurrentScene();
+		std::string GetCurrentSceneDirectory();
+
 		//ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
 
@@ -201,6 +204,8 @@ namespace ComponentEngine
 		std::map<std::string, void(*)(enteez::Entity& entity)> m_component_gui;
 		std::map<std::string, ITextureBuffer*> m_texture_storage;
 
+		std::string m_currentScene;
+		std::string m_currentSceneDirectory;
 
 		static const unsigned int IS_RUNNING_LOCK;
 		static const unsigned int TOGGLE_FRAME_LIMITING;

@@ -1,16 +1,19 @@
 ﻿#include <ComponentEngine\UIManager.hpp>
 #include <ComponentEngine\Components\UI.hpp>
 
+
 #include <imgui.h>
 
-const unsigned int ComponentEngine::UIManager::SCENE = 0;
-const unsigned int ComponentEngine::UIManager::ADD_COMPONENT = 1;
+const unsigned int ComponentEngine::UIManager::SCENE_HIERARCHY = 0;
+const unsigned int ComponentEngine::UIManager::COMPONENT_HIERARCHY = 1;
+const unsigned int ComponentEngine::UIManager::EXPLORER = 2;
 
 ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 {
 	m_indestructable_component_id = engine->GetEntityManager().GetComponentIndex<Indestructable>();
-	m_open[SCENE] = true;
-	m_open[ADD_COMPONENT] = false;
+	m_open[SCENE_HIERARCHY] = true;
+	m_open[EXPLORER] = true;
+	m_open[COMPONENT_HIERARCHY] = true;
 	m_thread_time_update_delay = 0.0f;
 }
 
@@ -19,11 +22,12 @@ void ComponentEngine::UIManager::Render()
 	ImGui::NewFrame();
 	ImGui::ShowTestWindow();
 
-
+	DockSpace();
 	RenderMainMenu();
-	RenderFPSCounter();
-	if (m_open[SCENE]) RenderScene();
-	if (m_open[ADD_COMPONENT]) RenderAddComponent();
+	//RenderFPSCounter();
+	if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
+	if (m_open[COMPONENT_HIERARCHY]) RenderComponentHierarchy();
+	if (m_open[EXPLORER]) RendererExplorer();
 
 
 	ImGui::Render();
@@ -58,8 +62,9 @@ void ComponentEngine::UIManager::RenderMainMenu()
 
 		if (ImGui::BeginMenu("Window"))
 		{
-			ImGui::MenuItem("Scene Manager", NULL, &m_open[SCENE]);
-			ImGui::MenuItem("Add Component", NULL, &m_open[ADD_COMPONENT]);
+			ImGui::MenuItem("Scene Hierarchy", NULL, &m_open[SCENE_HIERARCHY]);
+			ImGui::MenuItem("Component Hierarchy", NULL, &m_open[COMPONENT_HIERARCHY]);
+			ImGui::MenuItem("Explorer", NULL, &m_open[EXPLORER]);
 			ImGui::EndMenu();
 		}
 
@@ -72,7 +77,8 @@ void ComponentEngine::UIManager::RenderFPSCounter()
 	ImVec2 window_pos = ImVec2(10.0f, 25.0f);
 	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always);
 	bool open = true;
-	if (ImGui::Begin("", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
+
+	if (ImGui::Begin("FPS_COUNTER", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		//ImGui::Text("FPS:%i  TPS:%f", 1000.0f / io.Framerate, 0.0f);
@@ -136,42 +142,165 @@ void ComponentEngine::UIManager::RenderFPSCounter()
 	ImGui::End();
 }
 
-void ComponentEngine::UIManager::RenderScene()
+void ComponentEngine::UIManager::DockSpace()
+{
+	static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_PassthruDockspace;
+
+	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+	// because it would be confusing to have two docking targets within each others.
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::SetNextWindowBgAlpha(0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+	// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+	if (opt_flags & ImGuiDockNodeFlags_PassthruDockspace)
+		window_flags |= ImGuiWindowFlags_NoBackground;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	static bool open = true;
+	ImGui::Begin("Main DockSpace", &open, window_flags);
+	ImGui::PopStyleVar();
+
+	ImGui::PopStyleVar(2);
+
+	// Dockspace
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	{
+		ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), opt_flags);
+	}
+	else
+	{
+		assert(0 && "Dockspace not enabled!!! Needed in experimental branch of imgui");
+	}
+
+	ImGui::End();
+
+}
+
+void ComponentEngine::UIManager::RendererExplorer()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
-	//ImGui::SetNextWindowPos(ImVec2(10, 110));
-	if (ImGui::Begin("Scene Manager", &m_open[SCENE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize))
+	if (ImGui::Begin("Explorer", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	{
+		if (sceneFolder.path.longForm != Engine::Singlton()->GetCurrentSceneDirectory())
+		{
+			sceneFolder = Folder();
+			sceneFolder.path.longForm = Engine::Singlton()->GetCurrentSceneDirectory();
+			sceneFolder.path.shortForm = "/";
+			LoadFolder(sceneFolder);
+
+
+
+
+		}
+
+
+		RendererFolder(sceneFolder);
+		
+		/*
+		static ComponentDropInstance<Transformation> inst("Transformation");
+		if (ComponentDropBox<Transformation>("PLayer Transformation",inst))
+		{
+
+
+			inst.component->MoveWorldZ(-5);
+
+		}
+
+		ImGui::Button("Some mesh");
+
+		static std::string heya = "somePath/mesh.obj";
+		DropPayload("Mesh", heya.c_str(), &heya, sizeof(heya));
+
+
+		static StringDropInstance inst2("Mesh");
+		if (StringDropBox("Mesh", "Mesh", inst2))
+		{
+			std::cout << inst2.data << std::endl;
+		}*/
+
+
+
+	}
+	ImGui::End();
+}
+
+void ComponentEngine::UIManager::RendererFolder(Folder & folder)
+{
+	LoadFolder(folder);
+
+	ImGui::PushID(&folder);
+
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+	
+	bool open = ImGui::TreeNodeEx("Folder", flags, "%s", folder.path.shortForm.c_str());
+
+
+	if (open)
 	{
 
+		for (auto& childFolder : folder.folders)
+		{
+			RendererFolder(childFolder);
+		}
 
+		for (auto& childFiles : folder.files)
+		{
+			ImGui::PushID(&childFiles);
+			ImGui::TreeNodeEx("File", ImGuiTreeNodeFlags_Leaf, "%s", childFiles.shortForm.c_str());
+
+			{ // File drag
+				DropPayload("File", childFiles.shortForm.c_str(), &childFiles, sizeof(FileForms));
+			}
+
+			ImGui::TreePop();
+			ImGui::PopID();
+		}
+
+
+		ImGui::TreePop();
+	}
+	ImGui::PopID();
+}
+
+void ComponentEngine::UIManager::RenderSceneHierarchy()
+{
+	static int window_height = 370;
+	ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	if (ImGui::Begin("Scene Hierarchy", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	{
 		EntityManager& em = m_engine->GetEntityManager();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-		static bool v_borders = false;
-		ImGui::Columns(2, NULL, v_borders);
+
 		{
-			// Add Entity
-			if (ImGui::Button("Add"))
-			{
-				enteez::Entity* entity = em.CreateEntity("New Entity");
-				Transformation::EntityHookDefault(*entity);
-			}
-			ImGui::BeginChild("Child1", ImVec2((ImGui::GetWindowContentRegionWidth() / 2), window_height - 50), false);
+
+			ImGui::BeginChild("Child1", ImVec2(0.0f,0.0f), false);
 			{
 
 				bool open = ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen);
 
-				if (ImGui::BeginDragDropTarget())
-				{
-					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EntityParent"))
-					{
-						IM_ASSERT(payload->DataSize == sizeof(Entity*));
-						Entity* child = *(Entity**)payload->Data;
+				AddEntityDialougeMenu(nullptr);
 
-						child->GetComponent<Transformation>().SetParent(nullptr);
-					}
-					ImGui::EndDragDropTarget();
+
+				const ImGuiPayload* payload = nullptr;
+				if (DropTarget("Entity", payload))
+				{
+					IM_ASSERT(payload->DataSize == sizeof(Entity*));
+					Entity* child = *(Entity**)payload->Data;
+
+					child->GetComponent<Transformation>().SetParent(nullptr);
 				}
 
 				if (open)
@@ -196,25 +325,51 @@ void ComponentEngine::UIManager::RenderScene()
 			}
 		}
 
-		ImGui::NextColumn();
+		ImGui::Columns(1);
+		ImGui::PopStyleVar();
+
+
+	}
+	ImGui::End();
+}
+
+void ComponentEngine::UIManager::RenderComponentHierarchy()
+{
+
+	static int window_height = 370;
+	ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	static bool v_borders = false;
+	if (ImGui::Begin("Components", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	{
+		EntityManager& em = m_engine->GetEntityManager();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 
 		{
-			ImGui::BeginChild("Child2", ImVec2((ImGui::GetWindowContentRegionWidth() / 2), window_height - 50), false);
+			
+
+			ImGui::BeginChild("Child2", ImVec2(0.0f, 0.0f), false);
 			{
 				{
 					if (m_current_scene_focus.entity != nullptr)
 					{
+						bool entityBeenDestroyed = false;
 						// Title
 						{
 							ImGui::Columns(2, NULL, v_borders);
 							ImGui::Separator();
-							ImGui::PushID(1); // Button scope 1
+							ImGui::PushID(m_current_scene_focus.entity); // Button scope 1
 							bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
-							if (!hasIndestructable && ImGui::SmallButton("X"))
+
+							entityBeenDestroyed = !hasIndestructable && ImGui::SmallButton("X");
+
+							if (entityBeenDestroyed)
 							{
-								m_current_scene_focus.entity->Destroy();
+								// Loop through all children and destroy them
+								DestroyEntity(m_current_scene_focus.entity);
+
 								ResetSceneFocusEntity();
-								ResetSceneFocusComponent();
+								//ResetSceneFocusComponent();
 							}
 							else
 							{
@@ -228,112 +383,131 @@ void ComponentEngine::UIManager::RenderScene()
 								ImGui::Separator();
 							}
 							ImGui::PopID();
+
+
+
 						}
-					}
-					if (m_current_scene_focus.entity != nullptr)
-					{
+						if (!entityBeenDestroyed)
 						{// Body
 							RenderEntity(m_current_scene_focus.entity);
 						}
+
+						if (!entityBeenDestroyed)
+						{ // Components
+							m_current_scene_focus.entity->ForEach<UI>([this](Entity* entity, BaseComponentWrapper& wrapper, UI* ui)
+							{
+								bool componentBeenDestroyed = false;
+								// Title
+								{
+									ImGui::Columns(2);
+									ImGui::Separator();
+									ImGui::PushID(wrapper.GetComponentPtr());
+
+									bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>() || wrapper.GetName() == "Transformation";
+
+									componentBeenDestroyed = !hasIndestructable && ImGui::SmallButton("X");
+
+									if (componentBeenDestroyed)
+									{
+										m_current_scene_focus.entity->RemoveComponent(wrapper.GetComponentPtr());
+									}
+									else
+									{
+										if (!hasIndestructable)ImGui::SameLine();
+										ImGui::Text("Component");
+										ImGui::NextColumn();
+										ImGui::Text(wrapper.GetName().c_str());
+										ImGui::Columns(1);
+										ImGui::Separator();
+									}
+									ImGui::PopID();
+								}
+								if(!componentBeenDestroyed)
+								{ // Body
+									ui->Display();
+								}
+							});
+						}
+
+						
+
+
+
+
 					}
 				}
 
-				if (m_current_scene_focus.component != nullptr)
-				{
-					// Title
-					{
-						ImGui::Columns(2);
-						ImGui::Separator();
-						ImGui::PushID(2); // Button scope 2
-						bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>() || m_current_scene_focus.component->GetName() == "Transformation";
-						if (!hasIndestructable && ImGui::SmallButton("X"))
-						{
-							m_current_scene_focus.entity->RemoveComponent(m_current_scene_focus.component->GetComponentPtr());
-							m_current_scene_focus.component = nullptr;
-						}
-						else
-						{
-							if (!hasIndestructable)ImGui::SameLine();
-							ImGui::Text("Component");
-							ImGui::NextColumn();
-							ImGui::Text(m_current_scene_focus.component->GetName().c_str());
-							ImGui::Columns(1);
-							ImGui::Separator();
-						}
-						ImGui::PopID();
-					}
-					{ // Body
-						RenderComponent();
-					}
-				}
 				ImGui::EndChild();
 			}
+
+
 		}
+
 		ImGui::Columns(1);
 		ImGui::PopStyleVar();
 
 
 	}
 	ImGui::End();
+
 }
+
 
 void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 {
 
+	Transformation& entityTeansformation = entity->GetComponent<Transformation>();
 
-	bool open = ImGui::TreeNodeEx("GameObject", ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow, "%s", entity->GetName().c_str());
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+	if (!entityTeansformation.HasChildren())
+	{
+		flags |= ImGuiTreeNodeFlags_Leaf;
+	}
+	bool open = ImGui::TreeNodeEx("GameObject", flags, "%s", entity->GetName().c_str());
 
+	AddEntityDialougeMenu(entity);
 
 	if (ElementClicked())
 	{
 		ResetSceneFocusEntity();
 		m_current_scene_focus.entity = entity;
-		ResetSceneFocusComponent();
+		//ResetSceneFocusComponent();
 	}
 
-	// Our buttons are both drag sources and drag targets here!
-	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-	{
-		ImGui::SetDragDropPayload("EntityParent", &entity, sizeof(Entity**));        // Set payload to carry the index of our item (could be anything)
-		ImGui::Text("Move %s", entity->GetName().c_str());
-		ImGui::EndDragDropSource();
-	}
+	DropPayload("Entity", entity->GetName().c_str(), &entity, sizeof(Entity*));
 
-	if (ImGui::BeginDragDropTarget())
+
+
+	const ImGuiPayload* payload = nullptr;
+	if (DropTarget("Entity", payload))
 	{
-		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("EntityParent"))
+		IM_ASSERT(payload->DataSize == sizeof(Entity*));
+		Entity* child = *(Entity**)payload->Data;
+
+		bool notLooped = true;
+		Entity* currentParent = entity->GetComponent<Transformation>().GetParent();
+		while (currentParent != nullptr)
 		{
-			IM_ASSERT(payload->DataSize == sizeof(Entity*));
-			Entity* child = *(Entity**)payload->Data;
-
-
-			bool notLooped = true;
-			Entity* currentParent = entity->GetComponent<Transformation>().GetParent();
-			while (currentParent != nullptr)
+			if (currentParent == child)
 			{
-				if (currentParent == child)
-				{
-					notLooped = false;
-					break;
-				}
-				currentParent = currentParent->GetComponent<Transformation>().GetParent();
+				notLooped = false;
+				break;
 			}
-
-			if (notLooped)
-			{
-				child->GetComponent<Transformation>().SetParent(entity);
-			}
-
+			currentParent = currentParent->GetComponent<Transformation>().GetParent();
 		}
-		ImGui::EndDragDropTarget();
+
+		if (notLooped)
+		{
+			child->GetComponent<Transformation>().SetParent(entity);
+		}
+
 	}
 
 
 	if (open)
 	{
 
-
-		std::vector<Transformation*> children = entity->GetComponent<Transformation>().GetChildren();
+		std::vector<Transformation*> children = entityTeansformation.GetChildren();
 		for (auto child : children)
 		{
 			ImGui::PushID(child->GetEntity());
@@ -342,14 +516,6 @@ void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 
 			ImGui::PopID();
 		}
-
-
-
-		entity->ForEach([entity, this](BaseComponentWrapper& wrapper)
-		{
-			if (wrapper.GetID() != m_indestructable_component_id)RenderComponentTreeNode(entity, wrapper);
-		});
-
 
 		ImGui::TreePop();
 
@@ -361,89 +527,22 @@ void ComponentEngine::UIManager::RenderEntity(Entity * entity)
 	bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
 
 	ImGui::Text("Component Count:%i", entity->GetComponentCount());
-	if (!hasIndestructable && ImGui::Button("Add Component"))
-	{
-		m_open[ADD_COMPONENT] = true;
-	}
+	AddComponentDialougeMenu();
 }
 
-void ComponentEngine::UIManager::RenderComponentTreeNode(Entity* entity, BaseComponentWrapper & wrapper)
+void ComponentEngine::UIManager::DestroyEntity(Entity * entity)
 {
-	ImGui::TreeNodeEx("Component", ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet, "%s", wrapper.GetName().c_str());
-
-	if (ElementClicked())
+	Transformation& transformation = entity->GetComponent<Transformation>();
+	if (transformation.HasChildren())
 	{
-		m_current_scene_focus.entity = entity;
-		m_current_scene_focus.component = &wrapper;
-	}
-
-}
-
-void ComponentEngine::UIManager::RenderComponent()
-{
-	if (m_current_scene_focus.entity == nullptr || m_current_scene_focus.component == nullptr)return;
-
-	m_current_scene_focus.entity->ForEach<UI>([this](Entity* entity, BaseComponentWrapper& wrapper, UI* ui)
-	{
-		if (m_current_scene_focus.component->GetComponentPtr() == wrapper.GetComponentPtr())
+		for (auto t : transformation.GetChildren())
 		{
-			ui->Display();
-		}
-	});
-
-}
-
-void ComponentEngine::UIManager::RenderAddComponent()
-{
-	static int window_height = 80;
-	ImGui::SetNextWindowSize(ImVec2(226, window_height));
-	//ImGui::SetNextWindowPos(ImVec2(362, 25));
-	if (ImGui::Begin("Add Component", &m_open[ADD_COMPONENT], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
-	{
-		if (m_current_scene_focus.entity == nullptr) // No entity selected
-		{
-			ImGui::Text("No Entity Selected");
-		}
-		else // Entity selected
-		{
-			static std::string item_current = "Renderer";
-			if (ImGui::BeginCombo("Component", item_current.c_str()))
-			{
-				for (auto it : m_engine->m_component_register)
-				{
-					if (it.second.default_initilizer!=nullptr)
-					{
-						bool is_selected = (item_current == it.first);
-						if (ImGui::Selectable(it.first.c_str(), is_selected))
-						{
-							item_current = it.first;
-						}
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-					}
-				}
-				ImGui::EndCombo();
-			}
-			bool selected = ImGui::Button("Add");
-			if (selected)
-			{
-				auto it = m_engine->m_component_register.find(item_current);
-				if (it != m_engine->m_component_register.end())
-				{
-					if (it->second.default_initilizer != nullptr)
-					{
-						// In-case we replace the current component with a new one, we want to forget the old one now
-						m_current_scene_focus.component = nullptr;
-						it->second.default_initilizer(*m_current_scene_focus.entity);
-					}
-				}
-				m_open[ADD_COMPONENT] = false;
-			}
-
+			DestroyEntity(t->GetEntity());
 		}
 	}
-	ImGui::End();
+	entity->Destroy();
 }
+
 
 bool ComponentEngine::UIManager::ElementClicked()
 {
@@ -500,9 +599,72 @@ void ComponentEngine::UIManager::ResetSceneFocusEntity()
 	}
 }
 
-void ComponentEngine::UIManager::ResetSceneFocusComponent()
+// Use this after creating a component to add a right click menu to it
+void ComponentEngine::UIManager::AddEntityDialougeMenu(Entity * parent)
 {
-	m_current_scene_focus.component = nullptr;
+	if (ImGui::BeginPopupContextItem("Add Entity Menu"))
+	{
+		if (ImGui::Selectable("Add Entity"))
+		{
+			EntityManager& em = m_engine->GetEntityManager();
+			enteez::Entity* entity = em.CreateEntity("New Entity");
+			Transformation& a = entity->AddComponent<Transformation>(entity)->Get();
+			a.SetParent(parent);
+		}
+		ImGui::EndPopup();
+	}
+}
+
+void ComponentEngine::UIManager::AddComponentDialougeMenu()
+{
+	if (ImGui::Button("Add Component"))
+		ImGui::OpenPopup("AddComponentPopup");
+	if (ImGui::BeginPopup("AddComponentPopup"))
+	{
+		if (m_current_scene_focus.entity == nullptr) // No entity selected
+		{
+			ImGui::Text("No Entity Selected");
+		}
+		else // Entity selected
+		{
+			static std::string item_current = "Renderer";
+			if (ImGui::BeginCombo("Component", item_current.c_str()))
+			{
+				for (auto it : m_engine->m_component_register)
+				{
+					if (it.second.default_initilizer != nullptr)
+					{
+						bool is_selected = (item_current == it.first);
+						if (ImGui::Selectable(it.first.c_str(), is_selected))
+						{
+							item_current = it.first;
+						}
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+			bool selected = ImGui::Button("Add");
+			if (selected)
+			{
+				auto it = m_engine->m_component_register.find(item_current);
+				if (it != m_engine->m_component_register.end())
+				{
+					if (it->second.default_initilizer != nullptr)
+					{
+						// In-case we replace the current component with a new one, we want to forget the old one now
+						it->second.default_initilizer(*m_current_scene_focus.entity);
+					}
+				}
+				ImGui::CloseCurrentPopup();
+			}
+
+		}
+
+
+		ImGui::EndPopup();
+	}
 }
 
 void ComponentEngine::UIManager::Tooltip(const char * text)
@@ -515,4 +677,81 @@ void ComponentEngine::UIManager::Tooltip(const char * text)
 		ImGui::PopTextWrapPos();
 		ImGui::EndTooltip();
 	}
+}
+
+bool ComponentEngine::UIManager::DropTarget(const char * type,const ImGuiPayload *& payload)
+{
+	bool dropped = false;
+	if (ImGui::BeginDragDropTarget())
+	{
+		const ImGuiPayload* pl = nullptr;
+		dropped = pl = ImGui::AcceptDragDropPayload(type);
+		if (dropped)
+		{
+			payload = pl;
+		}
+		ImGui::EndDragDropTarget();
+	}
+	return dropped;
+}
+
+void ComponentEngine::UIManager::DropPayload(const char * type, const char* message, void * payload, unsigned int size)
+{
+	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+	{
+		ImGui::SetDragDropPayload(type, payload, size);        // Set payload to carry the index of our item (could be anything)
+		ImGui::Text("Move %s", message);
+		ImGui::EndDragDropSource();
+	}
+}
+
+bool ComponentEngine::UIManager::StringDropBox(const char * lable, const char* payloadType, StringDropInstance& inst)
+{
+	ImGui::Text(lable);
+	ImGui::SameLine();
+	ImGui::InputText("", (char*)inst.message.c_str(), inst.message.size(), ImGuiInputTextFlags_ReadOnly);
+
+
+	const ImGuiPayload* payload = nullptr;
+	if (DropTarget(payloadType, payload))
+	{
+		IM_ASSERT(payload->DataSize == sizeof(std::string));
+		std::string data = *(std::string*)payload->Data;
+
+
+		inst.SetMessage(data);
+		inst.data = data;
+
+		return true;
+
+
+
+	}
+
+
+	return false;
+}
+
+void ComponentEngine::UIManager::LoadFolder(Folder & folder)
+{
+	if (folder.readFolder) return;
+	folder.readFolder = true;
+	//std::experimental::filesystem::file
+	for (const auto & entry : std::experimental::filesystem::directory_iterator(folder.path.longForm))
+	{
+		if (std::experimental::filesystem::is_directory(entry.path()))
+		{
+			Folder childFolder;
+			childFolder.path.GenerateFileForm(entry.path().string());
+			folder.folders.push_back(childFolder);
+		}
+		else
+		{
+			FileForms file;
+			file.GenerateFileForm(entry.path().string());
+			folder.files.push_back(file);
+		}
+	}
+
+
 }

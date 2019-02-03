@@ -266,6 +266,29 @@ float ComponentEngine::Engine::Sync(int ups)
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 {
+	m_currentScene = path;
+
+	{ // Get directory
+
+		const size_t lastBackSlash = m_currentScene.rfind('\\');
+		if (std::string::npos != lastBackSlash)
+		{
+			m_currentSceneDirectory = m_currentScene.substr(0, lastBackSlash);
+		}
+		else
+		{
+			const size_t lastForwardSlash = m_currentScene.rfind('/');
+			if (std::string::npos != lastForwardSlash)
+			{
+				m_currentSceneDirectory = m_currentScene.substr(0, lastForwardSlash);
+			}
+		}
+		
+		
+
+	}
+
+
 
 	pugi::xml_document xml;
 	pugi::xml_parse_result result = xml.load_file(path);
@@ -364,6 +387,16 @@ ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
 		m_texture_storage[path] = texture;
 	}
 	return m_texture_storage[path];
+}
+
+std::string ComponentEngine::Engine::GetCurrentScene()
+{
+	return m_currentScene;
+}
+
+std::string ComponentEngine::Engine::GetCurrentSceneDirectory()
+{
+	return m_currentSceneDirectory;
 }
 /*
 ordered_lock& ComponentEngine::Engine::GetLogicMutex()
@@ -506,7 +539,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
-	RegisterBase<RendererComponent, UI>();
+	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 	RegisterBase<ParticleSystem, Logic, UI>();
 }
@@ -711,7 +744,7 @@ void ComponentEngine::Engine::InitImGUI()
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGuiStyle& style = ImGui::GetStyle();
 

@@ -8,6 +8,7 @@
 #include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\UI.hpp>
+#include <ComponentEngine\UIManager.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
 #include <glm/glm.hpp>
@@ -34,7 +35,7 @@ namespace Renderer
 namespace ComponentEngine
 {
 	class MeshVertex;
-
+	class FileForms;
 
 	struct MaterialStorage
 	{
@@ -91,6 +92,7 @@ namespace ComponentEngine
 	public:
 		Mesh(enteez::Entity* entity, std::string path);
 		~Mesh();
+		void ChangePath(std::string path);
 		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
 		std::string GetPath();
 		bool Loaded();
@@ -103,8 +105,9 @@ namespace ComponentEngine
 		friend class Engine;
 	private:
 		void LoadModel();
+		void UnloadModel();
 		static void CleanUp();
-		std::string m_path;
+		DropBoxInstance<FileForms> m_file_path;
 		std::string m_dir;
 		Renderer::IModel** m_sub_meshes;
 		unsigned int m_sub_mesh_count;

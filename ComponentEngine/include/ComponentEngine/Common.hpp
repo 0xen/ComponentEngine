@@ -8,5 +8,6 @@ namespace ComponentEngine
 	{
 		std::string GetDir(std::string path);
 		float RandomNumber(float Min, float Max);
+		void Replace(std::string& str, std::string old, std::string newStr);
 	}
 }
