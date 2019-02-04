@@ -119,7 +119,7 @@ namespace ComponentEngine
 		static bool DropBox(const char* lable, const char* payloadType, DropBoxInstance<T>& inst);
 	private:
 		void RenderMainMenu();
-		void RenderFPSCounter();
+		//void RenderFPSCounter();
 
 		// Dock Space
 		// Used as the central docking system for the windows
@@ -129,6 +129,8 @@ namespace ComponentEngine
 		void RendererFolder(Folder& folder);
 
 		void RenderComponentHierarchy();
+
+		void ThreadingWindow();
 
 		// Scene render functions
 		void RenderSceneHierarchy();

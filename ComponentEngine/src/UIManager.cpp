@@ -20,11 +20,13 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
-	ImGui::ShowTestWindow();
+	//ImGui::ShowTestWindow();
 
 	DockSpace();
 	RenderMainMenu();
-	//RenderFPSCounter();
+
+	ThreadingWindow();
+
 	if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
 	if (m_open[COMPONENT_HIERARCHY]) RenderComponentHierarchy();
 	if (m_open[EXPLORER]) RendererExplorer();
@@ -70,76 +72,6 @@ void ComponentEngine::UIManager::RenderMainMenu()
 
 		ImGui::EndMainMenuBar();
 	}
-}
-
-void ComponentEngine::UIManager::RenderFPSCounter()
-{
-	ImVec2 window_pos = ImVec2(10.0f, 25.0f);
-	ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always);
-	bool open = true;
-
-	if (ImGui::Begin("FPS_COUNTER", &open, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		//ImGui::Text("FPS:%i  TPS:%f", 1000.0f / io.Framerate, 0.0f);
-
-		m_thread_time_update_delay -= m_engine->GetLastThreadTime();
-
-		if (m_thread_time_update_delay < 0.0f)
-		{
-			m_thread_time_update_delay = 1.0f;
-
-			for (auto it : m_engine->m_thread_data)
-			{
-				if (m_thread_times_miliseconds[it].size() == 0)
-				{
-					m_thread_times_miliseconds[it].resize(20);
-				}
-				m_thread_times_fraction_last[it] = it->loop_time;
-
-				m_thread_times_miliseconds[it].push_back(1000 * it->process_time_average);
-				m_thread_times_miliseconds[it].erase(m_thread_times_miliseconds[it].begin());
-
-			}
-		}
-		int i = 0;
-		for (auto it : m_engine->m_thread_data)
-		{
-			// Check to see if the current thread is the renderer or we are multi threading, if so, display
-			if (m_engine->m_threading || it->thread_instance == nullptr)
-			{
-
-				ImGui::PushID(i);
-				bool temp = it->frame_limited;
-				if (ImGui::Checkbox("", &temp))
-				{
-					it->frame_limited = !it->frame_limited;
-				}
-				Tooltip("Should thread be speed limited");
-
-				ImGui::SameLine();
-				ImGui::PlotLines(
-					"", // Label
-					m_thread_times_miliseconds[it].data(), // Line data
-					m_thread_times_miliseconds[it].size(), // Line count
-					0,
-					"",
-					0.0f,
-					(float)(1000 / it->requested_ups) // Calculate the slowest the thread would have to run to meet the Updates Per Second
-				);
-
-				ImGui::SameLine();
-
-				ImGui::Text("~%04d/s:%s", (int)(1.0f / m_thread_times_fraction_last[it]), it->name);
-
-				Tooltip("Estimated UPS based on last recorded thread-time");
-
-				ImGui::PopID();
-				i++;
-			}
-		}
-	}
-	ImGui::End();
 }
 
 void ComponentEngine::UIManager::DockSpace()
@@ -449,6 +381,61 @@ void ComponentEngine::UIManager::RenderComponentHierarchy()
 
 	}
 	ImGui::End();
+
+}
+
+void ComponentEngine::UIManager::ThreadingWindow()
+{
+
+
+	static int window_height = 370;
+	ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	if (ImGui::Begin("Worker Threads", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	{
+
+		{
+			std::vector<WorkerThread*>& threads = Engine::Singlton()->GetThreadManager()->GetThreads();
+
+			for (int i = 0; i < threads.size(); i++)
+			{
+				ImGui::PushID(i);
+				WorkerThread* thread = threads[i];
+				ImGui::Text("Worker #%i", i);
+				
+				ImGui::PlotLines("", thread->GetThreadActivity().data(), thread->GetThreadActivity().size(), 0, "", 0.0f, 1.0f);
+
+				ImGui::SameLine();
+
+				ImGui::Text("%i%%", (int)(thread->GetThreadActivity()[thread->GetThreadActivity().size() - 1] * 100));
+
+				ImGui::PopID();
+			}
+		}
+
+		{
+			std::vector<WorkerTask*>& tasks = Engine::Singlton()->GetThreadManager()->GetSchedualedTasks();
+
+			for (int i = 0; i < tasks.size(); i++)
+			{
+				ImGui::PushID(i);
+				WorkerTask*& task = tasks[i];
+				ImGui::Text("Task: %s", task->name.c_str());
+				int ups = (int)task->ups;
+				if (ImGui::InputInt("", &ups, 1, 5, ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					if (ups < 1) ups = 1;
+					task->ups = ups;
+				}
+
+				ImGui::PopID();
+			}
+		}
+
+
+
+	}
+	ImGui::End();
+
 
 }
 

@@ -16,6 +16,7 @@ set(common_headers
     include/ComponentEngine/Engine.hpp
     include/ComponentEngine/Common.hpp
     include/ComponentEngine/ThreadHandler.hpp
+    include/ComponentEngine/ThreadManager.hpp
     include/ComponentEngine/DefaultMeshVertex.hpp
     include/ComponentEngine/UIManager.hpp
     include/ComponentEngine/Type.hpp
@@ -30,6 +31,7 @@ set(common_source
     src/Engine.cpp
     src/Common.cpp
     src/ThreadHandler.cpp
+    src/ThreadManager.cpp
     src/UIManager.cpp
 )
 
@@ -131,10 +133,10 @@ set(imgui_headers
     ../third_party/imgui/imconfig.h
     ../third_party/imgui/imgui.h
     ../third_party/imgui/imgui_internal.h
-    ../third_party/imgui/stb_rect_pack.h
-    ../third_party/imgui/stb_textedit.h
-    ../third_party/imgui/stb_truetype.h
-    ../third_party/imgui/examples/imgui_impl_sdl.h
+    #../third_party/imgui/stb_rect_pack.h
+    #../third_party/imgui/stb_textedit.h
+    #../third_party/imgui/stb_truetype.h
+    #../third_party/imgui/examples/imgui_impl_sdl.h
 )
 list(APPEND source ${imgui_src})
 list(APPEND headers ${imgui_headers})

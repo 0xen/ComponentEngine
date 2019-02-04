@@ -60,6 +60,11 @@ namespace ComponentEngine
 		glm::vec2 yVelocity;
 		glm::vec2 zVelocity;
 		float directionalVelocity;
+		bool m_useColorRange = true;
+		bool m_dynamicParticleCount = true;
+		bool xVelocityStatic = false;
+		bool yVelocityStatic = false;
+		bool zVelocityStatic = false;
 	};
 
 	struct ParticlePayload

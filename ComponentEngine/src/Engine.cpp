@@ -49,10 +49,11 @@ Engine* ComponentEngine::Engine::Singlton()
 ComponentEngine::Engine::~Engine()
 {
 	Stop();
-	for (auto i : m_thread_data)
+	delete m_threadManager;
+	/*for (auto i : m_thread_data)
 	{
 		delete i->thread_instance;
-	}
+	}*/
 }
 
 void ComponentEngine::Engine::Start()
@@ -70,16 +71,49 @@ void ComponentEngine::Engine::Start()
 
 	ThreadData* data = new ThreadData();
 	data->data_lock.lock();
-	data->thread_instance = nullptr;
+	//data->thread_instance = nullptr;
 	data->name = "Renderer";
 	data->delta_time = SDL_GetPerformanceCounter();
 	data->frame_limited = true;
 	m_thread_data.push_back(data);
 	m_thread_linker[m_main_thread] = data;
 	data->data_lock.unlock();
+
+	m_threadManager = new ThreadManager(ThreadMode::Threading);
+
+	// Render a frame so you know it has not crashed xD
+	RenderFrame();
+
+	// Add UI task
+	m_threadManager->AddTask([&](float frameTime) {
+		UpdateUI(frameTime);
+	}, 30, "UI");
+
+	// Add Render task
+	m_threadManager->AddTask([&](float frameTime) {
+		RenderFrame();
+	}, 60, "Render");
+
+	// Add Update Scene Buffers task
+	m_threadManager->AddTask([&](float frameTime) {
+		UpdateScene();
+	}, 60, "Scene Buffer Swapping");
+
+	// Add Update Scene task
+	m_threadManager->AddTask([&](float frameTime) {
+		EntityManager& em = GetEntityManager();
+		for (auto e : em.GetEntitys())
+		{
+			e->ForEach<Logic>([&](enteez::Entity* entity, Logic& logic)
+			{
+				logic.Update(frameTime);
+			});
+		}
+	}, 60, "Scene Update");
+
 }
 
-void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name)
+/*void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name)
 {
 	if (m_threading)
 	{
@@ -97,7 +131,7 @@ void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name
 		data->data_lock.unlock();
 	}
 
-}
+}*/
 
 void ComponentEngine::Engine::Stop()
 {
@@ -119,13 +153,7 @@ void ComponentEngine::Engine::Stop()
 
 void ComponentEngine::Engine::Join()
 {
-	for (auto i : m_thread_data)
-	{
-		if (i->thread_instance != nullptr)
-		{
-			i->thread_instance->Join();
-		}
-	}
+	m_threadManager->ChangeMode(Joined);
 }
 
 bool ComponentEngine::Engine::Running()
@@ -165,9 +193,10 @@ bool ComponentEngine::Engine::Running(int ups)
 
 void ComponentEngine::Engine::Update()
 {
+	m_threadManager->Update();
 	GetRendererMutex().lock();
 
-	if (m_main_thread == std::this_thread::get_id())
+	/*if (m_main_thread == std::this_thread::get_id())
 	{
 		for (auto i : m_thread_data)
 		{
@@ -179,7 +208,8 @@ void ComponentEngine::Engine::Update()
 				}
 			}
 		}
-	}
+	}*/
+
 
 	UpdateWindow();
 	GetRendererMutex().unlock();
@@ -193,10 +223,10 @@ void ComponentEngine::Engine::UpdateScene()
 	GetRendererMutex().unlock();
 }
 
-void ComponentEngine::Engine::UpdateUI()
+void ComponentEngine::Engine::UpdateUI(float delta)
 {
 	ImGuiIO& io = ImGui::GetIO();
-	io.DeltaTime = GetLastThreadTime();
+	io.DeltaTime = delta;
 	UpdateImGUI();
 }
 
@@ -407,6 +437,11 @@ ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 {
 	return m_renderer_thread;
+}
+
+ThreadManager * ComponentEngine::Engine::GetThreadManager()
+{
+	return m_threadManager;
 }
 
 void ComponentEngine::Engine::RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity &entity), void(*xml_initilizer)(enteez::Entity &entity, pugi::xml_node &component_data))
@@ -984,7 +1019,9 @@ void ComponentEngine::Engine::ToggleThreading()
 {
 	m_threading = !m_threading;
 
-	for (int i = m_thread_data.size() - 1; i >= 0 ; i--)
+	m_threadManager->ChangeMode(m_threading ? ThreadMode::Threading : ThreadMode::Joined);
+
+	/*for (int i = m_thread_data.size() - 1; i >= 0 ; i--)
 	{
 		auto it = m_thread_data.begin() + i;
 
@@ -1026,7 +1063,7 @@ void ComponentEngine::Engine::ToggleThreading()
 
 		}
 
-	}
+	}*/
 
 }
 

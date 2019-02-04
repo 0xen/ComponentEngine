@@ -15,17 +15,17 @@ ComponentEngine::ParticleSystem::ParticleSystem(enteez::Entity * entity)
 	// Initilize the system with default values
 	m_config.buffer_config.memory.updateTime = 0;
 	m_config.buffer_config.memory.totalTime = 0;
-	m_config.buffer_config.memory.maxLife = 4.0f;
-	m_config.buffer_config.memory.emissionRate = 0.0001f;
+	m_config.buffer_config.memory.maxLife = 1.0f;
+	m_config.buffer_config.memory.emissionRate = 0.001f;
 	m_config.buffer_config.memory.startColor = glm::vec4(0.976f, 0.941f, 0.475f, 1.0f);
 	m_config.buffer_config.memory.endColor = glm::vec4(0.965f, 0.486f, 0.004f, 1.0f);
-	m_config.buffer_config.memory.scale = 0.1f;
+	m_config.buffer_config.memory.scale = 0.2f;
 
-	m_config.xVelocity = glm::vec2(-1.0f, 1.0f);
-	m_config.yVelocity = glm::vec2(-1.0f, 1.0f);
-	m_config.zVelocity = glm::vec2(-1.0f, 1.0f);
+	m_config.xVelocity = glm::vec2(1.0f, -1.0f);
+	m_config.yVelocity = glm::vec2(1.0f, -1.0f);
+	m_config.zVelocity = glm::vec2(1.0f, -1.0f);
 
-	m_config.directionalVelocity = 1.0f;
+	m_config.directionalVelocity = 2.0f;
 
 	// Set the particle count to the count based on emission rates
 	m_particleCount = m_config.buffer_config.memory.maxLife / m_config.buffer_config.memory.emissionRate;
@@ -191,17 +191,17 @@ void ComponentEngine::ParticleSystem::Display()
 	ImGui::PushItemWidth(ImGui::GetWindowContentRegionWidth() - 10);
 	if (ImGui::CollapsingHeader("Color"))
 	{
-		static bool m_useColorRange = true;
+		
 		{
-			if (ImGui::Checkbox("Use Color Range", &m_useColorRange))
+			if (ImGui::Checkbox("Use Color Range", &m_config.m_useColorRange))
 			{
-				if (!m_useColorRange)
+				if (!m_config.m_useColorRange)
 				{
 					m_config.buffer_config.memory.endColor = m_config.buffer_config.memory.startColor;
 				}
 			}
 		}
-		if (m_useColorRange)
+		if (m_config.m_useColorRange)
 		{
 			{ // Start color
 				ImGui::PushID(0);
@@ -250,12 +250,12 @@ void ComponentEngine::ParticleSystem::Display()
 	if (ImGui::CollapsingHeader("Particle"))
 	{
 
-		static bool dynamicParticleCount = true;
+		 
 		{
-			if (ImGui::Checkbox("Dynamic Particle Count", &dynamicParticleCount))
+			if (ImGui::Checkbox("Dynamic Particle Count", &m_config.m_dynamicParticleCount))
 			{
 				// if we enabled a dynamic partical count, we now need to set the particle count
-				if (dynamicParticleCount)
+				if (m_config.m_dynamicParticleCount)
 				{
 					m_particleCount = m_config.buffer_config.memory.maxLife / m_config.buffer_config.memory.emissionRate;
 					RebuildAll();
@@ -265,7 +265,7 @@ void ComponentEngine::ParticleSystem::Display()
 
 
 
-		if (!dynamicParticleCount)
+		if (!m_config.m_dynamicParticleCount)
 		{
 			{ // Particle Count
 				ImGui::PushID(0);
@@ -289,7 +289,7 @@ void ComponentEngine::ParticleSystem::Display()
 			if (ImGui::InputFloat("##lifespan", (float*)&change, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 			{
 				m_config.buffer_config.memory.maxLife = change;
-				if (dynamicParticleCount)
+				if (m_config.m_dynamicParticleCount)
 				{
 					m_particleCount = m_config.buffer_config.memory.maxLife / m_config.buffer_config.memory.emissionRate;
 				}
@@ -305,7 +305,7 @@ void ComponentEngine::ParticleSystem::Display()
 			if (ImGui::InputFloat("##emissionRate", (float*)&change, 0.0f, 0.0f, "%.5f", ImGuiInputTextFlags_EnterReturnsTrue))
 			{
 				m_config.buffer_config.memory.emissionRate = change;
-				if (dynamicParticleCount)
+				if (m_config.m_dynamicParticleCount)
 				{
 					m_particleCount = m_config.buffer_config.memory.maxLife / m_config.buffer_config.memory.emissionRate;
 				}
@@ -357,12 +357,12 @@ void ComponentEngine::ParticleSystem::Display()
 			ImGui::Text("X Velocity");
 			// Temporaty storage for the velocity
 			glm::vec2 change = m_config.xVelocity;
-			static bool xVelocityStatic;
+			
 			// Check to see if the checkbox has been changed
-			if (ImGui::Checkbox("Static Velocity##XVelocity", &xVelocityStatic))
+			if (ImGui::Checkbox("Static Velocity##XVelocity", &m_config.xVelocityStatic))
 			{
 				// If we are in fixed velocity, update both and submit
-				if (xVelocityStatic)
+				if (m_config.xVelocityStatic)
 				{
 					m_config.xVelocity.x = m_config.xVelocity.x;
 					m_config.xVelocity.y = m_config.xVelocity.x;
@@ -370,7 +370,7 @@ void ComponentEngine::ParticleSystem::Display()
 				}
 			}
 			// If in static velocity render single input box
-			if (xVelocityStatic)
+			if (m_config.xVelocityStatic)
 			{
 				// Render single float input box for x velocity
 				if (ImGui::InputFloat("##xVelocity", (float*)&change, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
@@ -397,12 +397,12 @@ void ComponentEngine::ParticleSystem::Display()
 			ImGui::Text("Y Velocity");
 			// Temporaty storage for the velocity
 			glm::vec2 change = m_config.yVelocity;
-			static bool yVelocityStatic;
+
 			// Check to see if the checkbox has been changed
-			if (ImGui::Checkbox("Static Velocity##YVelocity", &yVelocityStatic))
+			if (ImGui::Checkbox("Static Velocity##YVelocity", &m_config.yVelocityStatic))
 			{
 				// If we are in fixed velocity, update both and submit
-				if (yVelocityStatic)
+				if (m_config.yVelocityStatic)
 				{
 					m_config.yVelocity.x = m_config.yVelocity.x;
 					m_config.yVelocity.y = m_config.yVelocity.x;
@@ -410,7 +410,7 @@ void ComponentEngine::ParticleSystem::Display()
 				}
 			}
 			// If in static velocity render single input box
-			if (yVelocityStatic)
+			if (m_config.yVelocityStatic)
 			{
 				// Render single float input box for x velocity
 				if (ImGui::InputFloat("##yVelocity", (float*)&change, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
@@ -437,12 +437,12 @@ void ComponentEngine::ParticleSystem::Display()
 			ImGui::Text("Z Velocity");
 			// Temporaty storage for the velocity
 			glm::vec2 change = m_config.zVelocity;
-			static bool zVelocityStatic;
+
 			// Check to see if the checkbox has been changed
-			if (ImGui::Checkbox("Static Velocity##ZVelocity", &zVelocityStatic))
+			if (ImGui::Checkbox("Static Velocity##ZVelocity", &m_config.zVelocityStatic))
 			{
 				// If we are in fixed velocity, update both and submit
-				if (zVelocityStatic)
+				if (m_config.zVelocityStatic)
 				{
 					m_config.zVelocity.x = m_config.zVelocity.x;
 					m_config.zVelocity.y = m_config.zVelocity.x;
@@ -450,7 +450,7 @@ void ComponentEngine::ParticleSystem::Display()
 				}
 			}
 			// If in static velocity render single input box
-			if (zVelocityStatic)
+			if (m_config.zVelocityStatic)
 			{
 				// Render single float input box for x velocity
 				if (ImGui::InputFloat("##zVelocity", (float*)&change, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
@@ -561,7 +561,7 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 
 	for (int i = 0; i < m_vertex_data.size(); i++)
 	{
-		m_vertex_data[i].position = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		m_vertex_data[i].position = glm::vec4(m_config.buffer_config.memory.emitter, 0.0f);
 		m_vertex_data[i].color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
@@ -578,7 +578,7 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 		float y = ((rand() % 200) - 100) * 0.01f;
 		float z = ((rand() % 200) - 100) * 0.01f;*/
 		m_particle_payloads[i].memory.velocity = glm::normalize(glm::vec4(x, y, z, 0)) * m_config.directionalVelocity;
-		m_particle_payloads[i].memory.origin = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		m_particle_payloads[i].memory.origin = glm::vec4(m_config.buffer_config.memory.emitter, 0.0f);
 	}
 
 	//m_particle_payload_buffer->Resize(BufferSlot::Primary, m_particle_payloads.data(), m_particleCount);

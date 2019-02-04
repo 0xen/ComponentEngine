@@ -9,6 +9,7 @@
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <ComponentEngine\ThreadHandler.hpp>
 #include <ComponentEngine\pugixml.hpp>
+#include <ComponentEngine\ThreadManager.hpp>
 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -41,7 +42,7 @@ namespace ComponentEngine
 		static Engine* Singlton();
 		~Engine();
 		void Start();
-		void AddThread(ThreadHandler* handler, const char* name = (const char*)0);
+		//void AddThread(ThreadHandler* handler, const char* name = (const char*)0);
 		void Stop();
 		void Join();
 		bool Running();
@@ -49,7 +50,7 @@ namespace ComponentEngine
 		bool IsRunning(); // To be used, update safe and dose not call the thread timing reset
 		void Update();
 		void UpdateScene();
-		void UpdateUI();
+		void UpdateUI(float delta);
 		void Rebuild();
 		void RenderFrame();
 		bool KeyDown(int key);
@@ -73,6 +74,9 @@ namespace ComponentEngine
 
 		//ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
+
+
+		ThreadManager* GetThreadManager();
 
 		void RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
 
@@ -190,7 +194,7 @@ namespace ComponentEngine
 
 			ordered_lock data_lock;
 
-			ThreadHandler* thread_instance = nullptr;
+			//ThreadHandler* thread_instance = nullptr;
 		};
 
 		ordered_lock m_renderer_thread;
@@ -206,6 +210,9 @@ namespace ComponentEngine
 
 		std::string m_currentScene;
 		std::string m_currentSceneDirectory;
+
+
+		ThreadManager* m_threadManager;
 
 		static const unsigned int IS_RUNNING_LOCK;
 		static const unsigned int TOGGLE_FRAME_LIMITING;
