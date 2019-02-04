@@ -37,6 +37,8 @@ ComponentEngine::ParticleSystem::ParticleSystem(enteez::Entity * entity)
 
 ComponentEngine::ParticleSystem::~ParticleSystem()
 {
+	Engine::Singlton()->GetRendererMutex().lock();
+	Engine::Singlton()->GetRenderer()->RemoveGraphicsPipeline(m_graphics_pipeline);
 	delete m_graphics_pipeline;
 	delete m_program;
 	delete m_compute_pipeline;
@@ -53,6 +55,7 @@ ComponentEngine::ParticleSystem::~ParticleSystem()
 	delete m_partical_vertex_pool;
 	delete m_partical_vertex_set;
 	delete m_vertex_buffer;
+	Engine::Singlton()->GetRendererMutex().unlock();
 
 }
 
