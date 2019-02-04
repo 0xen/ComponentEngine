@@ -56,6 +56,7 @@ namespace ComponentEngine
 	struct ParticleSystemConfig
 	{
 		ParticleSystemBufferConfig buffer_config;
+		glm::vec3 emmitter_offset;
 		glm::vec2 xVelocity;
 		glm::vec2 yVelocity;
 		glm::vec2 zVelocity;

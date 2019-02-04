@@ -25,6 +25,8 @@ ComponentEngine::ParticleSystem::ParticleSystem(enteez::Entity * entity)
 	m_config.yVelocity = glm::vec2(1.0f, -1.0f);
 	m_config.zVelocity = glm::vec2(1.0f, -1.0f);
 
+	m_config.emmitter_offset = glm::vec3();
+
 	m_config.directionalVelocity = 2.0f;
 
 	// Set the particle count to the count based on emission rates
@@ -171,7 +173,7 @@ void ComponentEngine::ParticleSystem::Update(float frame_time)
 	m_particle_lock.lock();
 	engine->GetRendererMutex().lock();
 
-	m_config.buffer_config.memory.emitter = m_entity->GetComponent<Transformation>().GetWorldPosition();
+	m_config.buffer_config.memory.emitter = m_config.emmitter_offset + m_entity->GetComponent<Transformation>().GetWorldPosition();
 	m_config.buffer_config.memory.totalTime += frame_time;
 	m_config.buffer_config.memory.updateTime = frame_time;
 
@@ -250,6 +252,18 @@ void ComponentEngine::ParticleSystem::Display()
 	if (ImGui::CollapsingHeader("Particle"))
 	{
 
+		{ // Emitter Offset
+			ImGui::PushID(0);
+			ImGui::Text("Emitter Offset");
+			glm::vec3 change = m_config.emmitter_offset;
+			if (ImGui::InputFloat3("##emitterOffset", (float*)&change), "%.3f", ImGuiInputTextFlags_EnterReturnsTrue)
+			{
+				m_config.emmitter_offset = change;
+				RebuildConfig();
+			}
+
+			ImGui::PopID();
+		}
 		 
 		{
 			if (ImGui::Checkbox("Dynamic Particle Count", &m_config.m_dynamicParticleCount))
@@ -561,7 +575,7 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 
 	for (int i = 0; i < m_vertex_data.size(); i++)
 	{
-		m_vertex_data[i].position = glm::vec4(m_config.buffer_config.memory.emitter, 0.0f);
+		m_vertex_data[i].position = glm::vec4(m_config.emmitter_offset + m_config.buffer_config.memory.emitter, 0.0f);
 		m_vertex_data[i].color = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 
@@ -578,7 +592,7 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 		float y = ((rand() % 200) - 100) * 0.01f;
 		float z = ((rand() % 200) - 100) * 0.01f;*/
 		m_particle_payloads[i].memory.velocity = glm::normalize(glm::vec4(x, y, z, 0)) * m_config.directionalVelocity;
-		m_particle_payloads[i].memory.origin = glm::vec4(m_config.buffer_config.memory.emitter, 0.0f);
+		m_particle_payloads[i].memory.origin = glm::vec4(m_config.emmitter_offset + m_config.buffer_config.memory.emitter, 0.0f);
 	}
 
 	//m_particle_payload_buffer->Resize(BufferSlot::Primary, m_particle_payloads.data(), m_particleCount);
