@@ -68,6 +68,7 @@ class ThreadManager
 public:
 	std::mutex m_schedualed_task_lock;
 	std::mutex m_task_pool_lock;
+	std::mutex m_activity_lock;
 
 
 	ThreadManager(ThreadMode mode);
@@ -85,11 +86,20 @@ public:
 	std::vector<WorkerThread*>& GetThreads();
 
 	std::vector<WorkerTask*>& GetSchedualedTasks();
+
+
+	std::vector<float> GetActivity();
 private:
+	float GetDeltaTime();
 	ThreadMode m_mode;
 	std::vector<WorkerTask*> m_schedualed_tasks;
 	std::vector<WorkerTask*> m_task_pool;
 	std::vector<WorkerThread*> m_threads;
-
+	// SDL time
+	Uint64 m_delta_time;
+	// Time since last seccond
+	float m_seccond_delta;
+	float m_active_time;
+	std::vector<float> m_thread_activity;
 
 };

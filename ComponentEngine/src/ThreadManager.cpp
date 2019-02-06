@@ -6,7 +6,11 @@ using namespace ComponentEngine;
 
 ThreadManager::ThreadManager(ThreadMode mode)
 {
-
+	m_delta_time = SDL_GetPerformanceCounter();
+	m_seccond_delta = 0;
+	m_thread_activity.resize(20);
+	m_seccond_delta = 0;
+	m_delta_time = SDL_GetPerformanceCounter();
 
 	unsigned int thread_count = (unsigned int)(((float)std::thread::hardware_concurrency() * 1.5f) + 0.5f);
 
@@ -97,9 +101,24 @@ void ThreadManager::Update()
 	if (m_mode == Joined)
 	{
 		WorkerTask task;
+
+
 		while (GetTask(task))
 		{
 			task.funcPtr(delta);
+			float newDelta = GetDeltaTime();
+			delta += newDelta;
+			m_active_time += newDelta;
+		}
+
+		m_seccond_delta += delta;
+		if (m_seccond_delta > 1.0f)
+		{
+			std::unique_lock<std::mutex> acquire(m_activity_lock);
+			memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
+			m_thread_activity[19] = m_active_time;
+			m_active_time = 0;
+			m_seccond_delta = 0;
 		}
 	}
 
@@ -114,6 +133,21 @@ std::vector<WorkerThread*>& ThreadManager::GetThreads()
 std::vector<WorkerTask*>& ThreadManager::GetSchedualedTasks()
 {
 	return m_schedualed_tasks;
+}
+
+std::vector<float> ThreadManager::GetActivity()
+{
+	std::unique_lock<std::mutex> acquire(m_activity_lock);
+	return m_thread_activity;
+}
+
+float ThreadManager::GetDeltaTime()
+{
+	Uint64 now = SDL_GetPerformanceCounter();
+	Uint64 last = m_delta_time;
+	m_delta_time = now;
+	float temp = static_cast<float>((float)(now - last) / SDL_GetPerformanceFrequency());
+	return temp;
 }
 
 WorkerThread::WorkerThread(ThreadManager* thread_manager, ThreadMode mode)
@@ -195,11 +229,7 @@ std::vector<float> WorkerThread::GetThreadActivity()
 
 float WorkerThread::GetDeltaTime()
 {
-
-	std::thread::id id = std::this_thread::get_id();
 	Uint64 now = SDL_GetPerformanceCounter();
-
-
 	Uint64 last = m_delta_time;
 	m_delta_time = now;
 	float temp = static_cast<float>((float)(now - last) / SDL_GetPerformanceFrequency());

@@ -393,6 +393,8 @@ void ComponentEngine::UIManager::ThreadingWindow()
 	if (ImGui::Begin("Worker Threads", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
 	{
 
+
+		if (Engine::Singlton()->m_threading)
 		{
 			std::vector<WorkerThread*>& threads = Engine::Singlton()->GetThreadManager()->GetThreads();
 
@@ -410,6 +412,22 @@ void ComponentEngine::UIManager::ThreadingWindow()
 
 				ImGui::PopID();
 			}
+		}
+		else
+		{
+
+			{
+				ImGui::Text("Main Thread");
+
+				std::vector<float> activity = Engine::Singlton()->GetThreadManager()->GetActivity();
+				ImGui::PlotLines("", activity.data(), activity.size(), 0, "", 0.0f, 1.0f);
+
+				ImGui::SameLine();
+
+				ImGui::Text("%i%%", (int)(activity[activity.size() - 1] * 100));
+
+			}
+
 		}
 
 		{
