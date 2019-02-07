@@ -95,7 +95,8 @@ namespace ComponentEngine
 
 		void UpdateCameraProjection();
 
-		void LoadXMLGameObject(pugi::xml_node& xml_entity, Entity* parent = nullptr);
+		void LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent = nullptr);
+		void LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name);
 		void AttachXMLComponent(pugi::xml_node& xml_component, enteez::Entity* entity);
 
 		void InitImGUI();

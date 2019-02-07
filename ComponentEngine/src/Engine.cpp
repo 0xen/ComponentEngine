@@ -331,9 +331,12 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 	if (!scene_node)return false;
 
 
+	pugi::xml_node prefabs_node = game_node.child("Prefabs");
+
+
 	for (pugi::xml_node node : scene_node.children("GameObject"))
 	{
-		LoadXMLGameObject(node);
+		LoadXMLGameObject(node, prefabs_node);
 	}
 
 
@@ -731,13 +734,28 @@ void ComponentEngine::Engine::UpdateCameraProjection()
 	m_camera_component.projection[1][1] *= -1;
 }
 
-void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity, Entity* parent)
+void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent)
 {
 	std::string name = xml_entity.attribute("name").as_string();
-	enteez::Entity* entity = GetEntityManager().CreateEntity(name.size() > 0 ? name : "Object");
+	std::string prefab_name = xml_entity.attribute("prefab").as_string();
+
+
+	enteez::Entity* entity = GetEntityManager().CreateEntity(name.size() > 0 ? name : "Entity");
+
+
+
 
 	// For now manualy add transformation by default
 	Transformation::EntityHookDefault(*entity);
+
+
+
+	LoadGameObjectPrefab(entity, prefab_node, prefab_name);
+
+	
+
+
+
 
 
 	for (pugi::xml_node node : xml_entity.children("Component"))
@@ -746,13 +764,35 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node & xml_entity, Ent
 	}
 	for (pugi::xml_node node : xml_entity.children("GameObject"))
 	{
-		LoadXMLGameObject(node, entity);
+		LoadXMLGameObject(node, prefab_node, entity);
 	}
 	// If this object has a parent, add it to the object
 	if (parent != nullptr)
 	{
 		entity->GetComponent<Transformation>().SetParent(parent);
 	}
+}
+
+
+void ComponentEngine::Engine::LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name)
+{
+	if (prefab_name.size() == 0)return;
+
+
+	pugi::xml_node prefab = prefab_node.find_child_by_attribute("name", prefab_name.c_str());
+	for (pugi::xml_node node : prefab.children("Component"))
+	{
+		AttachXMLComponent(node, entity);
+	}
+	for (pugi::xml_node node : prefab.children("GameObject"))
+	{
+		LoadXMLGameObject(node, prefab_node, entity);
+	}
+
+	// Load the prefabs prefab
+	std::string prefabs_prefab_name = prefab.attribute("prefab").as_string();
+	LoadGameObjectPrefab(entity, prefab_node, prefabs_prefab_name);
+
 }
 
 void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component, enteez::Entity * entity)

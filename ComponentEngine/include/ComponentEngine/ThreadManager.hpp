@@ -89,6 +89,11 @@ public:
 
 
 	std::vector<float> GetActivity();
+
+
+	ThreadMode GetThreadMode();
+
+
 private:
 	float GetDeltaTime();
 	ThreadMode m_mode;

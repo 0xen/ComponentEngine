@@ -394,7 +394,7 @@ void ComponentEngine::UIManager::ThreadingWindow()
 	{
 
 
-		if (Engine::Singlton()->m_threading)
+		if (Engine::Singlton()->GetThreadManager()->GetThreadMode() == ThreadMode::Threading)
 		{
 			std::vector<WorkerThread*>& threads = Engine::Singlton()->GetThreadManager()->GetThreads();
 

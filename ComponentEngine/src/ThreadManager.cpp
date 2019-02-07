@@ -80,24 +80,27 @@ void ThreadManager::Update()
 
 	float delta = Engine::Singlton()->GetLastThreadTime();
 
-	std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
+	{ // Schedualed task
+		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
 
 
-	for (int i = 0 ; i < m_schedualed_tasks.size(); ++i)
-	{
-		WorkerTask*& task = m_schedualed_tasks[i];
-		task->deltaTime += delta;
-		if (task->deltaTime > (1.0f / task->ups) && !task->queued)
+		for (int i = 0; i < m_schedualed_tasks.size(); ++i)
 		{
-			task->queued = true;
-			task->lastDelta = task->deltaTime;
-			task->deltaTime = 0;
+			WorkerTask*& task = m_schedualed_tasks[i];
+			task->deltaTime += delta;
+			if (task->deltaTime > (1.0f / task->ups) && !task->queued)
 			{
-				std::unique_lock<std::mutex> acquire(m_task_pool_lock);
-				m_task_pool.push_back(task);
+				task->queued = true;
+				task->lastDelta = task->deltaTime;
+				task->deltaTime = 0;
+				{
+					std::unique_lock<std::mutex> acquire(m_task_pool_lock);
+					m_task_pool.push_back(task);
+				}
 			}
 		}
 	}
+	std::unique_lock<std::mutex> acquire_mode_lock(m_activity_lock);
 	if (m_mode == Joined)
 	{
 		WorkerTask task;
@@ -114,7 +117,6 @@ void ThreadManager::Update()
 		m_seccond_delta += delta;
 		if (m_seccond_delta > 1.0f)
 		{
-			std::unique_lock<std::mutex> acquire(m_activity_lock);
 			memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
 			m_thread_activity[19] = m_active_time;
 			m_active_time = 0;
@@ -137,8 +139,13 @@ std::vector<WorkerTask*>& ThreadManager::GetSchedualedTasks()
 
 std::vector<float> ThreadManager::GetActivity()
 {
-	std::unique_lock<std::mutex> acquire(m_activity_lock);
+	//std::unique_lock<std::mutex> acquire(m_activity_lock);
 	return m_thread_activity;
+}
+
+ThreadMode ThreadManager::GetThreadMode()
+{
+	return m_mode;
 }
 
 float ThreadManager::GetDeltaTime()
@@ -155,6 +162,7 @@ WorkerThread::WorkerThread(ThreadManager* thread_manager, ThreadMode mode)
 	m_delta_time = SDL_GetPerformanceCounter();
 	m_seccond_delta = 0;
 	m_thread_activity.resize(20);
+	std::unique_lock<std::mutex> acquire(m_worker_lock);
 	m_mode = mode;
 	m_thread_manager = thread_manager;
 	if (mode == ThreadMode::Threading)thread = new std::thread(&WorkerThread::Loop, this);

@@ -1,111 +1,37 @@
 <?xml version="1.0"?>
 <Game>
-	<Prefab>
-		<GameObject name="Cube">
-			<Component name="Mesh">
-				<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
-			</Component>
-			<Component name="Renderer"/>
-		</GameObject>
-	</Prefab>		
+  <Prefabs>
+
+
+    <GameObject name="RendererPrefab">
+      <Component name="Renderer"/>
+    </GameObject>
+
+    <GameObject name="LetterBlockC" prefab="RendererPrefab">
+      <Component name="Transformation">
+        <Position x="-0.5f" y="0.0f" z="0.0f"/>
+        <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+        <Scale x="1.0f" y="1.0f" z="1.0f"/>
+      </Component>
+      <Component name="Mesh">
+        <Path value="/Resources/Models/Blocks/LetterBlockC.obj"/>
+      </Component>
+    </GameObject>
+  </Prefabs>
+  
+  
 	<Scenes>
 		<Scene>
 
-			<GameObject name="Cube Parent">
-				<Component name="Transformation">
-					<Position x="0.0f" y="0.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-
-
-			</GameObject>
-
-			<GameObject name="Cube Parent">
-				<Component name="Transformation">
-					<Position x="0.0f" y="1.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-
-				<GameObject name="Cube3">
-					<Component name="Transformation">
-						<Position x="0.0f" y="0.0f" z="0.0f"/>
-						<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-						<Scale x="1.0f" y="1.0f" z="1.0f"/>
-					</Component>
-					<Component name="Mesh">
-						<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
-					</Component>
-					<Component name="Renderer"/>
-				</GameObject>
-
-
-				<GameObject name="Cube1">
-					<Component name="Transformation">
-						<Position x="2.0f" y="0.0f" z="0.0f"/>
-						<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-						<Scale x="1.0f" y="1.0f" z="1.0f"/>
-					</Component>
-					<Component name="Mesh">
-						<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
-					</Component>
-					<Component name="Renderer"/>
-				</GameObject>
-
-				<GameObject name="Cube2">
-					<Component name="Transformation">
-						<Position x="-2.0f" y="0.0f" z="0.0f"/>
-						<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-						<Scale x="1.0f" y="1.0f" z="1.0f"/>
-					</Component>
-					<Component name="Mesh">
-						<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
-					</Component>
-					<Component name="Renderer"/>
-				</GameObject>
-			</GameObject>
-
-
-
-			<GameObject name="Cessna">
-				<Component name="Transformation">
-					<Position x="0.0f" y="2.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="90.0f" z="0.0f"/>
-					<Scale x="0.1f" y="0.1f" z="0.1f"/>
-				</Component>
-				<Component name="Mesh">
-					<Path value="../../ComponentEngine-demo/Resources/Models/cessna.obj"/>
-				</Component>
-				<Component name="Renderer"/>
-			</GameObject>
-
-
-			<GameObject name="Floor">
-				<Component name="Transformation">
-					<Position x="0.0f" y="0.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="10.0f" y="0.0001f" z="10.0f"/>
-				</Component>
-				<Component name="Mesh">
-					<Path value="../../ComponentEngine-demo/Resources/Models/cube.obj"/>
-				</Component>
-				<Component name="Renderer"/>
-			</GameObject>
-
-			<GameObject name="teapot">
-				<Component name="Transformation">
-					<Position x="0.0f" y="1.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-				<Component name="Mesh">
-					<Path value="../../ComponentEngine-demo/Resources/Models/teapot.obj"/>
-				</Component>
-				<Component name="Renderer"/>
-			</GameObject>
-
-
+      <GameObject name="Cube2" prefab="LetterBlockC">
+        <Component name="Transformation">
+          <Position x="2.0f" y="2.0f" z="0.0f"/>
+          <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+          <Scale x="1.0f" y="1.0f" z="1.0f"/>
+        </Component>
+      </GameObject>
+      
+      
 		</Scene>
 	</Scenes>
 </Game>

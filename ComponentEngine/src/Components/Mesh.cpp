@@ -46,16 +46,33 @@ void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node &
 	pugi::xml_node mesh_node = component_data.child("Path");
 	if (mesh_node)
 	{
-		std::string path = mesh_node.attribute("value").as_string();
+		std::stringstream ss;
+		ss << Engine::Singlton()->GetCurrentSceneDirectory(); // Working path
+		ss << mesh_node.attribute("value").as_string(); // File path
+		std::string path = ss.str();
 
-
-		enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity, path);
-		mesh->SetName("Mesh");
-		if (!mesh->Get().Loaded())
+		if (entity.HasComponent<Mesh>())
 		{
-			std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
-			entity.RemoveComponent<Mesh>();
+			Mesh& mesh = entity.GetComponent<Mesh>();
+
+			Engine::Singlton()->GetRendererMutex().lock();
+			mesh.UnloadModel();
+			mesh.ChangePath(path);
+			mesh.LoadModel();
+			Engine::Singlton()->GetRendererMutex().unlock();
 		}
+		else
+		{
+			enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity, path);
+			mesh->SetName("Mesh");
+			if (!mesh->Get().Loaded())
+			{
+				std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
+				entity.RemoveComponent<Mesh>();
+			}
+		}
+
+		
 	}
 }
 
@@ -169,7 +186,10 @@ void ComponentEngine::Mesh::LoadModel()
 				IDescriptorSet* texture_maps_descriptor_set = /*Engine::Singlton()->GetTextureMapsPool()*/m_materials[m.name].m_texture_maps_pool->CreateDescriptorSet();
 				if (m.diffuse_texname.empty())
 				{
-					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + "default.png"));
+					std::stringstream ss;
+					ss << Engine::Singlton()->GetCurrentSceneDirectory();
+					ss << "/Resources/Resources/default.png";
+					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(ss.str()));
 				}
 				else
 				{

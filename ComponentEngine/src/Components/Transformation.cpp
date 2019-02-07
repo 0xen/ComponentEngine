@@ -256,6 +256,15 @@ void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity & entity)
 
 void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
 {
+
+
+	std::vector<Transformation*> children;
+	if(entity.HasComponent<Transformation>())
+	{
+		Transformation& trans = entity.GetComponent<Transformation>();
+		children = trans.GetChildren();
+	}
+
 	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>(&entity);
 	trans_wrapper->SetName("Transformation");
 	Transformation& trans = trans_wrapper->Get();
@@ -287,7 +296,13 @@ void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pug
 		));
 	}
 
-
+	// Add children if it has a transformation previously
+	for (Transformation* child : children)
+	{
+		trans.AddChild(child);
+	}
+	// Update parent and children transformations
+	trans.PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::AddChild(Transformation * trans)
