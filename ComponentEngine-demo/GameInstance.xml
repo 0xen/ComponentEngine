@@ -23,15 +23,63 @@
 	<Scenes>
 		<Scene>
 
-      <GameObject name="Cube2" prefab="LetterBlockC">
+      <GameObject name="Cube2">
+        <GameObject name="Cube2" prefab="LetterBlockC">
+          <Component name="Transformation">
+            <Position x="0.0f" y="0.0f" z="0.0f"/>
+            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+            <Scale x="1.0f" y="1.0f" z="1.0f"/>
+          </Component>
+        </GameObject>
+        <GameObject name="Cube2" prefab="LetterBlockC">
+          <Component name="Transformation">
+            <Position x="1.0f" y="0.0f" z="0.0f"/>
+            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+            <Scale x="1.0f" y="1.0f" z="1.0f"/>
+          </Component>
+        </GameObject>
+        <GameObject name="Cube2" prefab="LetterBlockC">
+          <Component name="Transformation">
+            <Position x="-1.0f" y="0.0f" z="0.0f"/>
+            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+            <Scale x="1.0f" y="1.0f" z="1.0f"/>
+          </Component>
+        </GameObject>
+      </GameObject>
+
+      <GameObject name="Camera">
         <Component name="Transformation">
-          <Position x="2.0f" y="2.0f" z="0.0f"/>
+          <Position x="10.0f" y="0.0f" z="0.0f"/>
+          <Rotation x="0.0f" y="90.0f" z="0.0f"/>
+          <Scale x="1.0f" y="1.0f" z="1.0f"/>
+        </Component>
+        <Component name="Camera"></Component>
+      </GameObject>
+
+
+      <GameObject name="Camera">
+        <Component name="Transformation">
+          <Position x="0.0f" y="0.0f" z="10.0f"/>
           <Rotation x="0.0f" y="0.0f" z="0.0f"/>
           <Scale x="1.0f" y="1.0f" z="1.0f"/>
         </Component>
+        <Component name="Camera"></Component>
+
+        <Component name="Keyboard Movment"/>
+
+        <GameObject name="Cube2" prefab="LetterBlockC">
+          <Component name="Transformation">
+            <Position x="0.0f" y="0.0f" z="-5.0f"/>
+            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+            <Scale x="1.0f" y="1.0f" z="1.0f"/>
+          </Component>
+        </GameObject>
+
       </GameObject>
       
       
-		</Scene>
+      
+      
+    </Scene>
 	</Scenes>
 </Game>

@@ -102,6 +102,8 @@ void ComponentEngine::Engine::Start()
 	// Add Update Scene task
 	m_threadManager->AddTask([&](float frameTime) {
 		EntityManager& em = GetEntityManager();
+
+		m_logic_lock.lock();
 		for (auto e : em.GetEntitys())
 		{
 			e->ForEach<Logic>([&](enteez::Entity* entity, Logic& logic)
@@ -109,6 +111,7 @@ void ComponentEngine::Engine::Start()
 				logic.Update(frameTime);
 			});
 		}
+		m_logic_lock.unlock();
 	}, 60, "Scene Update");
 
 }
@@ -217,10 +220,29 @@ void ComponentEngine::Engine::Update()
 
 void ComponentEngine::Engine::UpdateScene()
 {
+	EntityManager& em = GetEntityManager();
+
+	m_logic_lock.lock();
 	Mesh::SetBufferData();
+	for (auto e : em.GetEntitys())
+	{
+		e->ForEach<TransferBuffers>([&](enteez::Entity * entity, TransferBuffers & buffer)
+		{
+			buffer.SetBufferData();
+		});
+	}
+
 	GetRendererMutex().lock();
 	Mesh::TransferToPrimaryBuffers();
+	for (auto e : em.GetEntitys())
+	{
+		e->ForEach<TransferBuffers>([&](enteez::Entity * entity, TransferBuffers & buffer)
+		{
+			buffer.BufferTransfer();
+		});
+	}
 	GetRendererMutex().unlock();
+	m_logic_lock.unlock();
 }
 
 void ComponentEngine::Engine::UpdateUI(float delta)
@@ -239,14 +261,8 @@ void ComponentEngine::Engine::Rebuild()
 
 void ComponentEngine::Engine::RenderFrame()
 {
-	//Update camera
-	m_camera_component.view = glm::inverse(m_camera_component.view);
-	m_camera_component.view = m_camera_entity->GetComponent<Transformation>().Get();
-	m_camera_component.view = glm::inverse(m_camera_component.view);
-
+	if (m_main_camera == nullptr)return;
 	GetRendererMutex().lock();
-	// Set data
-	m_camera_buffer->SetData(BufferSlot::Primary);
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
 	GetRendererMutex().unlock();
@@ -353,15 +369,6 @@ IRenderer * ComponentEngine::Engine::GetRenderer()
 	return m_renderer;
 }
 
-Entity * ComponentEngine::Engine::GetCameraEntity()
-{
-	return m_camera_entity;
-}
-
-Transformation * ComponentEngine::Engine::GetCameraTransformation()
-{
-	return &m_camera_entity->GetComponent<Transformation>();
-}
 
 IDescriptorPool * ComponentEngine::Engine::GetCameraPool()
 {
@@ -447,6 +454,37 @@ ThreadManager * ComponentEngine::Engine::GetThreadManager()
 	return m_threadManager;
 }
 
+void ComponentEngine::Engine::SetCamera(Camera* camera)
+{
+	GetRendererMutex().lock();
+	m_main_camera = camera;
+	m_camera_descriptor_set->AttachBuffer(0, camera->GetCameraBuffer());
+	m_camera_descriptor_set->UpdateSet();
+	camera->UpdateProjection();
+	Rebuild();
+	GetRendererMutex().unlock();
+}
+
+bool ComponentEngine::Engine::HasCamera()
+{
+	return m_main_camera != m_default_camera;
+}
+
+Camera* ComponentEngine::Engine::GetMainCamera()
+{
+	return m_main_camera;
+}
+
+Camera* ComponentEngine::Engine::GetDefaultCamera()
+{
+	return m_default_camera;;
+}
+
+NativeWindowHandle* ComponentEngine::Engine::GetWindowHandle()
+{
+	return m_window_handle;
+}
+
 void ComponentEngine::Engine::RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity &entity), void(*xml_initilizer)(enteez::Entity &entity, pugi::xml_node &component_data))
 {
 	m_component_register[name].default_initilizer = default_initilizer;
@@ -515,8 +553,7 @@ void ComponentEngine::Engine::UpdateWindow()
 				Rebuild();
 				GetRendererMutex().unlock();
 				// Update Camera
-				UpdateCameraProjection();
-				m_camera_buffer->SetData(BufferSlot::Primary);
+				if(m_main_camera!=nullptr) m_main_camera->UpdateProjection();
 				break;
 			}
 			break;
@@ -580,6 +617,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 	RegisterBase<ParticleSystem, Logic, UI>();
+	RegisterBase<Camera, Logic, UI, TransferBuffers>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -596,27 +634,10 @@ void ComponentEngine::Engine::InitRenderer()
 	// If the rendering was not fully created, error out
 	assert(m_renderer != nullptr && "Error, renderer instance could not be created");
 
-	// Create camera
-	m_camera_component.view = glm::mat4(1.0f);
-	m_camera_component.view = glm::translate(m_camera_component.view, glm::vec3(0.0f, 0.0f, 0.0f));
-
-	UpdateCameraProjection(); 
-
-
-	m_camera_entity = this->GetEntityManager().CreateEntity("Camera");
+	//m_camera_entity = this->GetEntityManager().CreateEntity("Camera");
 	//m_camera_entity->AddComponent(&m_camera_component);
 
-	ComponentWrapper<Indestructable>* indestructable_transformation = m_camera_entity->AddComponent<Indestructable>();
-	indestructable_transformation->SetName("Indestructable");
-	ComponentWrapper<Transformation>* camera_transformation = m_camera_entity->AddComponent<Transformation>(m_camera_entity);
-	camera_transformation->SetName("Transformation");
-	camera_transformation->Get().Translate(glm::vec3(0.0f, 0.0f, 0.0f));
-	ComponentWrapper<Camera>* camera_component = m_camera_entity->AddComponent(&m_camera_component);
-	camera_component->SetName("Camera");
-
-	// Create camera buffer
-	m_camera_buffer = m_renderer->CreateUniformBuffer(&m_camera_component, BufferChain::Single, sizeof(Camera), 1);
-	m_camera_buffer->SetData(BufferSlot::Primary);
+	m_default_camera = new Camera();
 
 	// Create camera pool
 	// This is a layout for the camera input data
@@ -627,8 +648,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Create camera descriptor set from the tempalte
 	m_camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
-	// Attach the buffer
-	m_camera_descriptor_set->AttachBuffer(0, m_camera_buffer);
+	// 
 	m_camera_descriptor_set->UpdateSet();
 
 
@@ -681,6 +701,8 @@ void ComponentEngine::Engine::InitRenderer()
 	// Build and check default pipeline
 	assert(sucsess && "Unable to build default pipeline");
 	InitImGUI();
+	SetCamera(m_default_camera);
+
 }
 
 void ComponentEngine::Engine::DeInitRenderer()
@@ -696,10 +718,10 @@ void ComponentEngine::Engine::DeInitRenderer()
 	m_texture_storage.clear();
 
 
+	delete m_default_camera;
+	m_default_camera = nullptr;
 	delete m_default_pipeline;
 	m_default_pipeline = nullptr;
-	delete m_camera_buffer;
-	m_camera_buffer = nullptr;
 	delete m_camera_pool;
 	m_camera_pool = nullptr;
 	delete m_texture_maps_pool;
@@ -716,23 +738,12 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Mesh",nullptr, Mesh::EntityHook);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
 	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
+	RegisterComponentBase("Camera", Camera::EntityHookDefault, Camera::EntityHookXML);
 	
 
 	RegisterComponentBase("Indestructable", nullptr, nullptr);
 }
 
-void ComponentEngine::Engine::UpdateCameraProjection()
-{
-	float aspectRatio = ((float)m_window_handle->width) / ((float)m_window_handle->height);
-	m_camera_component.projection = glm::perspective(
-		glm::radians(45.0f),
-		aspectRatio,
-		0.1f,
-		200.0f
-	);
-	// Need to flip the projection as GLM was made for OpenGL
-	m_camera_component.projection[1][1] *= -1;
-}
 
 void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent)
 {

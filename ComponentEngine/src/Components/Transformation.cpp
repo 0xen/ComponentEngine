@@ -1,6 +1,7 @@
 #include <ComponentEngine\Components\Transformation.hpp>
 
 #include <ComponentEngine\pugixml.hpp>
+#include <ComponentEngine\Components\Mesh.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 
@@ -321,6 +322,7 @@ void ComponentEngine::Transformation::RemoveChild(Transformation * trans)
 
 void ComponentEngine::Transformation::PushToPositionArray()
 {
+	Mesh::GetModelPositionTransferLock().lock();
 	*m_mat4 = m_local_mat4;
 	if (m_parent != nullptr && m_parent->HasComponent<Transformation>())
 		(*m_mat4) = m_parent->GetComponent<Transformation>().Get() * m_local_mat4;
@@ -329,5 +331,6 @@ void ComponentEngine::Transformation::PushToPositionArray()
 	{
 		m_children[i]->PushToPositionArray();
 	}
+	Mesh::GetModelPositionTransferLock().unlock();
 }
 

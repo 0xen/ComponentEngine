@@ -41,6 +41,7 @@ source_group("Header Files\\ComponentEngine" FILES ${common_headers})
 
 set(component_headers
     include/ComponentEngine/Components/UI.hpp
+    include/ComponentEngine/Components/TransferBuffers.hpp
     include/ComponentEngine/Components/ComponentMessages.hpp
     include/ComponentEngine/Components/MsgRecive.hpp
     include/ComponentEngine/Components/MsgSend.hpp
@@ -58,6 +59,7 @@ set(component_source
     src/Components/MsgRecive.cpp
     src/Components/MsgSend.cpp
     src/Components/Mesh.cpp
+    src/Components/Camera.cpp
     src/Components/Transformation.cpp
     src/Components/ParticalSystem.cpp
     src/Components/Renderer.cpp

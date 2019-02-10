@@ -3,6 +3,7 @@
 #include <ComponentEngine\Components\Renderer.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <ItemHover.hpp>
+#include <KeyboardMovment.hpp>
 #include <iostream>
 
 
@@ -14,8 +15,13 @@ Engine* engine;
 
 void RegisterCustomComponents()
 {
+
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
 	engine->RegisterBase<ItemHover, Logic, UI>();
+
+	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
+	engine->RegisterBase<KeyboardMovment, Logic, UI>();
+
 }
 
 int main(int argc, char **argv)
@@ -31,26 +37,9 @@ int main(int argc, char **argv)
 	engine->GetThreadManager()->AddTask([&](float frameTime) {
 		engine->GetRendererMutex().lock();
 		engine->LoadScene("../../ComponentEngine-demo/GameInstance.xml");
-		Transformation* camera = engine->GetCameraTransformation();
-		camera->Translate(glm::vec3(0.0f, 2.0f, 10.0f));
 		engine->GetRendererMutex().unlock();
 		engine->UpdateScene();
 	});
-
-
-	engine->GetThreadManager()->AddTask([&](float frameTime) {
-		if (engine->KeyDown(SDL_SCANCODE_W))
-			engine->GetCameraTransformation()->MoveLocalZ(-10.0f * frameTime);
-		if (engine->KeyDown(SDL_SCANCODE_S))
-			engine->GetCameraTransformation()->MoveLocalZ(10.0f * frameTime);
-
-
-		if (engine->KeyDown(SDL_SCANCODE_A))
-			engine->GetCameraTransformation()->RotateWorldY(glm::radians(90.0f*frameTime));
-		if (engine->KeyDown(SDL_SCANCODE_D))
-			engine->GetCameraTransformation()->RotateWorldY(glm::radians(-90.0f*frameTime));
-	}, 60, "Keyboard Control");
-
 
 	
 	while (engine->Running(60))

@@ -3,6 +3,7 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Common.hpp>
 
+#include <ComponentEngine\ThreadHandler.hpp>
 #include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <EnteeZ\EnteeZ.hpp>
@@ -18,6 +19,8 @@ using namespace ComponentEngine;
 std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
 const unsigned int Mesh::m_buffer_size_step = 100;
+
+ordered_lock ComponentEngine::Mesh::m_transformation_lock;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
 {
@@ -129,18 +132,27 @@ void ComponentEngine::Mesh::Display()
 
 void ComponentEngine::Mesh::SetBufferData()
 {
+	GetModelPositionTransferLock().lock();
 	for (auto& it : m_mesh_instance)
 	{
 		it.second.model_position_buffer->SetData(BufferSlot::Secondery);
 	}
+	GetModelPositionTransferLock().unlock();
 }
 
 void ComponentEngine::Mesh::TransferToPrimaryBuffers()
 {
+	GetModelPositionTransferLock().lock();
 	for (auto& it : m_mesh_instance)
 	{
 		it.second.model_position_buffer->Transfer(BufferSlot::Primary, BufferSlot::Secondery);
 	}
+	GetModelPositionTransferLock().unlock();
+}
+
+ordered_lock& ComponentEngine::Mesh::GetModelPositionTransferLock()
+{
+	return m_transformation_lock;
 }
 
 void ComponentEngine::Mesh::LoadModel()

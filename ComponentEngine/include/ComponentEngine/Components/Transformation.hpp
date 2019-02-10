@@ -9,6 +9,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+
 #include <ComponentEngine\Components\MsgRecive.hpp>
 #include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
@@ -86,7 +87,6 @@ namespace ComponentEngine
 		enteez::Entity* GetParent();
 		std::vector<Transformation*> GetChildren();
 		bool HasChildren();
-
 
 		enteez::Entity* GetEntity();
 

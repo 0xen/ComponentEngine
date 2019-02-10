@@ -59,8 +59,6 @@ namespace ComponentEngine
 		bool LoadScene(const char* path, bool merge_scenes = false);
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
-		Entity* GetCameraEntity();
-		Transformation* GetCameraTransformation();
 		IDescriptorPool* GetCameraPool();
 		IDescriptorSet* GetCameraDescriptorSet();
 		IDescriptorPool* GetTextureMapsPool();
@@ -75,8 +73,17 @@ namespace ComponentEngine
 		//ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
 
-
 		ThreadManager* GetThreadManager();
+
+		void SetCamera(Camera* camera);
+
+		bool HasCamera();
+
+		Camera* GetMainCamera();
+
+		Camera* GetDefaultCamera();
+
+		NativeWindowHandle* GetWindowHandle();
 
 		void RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
 
@@ -84,16 +91,17 @@ namespace ComponentEngine
 	private:
 		Engine();
 		Uint32 GetWindowFlags(RenderingAPI api);
+
 		void InitWindow();
 		void UpdateWindow();
 		void DeInitWindow();
+
 		void InitEnteeZ();
 		void DeInitEnteeZ();
+
 		void InitRenderer();
 		void DeInitRenderer();
 		void InitComponentHooks();
-
-		void UpdateCameraProjection();
 
 		void LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent = nullptr);
 		void LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name);
@@ -136,12 +144,13 @@ namespace ComponentEngine
 
 		// Default pipeline data
 		IGraphicsPipeline* m_default_pipeline = nullptr;
-		Entity* m_camera_entity;
-		Camera m_camera_component;
-		IUniformBuffer* m_camera_buffer;
 		IDescriptorPool* m_camera_pool;
 		IDescriptorSet* m_camera_descriptor_set;
 		IDescriptorPool* m_texture_maps_pool;
+
+		Camera* m_default_camera;
+		// Main camera
+		Camera* m_main_camera = nullptr;
 
 		// ImGUI
 		struct
@@ -199,6 +208,7 @@ namespace ComponentEngine
 		};
 
 		ordered_lock m_renderer_thread;
+		ordered_lock m_logic_lock;
 		ordered_lock m_thread_data_lock;
 
 		std::vector<ThreadData*> m_thread_data;

@@ -8,10 +8,12 @@ set(HAVE_LIBC TRUE)
 set(src
     src/main.cpp
     src/ItemHover.cpp
+    src/KeyboardMovment.cpp
 )
 
 set(headers
     include/ItemHover.hpp
+    include/KeyboardMovment.hpp
 )
 
 

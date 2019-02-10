@@ -13,6 +13,8 @@
 
 #include <glm/glm.hpp>
 
+class ordered_lock;
+
 namespace enteez
 {
 	class Entity;
@@ -35,7 +37,7 @@ namespace Renderer
 namespace ComponentEngine
 {
 	class MeshVertex;
-	class FileForms;
+	struct FileForms;
 
 	struct MaterialStorage
 	{
@@ -102,6 +104,7 @@ namespace ComponentEngine
 		virtual void Display();
 		static void SetBufferData();
 		static void TransferToPrimaryBuffers();
+		static ordered_lock& GetModelPositionTransferLock();
 		friend class Engine;
 	private:
 		void LoadModel();
@@ -119,6 +122,8 @@ namespace ComponentEngine
 		static std::map<std::string, MaterialStorage> m_materials;
 		// How many slots we will reserve 
 		static const unsigned int m_buffer_size_step;
+
+		static ordered_lock m_transformation_lock;
 
 		enteez::Entity * m_entity;
 	};
