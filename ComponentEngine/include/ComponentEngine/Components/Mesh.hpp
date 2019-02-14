@@ -92,10 +92,12 @@ namespace ComponentEngine
 		public MsgRecive<OnComponentEnter<Transformation>>, public MsgRecive<OnComponentExit<Transformation>>
 	{
 	public:
+		Mesh(enteez::Entity* entity);
 		Mesh(enteez::Entity* entity, std::string path);
 		~Mesh();
 		void ChangePath(std::string path);
-		static void EntityHook(enteez::Entity& entity, pugi::xml_node& component_data);
+		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
+		static void EntityHookDefault(enteez::Entity& entity);
 		std::string GetPath();
 		bool Loaded();
 		virtual void ReciveMessage(enteez::Entity* sender, RenderStatus& message);

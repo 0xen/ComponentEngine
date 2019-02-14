@@ -735,7 +735,7 @@ void ComponentEngine::Engine::InitComponentHooks()
 {
 	
 	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
-	RegisterComponentBase("Mesh",nullptr, Mesh::EntityHook);
+	RegisterComponentBase("Mesh", Mesh::EntityHookDefault, Mesh::EntityHookXML);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
 	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
 	RegisterComponentBase("Camera", Camera::EntityHookDefault, Camera::EntityHookXML);

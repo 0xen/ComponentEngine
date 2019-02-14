@@ -1,8 +1,8 @@
 # Blender MTL File: 'None'
 # Material Count: 2
 
-newmtl Letter
-Ns 94.117647
+newmtl Letter.002
+Ns 92.156863
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.000000 0.000000
 Ks 0.500000 0.500000 0.500000
@@ -11,8 +11,8 @@ Ni 1.000000
 d 1.000000
 illum 2
 
-newmtl cream_block
-Ns 94.117647
+newmtl cream_block.002
+Ns 92.156863
 Ka 1.000000 1.000000 1.000000
 Kd 0.217600 0.217600 0.170163
 Ks 0.500000 0.500000 0.500000

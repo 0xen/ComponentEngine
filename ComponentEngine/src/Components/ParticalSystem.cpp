@@ -176,7 +176,22 @@ void ComponentEngine::ParticleSystem::Update(float frame_time)
 	m_particle_lock.lock();
 	engine->GetRendererMutex().lock();
 
-	m_config.buffer_config.memory.emitter = m_config.emmitter_offset + m_entity->GetComponent<Transformation>().GetWorldPosition();
+	// Get the models matrix
+	glm::mat4 positionMatrix = m_entity->GetComponent<Transformation>().Get();
+
+	glm::vec3 xFacing = positionMatrix[0];
+	glm::vec3 yFacing = positionMatrix[1];
+	glm::vec3 zFacing = positionMatrix[2];
+
+	xFacing = glm::normalize(xFacing) * m_config.emmitter_offset.x;
+	yFacing = glm::normalize(yFacing) * m_config.emmitter_offset.y;
+	zFacing = glm::normalize(zFacing) * m_config.emmitter_offset.z;
+
+	(positionMatrix)[3][0] += xFacing.x + yFacing.x + zFacing.x;
+	(positionMatrix)[3][1] += xFacing.y + yFacing.y + zFacing.y;
+	(positionMatrix)[3][2] += xFacing.z + yFacing.z + zFacing.z;
+
+	m_config.buffer_config.memory.emitter = (positionMatrix)[3];// m_config.emmitter_offset + m_entity->GetComponent<Transformation>().GetWorldPosition();
 	m_config.buffer_config.memory.totalTime += frame_time;
 	m_config.buffer_config.memory.updateTime = frame_time;
 

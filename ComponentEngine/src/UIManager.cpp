@@ -729,8 +729,6 @@ bool ComponentEngine::UIManager::StringDropBox(const char * lable, const char* p
 
 		return true;
 
-
-
 	}
 
 

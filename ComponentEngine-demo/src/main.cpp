@@ -6,33 +6,24 @@
 #include <KeyboardMovment.hpp>
 #include <iostream>
 
-
 using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
 Engine* engine;
 
-
 void RegisterCustomComponents()
 {
-
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
 	engine->RegisterBase<ItemHover, Logic, UI>();
-
 	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
 	engine->RegisterBase<KeyboardMovment, Logic, UI>();
-
 }
 
 int main(int argc, char **argv)
 {
-
-
 	engine = Engine::Singlton();
 	engine->Start();
-
 	RegisterCustomComponents();
-
 	// Load the scene
 	engine->GetThreadManager()->AddTask([&](float frameTime) {
 		engine->GetRendererMutex().lock();
@@ -40,13 +31,10 @@ int main(int argc, char **argv)
 		engine->GetRendererMutex().unlock();
 		engine->UpdateScene();
 	});
-
-	
 	while (engine->Running(60))
 	{
 		engine->Update();
 	}
-
 	engine->Join();
 	engine->Stop();
 	delete engine;

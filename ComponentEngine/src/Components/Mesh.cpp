@@ -22,6 +22,14 @@ const unsigned int Mesh::m_buffer_size_step = 100;
 
 ordered_lock ComponentEngine::Mesh::m_transformation_lock;
 
+ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
+{
+	m_loaded = false;
+	m_vertex_count = 0;
+
+
+}
+
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
 {
 	m_loaded = false;
@@ -44,7 +52,7 @@ void ComponentEngine::Mesh::ChangePath(std::string path)
 	m_dir = Common::GetDir(m_file_path.data.longForm);
 }
 
-void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node & component_data)
+void ComponentEngine::Mesh::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
 {
 	pugi::xml_node mesh_node = component_data.child("Path");
 	if (mesh_node)
@@ -79,6 +87,28 @@ void ComponentEngine::Mesh::EntityHook(enteez::Entity & entity, pugi::xml_node &
 	}
 }
 
+void ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
+{
+
+	if (!entity.HasComponent<Mesh>())
+	{
+
+		enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity);
+		mesh->SetName("Mesh");
+	}
+	else
+	{
+		/*enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity, path);
+		mesh->SetName("Mesh");
+		if (!mesh->Get().Loaded())
+		{
+			std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
+			entity.RemoveComponent<Mesh>();
+		}*/
+	}
+
+}
+
 std::string ComponentEngine::Mesh::GetPath()
 {
 	return m_file_path.data.longForm;
@@ -91,6 +121,7 @@ bool ComponentEngine::Mesh::Loaded()
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, RenderStatus& message)
 {
+	if (!m_loaded)return;
 	for (int i = 0; i < m_sub_mesh_count; i++)
 	{
 		m_sub_meshes[i]->ShouldRender(message.should_renderer);
@@ -99,6 +130,7 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, RenderStatus&
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEnter<Transformation>& message)
 {
+	if (!m_loaded)return;
 	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_file_path.data.longForm].model_position_array[m_mesh_index]);
 }
 
@@ -110,9 +142,13 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEx
 
 void ComponentEngine::Mesh::Display()
 {
-	ImGui::Text("Mesh Instance Count: %d", m_mesh_instance[m_file_path.data.longForm].used_instances);
-	ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
-	ImGui::Text("Vertex Count: %d", m_vertex_count);
+
+	if (m_loaded)
+	{
+		ImGui::Text("Mesh Instance Count: %d", m_mesh_instance[m_file_path.data.longForm].used_instances);
+		ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
+		ImGui::Text("Vertex Count: %d", m_vertex_count);
+	}
 
 	DropBoxInstance<FileForms> tempFilePath = m_file_path;
 	if (UIManager::DropBox("Mesh File", "File", tempFilePath))
@@ -121,10 +157,12 @@ void ComponentEngine::Mesh::Display()
 		{
 			Engine::Singlton()->GetRendererMutex().lock();
 			tempFilePath.SetMessage(tempFilePath.data.shortForm);
-			UnloadModel();
-			m_file_path = tempFilePath;
+			if (m_loaded)UnloadModel();
+
+			ChangePath(tempFilePath.data.longForm);
+			//m_file_path = tempFilePath;
+			//std::cout << m_file_path.data.longForm << std::endl;
 			LoadModel();
-			std::cout << m_file_path.data.longForm << std::endl;
 			Engine::Singlton()->GetRendererMutex().unlock();
 		}
 	}
@@ -163,7 +201,7 @@ void ComponentEngine::Mesh::LoadModel()
 	if (it == m_mesh_instance.end())
 	{
 		// Needs changed how we do this
-		std::string material_base_dir = m_dir + "../Resources/";
+		//std::string material_base_dir = m_dir + "../Resources/";
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> materials;
@@ -200,12 +238,12 @@ void ComponentEngine::Mesh::LoadModel()
 				{
 					std::stringstream ss;
 					ss << Engine::Singlton()->GetCurrentSceneDirectory();
-					ss << "/Resources/Resources/default.png";
+					ss << "/Resources/Models/default.png";
 					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(ss.str()));
 				}
 				else
 				{
-					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(material_base_dir + m.diffuse_texname));
+					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(m_dir + m.diffuse_texname));
 				}
 				texture_maps_descriptor_set->UpdateSet();
 

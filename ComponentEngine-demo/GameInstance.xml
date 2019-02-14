@@ -7,53 +7,44 @@
       <Component name="Renderer"/>
     </GameObject>
 
-    <GameObject name="LetterBlockC" prefab="RendererPrefab">
+    <GameObject name="LetterBlockA" prefab="RendererPrefab">
       <Component name="Transformation">
         <Position x="-0.5f" y="0.0f" z="0.0f"/>
         <Rotation x="0.0f" y="0.0f" z="0.0f"/>
         <Scale x="1.0f" y="1.0f" z="1.0f"/>
       </Component>
       <Component name="Mesh">
-        <Path value="/Resources/Models/Blocks/LetterBlockC.obj"/>
+        <Path value="/Resources/Models/Blocks/LetterBlockA.obj"/>
       </Component>
     </GameObject>
+
+    <GameObject name="TexturedCube" prefab="RendererPrefab">
+      <Component name="Mesh">
+        <Path value="/Resources/Models/Cube.obj"/>
+      </Component>
+    </GameObject>
+    
+    
   </Prefabs>
   
   
 	<Scenes>
 		<Scene>
 
-      <GameObject name="Cube2">
-        <GameObject name="Cube2" prefab="LetterBlockC">
-          <Component name="Transformation">
-            <Position x="0.0f" y="0.0f" z="0.0f"/>
-            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
-            <Scale x="1.0f" y="1.0f" z="1.0f"/>
-          </Component>
-        </GameObject>
-        <GameObject name="Cube2" prefab="LetterBlockC">
-          <Component name="Transformation">
-            <Position x="1.0f" y="0.0f" z="0.0f"/>
-            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
-            <Scale x="1.0f" y="1.0f" z="1.0f"/>
-          </Component>
-        </GameObject>
-        <GameObject name="Cube2" prefab="LetterBlockC">
-          <Component name="Transformation">
-            <Position x="-1.0f" y="0.0f" z="0.0f"/>
-            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
-            <Scale x="1.0f" y="1.0f" z="1.0f"/>
-          </Component>
-        </GameObject>
-      </GameObject>
-
-      <GameObject name="Camera">
+      <GameObject name="TexturedCubeGrass" prefab="TexturedCube">
         <Component name="Transformation">
-          <Position x="10.0f" y="0.0f" z="0.0f"/>
-          <Rotation x="0.0f" y="90.0f" z="0.0f"/>
+          <Position x="0.0f" y="0.0f" z="0.0f"/>
+          <Rotation x="0.0f" y="0.0f" z="0.0f"/>
           <Scale x="1.0f" y="1.0f" z="1.0f"/>
         </Component>
-        <Component name="Camera"></Component>
+      </GameObject>
+
+      <GameObject name="LetterBlock" prefab="LetterBlockA">
+        <Component name="Transformation">
+          <Position x="1.0f" y="0.0f" z="0.0f"/>
+          <Rotation x="0.0f" y="0.0f" z="0.0f"/>
+          <Scale x="1.0f" y="1.0f" z="1.0f"/>
+        </Component>
       </GameObject>
 
 
@@ -64,19 +55,7 @@
           <Scale x="1.0f" y="1.0f" z="1.0f"/>
         </Component>
         <Component name="Camera"></Component>
-
-        <Component name="Keyboard Movment"/>
-
-        <GameObject name="Cube2" prefab="LetterBlockC">
-          <Component name="Transformation">
-            <Position x="0.0f" y="0.0f" z="-5.0f"/>
-            <Rotation x="0.0f" y="0.0f" z="0.0f"/>
-            <Scale x="1.0f" y="1.0f" z="1.0f"/>
-          </Component>
-        </GameObject>
-
       </GameObject>
-      
       
       
       
