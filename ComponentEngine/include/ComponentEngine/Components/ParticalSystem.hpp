@@ -103,6 +103,7 @@ namespace ComponentEngine
 		virtual void Display();
 		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
+		void ResetTimer();
 	private:
 
 		void RebuildConfig();
@@ -138,6 +139,9 @@ namespace ComponentEngine
 		ParticleSystemConfig m_config;
 
 		int m_particleCount;
+
+		bool m_running = true;
+		bool m_visible = true;
 
 	};
 }

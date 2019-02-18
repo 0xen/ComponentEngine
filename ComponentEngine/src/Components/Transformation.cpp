@@ -249,12 +249,6 @@ enteez::Entity * ComponentEngine::Transformation::GetEntity()
 	return m_entity;
 }
 
-void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity & entity)
-{
-	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>(&entity);
-	trans_wrapper->SetName("Transformation");
-}
-
 void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
 {
 

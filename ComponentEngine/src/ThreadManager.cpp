@@ -23,7 +23,7 @@ ThreadManager::ThreadManager(ThreadMode mode)
 
 }
 
-bool ThreadManager::GetTask(WorkerTask& task)
+bool ThreadManager::GetTask(WorkerTask*& task)
 {
 	WorkerTask* poolTask = nullptr;
 	{
@@ -31,16 +31,11 @@ bool ThreadManager::GetTask(WorkerTask& task)
 		if (m_task_pool.size() == 0) return false;
 
 		poolTask = m_task_pool[0];
-		poolTask->queued = false;
 		m_task_pool.erase(m_task_pool.begin());
 	}
 
 
-	task = *poolTask;
-	if (poolTask->type == TaskType::Single)
-	{
-		delete poolTask;
-	}
+	task = poolTask;
 	return true;
 }
 
@@ -66,6 +61,7 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, std::string name
 void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups, std::string name)
 {
 	WorkerTask* newTask = new WorkerTask();
+	newTask->queued = false;
 	newTask->funcPtr = funcPtr;
 	newTask->ups = ups;
 	newTask->name = name;
@@ -82,7 +78,6 @@ void ThreadManager::Update()
 
 	{ // Schedualed task
 		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
-
 
 		for (int i = 0; i < m_schedualed_tasks.size(); ++i)
 		{
@@ -103,16 +98,24 @@ void ThreadManager::Update()
 	std::unique_lock<std::mutex> acquire_mode_lock(m_activity_lock);
 	if (m_mode == Joined)
 	{
-		WorkerTask task;
-
+		WorkerTask* task;
 
 		while (GetTask(task))
 		{
-			task.funcPtr(delta);
-			float newDelta = GetDeltaTime();
-			delta += newDelta;
-			m_active_time += newDelta;
+			task->funcPtr(delta);
+
+			{ // Cleanup
+				task->queued = false;
+				if (task->type == TaskType::Single)
+				{
+					delete task;
+				}
+			}
 		}
+
+		float newDelta = GetDeltaTime();
+		delta += newDelta;
+		m_active_time += newDelta;
 
 		m_seccond_delta += delta;
 		if (m_seccond_delta > 1.0f)
@@ -170,15 +173,24 @@ WorkerThread::WorkerThread(ThreadManager* thread_manager, ThreadMode mode)
 
 void WorkerThread::Loop()
 {
-	WorkerTask task;
+	WorkerTask* task;
 	do{
 		float lastDelta = GetDeltaTime();
 		if (m_thread_manager->GetTask(task))
 		{
-			task.funcPtr(task.lastDelta);
+			task->funcPtr(task->lastDelta);
 			float end = GetDeltaTime();
 			m_active_time += end;
 			lastDelta += end;
+
+
+			{ // Cleanup
+				task->queued = false;
+				if (task->type == TaskType::Single)
+				{
+					delete task;
+				}
+			}
 		}
 		else if (m_mode == ThreadMode::Threading)
 		{

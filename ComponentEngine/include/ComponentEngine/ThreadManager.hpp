@@ -73,7 +73,7 @@ public:
 
 	ThreadManager(ThreadMode mode);
 
-	bool GetTask(WorkerTask& task);
+	bool GetTask(WorkerTask*& task);
 
 	void ChangeMode(ThreadMode mode);
 

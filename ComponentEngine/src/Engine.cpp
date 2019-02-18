@@ -146,7 +146,25 @@ void ComponentEngine::Engine::Stop()
 		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
 		m_running = false;
 	}
+
+
 	GetRendererMutex().lock();
+
+
+
+
+
+
+
+	std::stringstream ss;
+	ss << m_currentSceneDirectory;
+	ss << "/test.xml";
+	m_xml_scene.save_file(ss.str().c_str());
+
+
+
+
+
 	GetEntityManager().Clear();
 	DeInitEnteeZ();
 	DeInitRenderer();
@@ -335,11 +353,9 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 	}
 
 
+	pugi::xml_parse_result result = m_xml_scene.load_file(path);
 
-	pugi::xml_document xml;
-	pugi::xml_parse_result result = xml.load_file(path);
-
-	pugi::xml_node game_node = xml.child("Game");
+	pugi::xml_node game_node = m_xml_scene.child("Game");
 	if (!game_node)return false;
 	pugi::xml_node scenes_node = game_node.child("Scenes");
 	if (!scenes_node)return false;
@@ -349,11 +365,11 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 
 	pugi::xml_node prefabs_node = game_node.child("Prefabs");
 
-
 	for (pugi::xml_node node : scene_node.children("GameObject"))
 	{
 		LoadXMLGameObject(node, prefabs_node);
 	}
+
 
 
 	return true;
@@ -734,7 +750,7 @@ void ComponentEngine::Engine::DeInitRenderer()
 void ComponentEngine::Engine::InitComponentHooks()
 {
 	
-	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
+	RegisterComponentBase("Transformation", nullptr, Transformation::EntityHookXML);
 	RegisterComponentBase("Mesh", Mesh::EntityHookDefault, Mesh::EntityHookXML);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
 	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
@@ -753,11 +769,8 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi
 
 	enteez::Entity* entity = GetEntityManager().CreateEntity(name.size() > 0 ? name : "Entity");
 
-
-
-
-	// For now manualy add transformation by default
-	Transformation::EntityHookDefault(*entity);
+	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity->AddComponent<Transformation>(entity);
+	trans_wrapper->SetName("Transformation");
 
 
 

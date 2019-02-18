@@ -52,20 +52,18 @@
 						<StartColor R="1.0f" G="1.0f" B="1.0f" A="0.1f" />
 						<EndColor R="1.0f" G="1.0f" B="1.0f" A="0.0f" />
 					</Color>
-          <Particle dynamicParticleCount="1">
-            <EmitterOffset x="1.8f" y="0.65f" z="0.0f"/>
-            <EmissionRate value="0.01f"/>
-            <MaxLife value="1.0f"/>
-            <Scale value="0.2f"/>
-            <!-- <ParticleCount value="100"\> -->
-          </Particle>
-          <VelocityAndDrag>
-            <DirectionalVelocity value="2.0f"/>
-            <VelocityX static="0" min="-0.4" max="0.4"/>
-            <VelocityY static="1" min="1.0f"/>
-            <VelocityZ static="0" min="-0.4f" max="0.4"/>
-          </VelocityAndDrag>
-
+					<Particle dynamicParticleCount="1">
+						<EmitterOffset x="1.8f" y="0.65f" z="0.0f" />
+						<EmissionRate value="0.01f" />
+						<MaxLife value="1.0f" />
+						<Scale value="0.2f" />
+					</Particle>
+					<VelocityAndDrag>
+						<DirectionalVelocity value="2.0f" />
+						<VelocityX static="0" min="-0.4" max="0.4" />
+						<VelocityY static="1" min="1.0f" />
+						<VelocityZ static="0" min="-0.4f" max="0.4" />
+					</VelocityAndDrag>
 				</Component>
 			</GameObject>
 			<GameObject name="Camera">

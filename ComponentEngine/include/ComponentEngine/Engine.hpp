@@ -10,6 +10,7 @@
 #include <ComponentEngine\ThreadHandler.hpp>
 #include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\ThreadManager.hpp>
+#include <ComponentEngine/pugixml.hpp>
 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -221,6 +222,7 @@ namespace ComponentEngine
 
 		std::string m_currentScene;
 		std::string m_currentSceneDirectory;
+		pugi::xml_document m_xml_scene;
 
 
 		ThreadManager* m_threadManager;

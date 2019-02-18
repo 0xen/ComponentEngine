@@ -172,6 +172,7 @@ void ComponentEngine::ParticleSystem::Build()
 
 void ComponentEngine::ParticleSystem::Update(float frame_time)
 {
+	if (!m_running)return;
 	ComponentEngine::Engine* engine = Engine::Singlton();
 	m_particle_lock.lock();
 	engine->GetRendererMutex().lock();
@@ -206,6 +207,17 @@ void ComponentEngine::ParticleSystem::Update(float frame_time)
 void ComponentEngine::ParticleSystem::Display()
 {
 	m_particle_lock.lock();
+
+	if (ImGui::Checkbox("##PE_isVisible", &m_visible))
+	{
+		m_model->ShouldRender(m_visible);
+	}
+	ImGui::SameLine();
+	ImGui::Text("Visible");
+
+	ImGui::Checkbox("##PE_isRunning", &m_running);
+	ImGui::SameLine();
+	ImGui::Text("Running");
 
 
 	ImGui::PushItemWidth(ImGui::GetWindowContentRegionWidth() - 10);
@@ -305,6 +317,10 @@ void ComponentEngine::ParticleSystem::Display()
 				int change = m_particleCount;
 				if (ImGui::InputInt("##particleCount", (int*)&change, 0.0f, 0.0f, ImGuiInputTextFlags_EnterReturnsTrue))
 				{
+					if (change < 0)
+					{
+						change = 1;
+					}
 					m_particleCount = change;
 					RebuildAll();
 				}
@@ -320,6 +336,10 @@ void ComponentEngine::ParticleSystem::Display()
 			float change = m_config.buffer_config.memory.maxLife;
 			if (ImGui::InputFloat("##lifespan", (float*)&change, 0.0f, 0.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 			{
+				if (change < 0.1f)
+				{
+					change = 0.1f;
+				}
 				m_config.buffer_config.memory.maxLife = change;
 				if (m_config.m_dynamicParticleCount)
 				{
@@ -336,6 +356,10 @@ void ComponentEngine::ParticleSystem::Display()
 			float change = m_config.buffer_config.memory.emissionRate;
 			if (ImGui::InputFloat("##emissionRate", (float*)&change, 0.0f, 0.0f, "%.5f", ImGuiInputTextFlags_EnterReturnsTrue))
 			{
+				if (change < 0.0f)
+				{
+					change = 0.00001f;
+				}
 				m_config.buffer_config.memory.emissionRate = change;
 				if (m_config.m_dynamicParticleCount)
 				{
@@ -513,19 +537,132 @@ void ComponentEngine::ParticleSystem::Display()
 void ComponentEngine::ParticleSystem::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<ParticleSystem>* wrapper = entity.AddComponent<ParticleSystem>(&entity);
-	wrapper->SetName("ParticleSystem");
+	wrapper->SetName("Particle System");
 }
 
 void ComponentEngine::ParticleSystem::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
 {
 	enteez::ComponentWrapper<ParticleSystem>* wrapper = entity.AddComponent<ParticleSystem>(&entity);
-	wrapper->SetName("ParticleSystem");
+	wrapper->SetName("Particle System");
+	ParticleSystem& particel_system = wrapper->Get();
+
+	particel_system.m_visible = component_data.attribute("visible").as_bool(true);
+	particel_system.m_running = component_data.attribute("running").as_bool(true);
+	particel_system.m_model->ShouldRender(particel_system.m_visible);
+
+	pugi::xml_node color_node = component_data.child("Color");
+	if (color_node)
+	{
+		pugi::xml_node start_color_node = color_node.child("StartColor");
+		glm::vec4 start_color
+		(
+			start_color_node.attribute("R").as_float(0.0f),
+			start_color_node.attribute("G").as_float(1.0f),
+			start_color_node.attribute("B").as_float(1.0f),
+			start_color_node.attribute("A").as_float(0.0f)
+		);
+		particel_system.m_config.buffer_config.memory.startColor = start_color;
+
+		if (color_node.attribute("useColorRange").as_bool())
+		{
+			pugi::xml_node end_color_node = color_node.child("EndColor");
+			glm::vec4 end_color
+			(
+				end_color_node.attribute("R").as_float(1.0f),
+				end_color_node.attribute("G").as_float(0.0f),
+				end_color_node.attribute("B").as_float(0.0f),
+				end_color_node.attribute("A").as_float(1.0f)
+			);
+			particel_system.m_config.buffer_config.memory.endColor = end_color;
+		}
+		else
+		{
+			particel_system.m_config.buffer_config.memory.endColor = start_color;
+		}
+	}
+
+
+	pugi::xml_node particle_node = component_data.child("Particle");
+	if (particle_node)
+	{
+		particel_system.m_config.buffer_config.memory.emissionRate = particle_node.child("EmissionRate").attribute("value").as_float(0.01f);
+		particel_system.m_config.buffer_config.memory.maxLife = particle_node.child("MaxLife").attribute("value").as_float(1.0f);
+		if (particle_node.attribute("dynamicParticleCount").as_bool())
+		{
+			particel_system.m_particleCount = particel_system.m_config.buffer_config.memory.maxLife / particel_system.m_config.buffer_config.memory.emissionRate;
+		}
+		else
+		{
+			particel_system.m_particleCount = particle_node.child("ParticleCount").attribute("value").as_int(100);
+		}
+		particel_system.m_config.buffer_config.memory.scale = particle_node.child("Scale").attribute("value").as_float(0.1f);
+		pugi::xml_node emitter_offset_node = particle_node.child("EmitterOffset");
+		glm::vec3 emitter_offset
+		(
+			emitter_offset_node.attribute("x").as_float(),
+			emitter_offset_node.attribute("y").as_float(),
+			emitter_offset_node.attribute("z").as_float()
+		);
+
+		particel_system.m_config.emmitter_offset = emitter_offset;
+	}
+
+
+	pugi::xml_node velocity_node = component_data.child("VelocityAndDrag");
+	if (velocity_node)
+	{
+
+		particel_system.m_config.directionalVelocity = velocity_node.child("DirectionalVelocity").attribute("value").as_float(1.0f);
+
+		particel_system.m_config.xVelocityStatic = velocity_node.child("VelocityX").attribute("static").as_bool(false);
+		particel_system.m_config.yVelocityStatic = velocity_node.child("VelocityY").attribute("static").as_bool(false);
+		particel_system.m_config.zVelocityStatic = velocity_node.child("VelocityZ").attribute("static").as_bool(false);
+
+
+		particel_system.m_config.xVelocity = glm::vec2(
+			velocity_node.child("VelocityX").attribute("min").as_float(-1.0f),
+			velocity_node.child("VelocityX").attribute("max").as_float(1.0f)
+		);
+
+		particel_system.m_config.yVelocity = glm::vec2(
+			velocity_node.child("VelocityY").attribute("min").as_float(-1.0f),
+			velocity_node.child("VelocityY").attribute("max").as_float(1.0f)
+		);
+
+		particel_system.m_config.yVelocity = glm::vec2(
+			velocity_node.child("VelocityY").attribute("min").as_float(-1.0f),
+			velocity_node.child("VelocityY").attribute("max").as_float(1.0f)
+		);
+
+
+
+	}
+
+
+	particel_system.RebuildAll();
+
+
+}
+
+void ComponentEngine::ParticleSystem::ResetTimer()
+{
+
+	ComponentEngine::Engine* engine = Engine::Singlton();
+	engine->GetRendererMutex().lock();
+	m_particle_lock.lock();
+
+
+	m_config.buffer_config.memory.totalTime = 0;
+	RebuildAll();
+
+
+	m_particle_lock.unlock();
+	engine->GetRendererMutex().unlock();
 }
 
 void ComponentEngine::ParticleSystem::RebuildConfig()
 {
 	ComponentEngine::Engine* engine = Engine::Singlton();
-	Renderer::IRenderer* renderer = engine->GetRenderer();
 	engine->GetRendererMutex().lock();
 	m_particle_lock.lock();
 
@@ -606,9 +743,6 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 		float y = Common::RandomNumber(m_config.yVelocity.x, m_config.yVelocity.y);
 		float z = Common::RandomNumber(m_config.zVelocity.x, m_config.zVelocity.y);
 
-		/*float x = ((rand() % 200) - 100) * 0.01f;
-		float y = ((rand() % 200) - 100) * 0.01f;
-		float z = ((rand() % 200) - 100) * 0.01f;*/
 		m_particle_payloads[i].memory.velocity = glm::normalize(glm::vec4(x, y, z, 0)) * m_config.directionalVelocity;
 		m_particle_payloads[i].memory.origin = glm::vec4(m_config.emmitter_offset + m_config.buffer_config.memory.emitter, 0.0f);
 	}

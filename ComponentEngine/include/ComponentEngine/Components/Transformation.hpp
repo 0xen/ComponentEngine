@@ -89,8 +89,6 @@ namespace ComponentEngine
 		bool HasChildren();
 
 		enteez::Entity* GetEntity();
-
-		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		friend class Mesh;
