@@ -9,11 +9,13 @@ set(src
     src/main.cpp
     src/ItemHover.cpp
     src/KeyboardMovment.cpp
+    src/MouseMovment.cpp
 )
 
 set(headers
     include/ItemHover.hpp
     include/KeyboardMovment.hpp
+    include/MouseMovment.hpp
 )
 
 

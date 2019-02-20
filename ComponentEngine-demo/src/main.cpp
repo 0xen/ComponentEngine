@@ -4,6 +4,7 @@
 #include <EnteeZ\EnteeZ.hpp>
 #include <ItemHover.hpp>
 #include <KeyboardMovment.hpp>
+#include <MouseMovment.hpp>
 #include <iostream>
 
 using namespace ComponentEngine;
@@ -15,8 +16,10 @@ void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
 	engine->RegisterBase<ItemHover, Logic, UI>();
-	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
+	engine->RegisterComponentBase("KeyboardMovment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
 	engine->RegisterBase<KeyboardMovment, Logic, UI>();
+	engine->RegisterComponentBase("MouseMovment", MouseMovment::EntityHookDefault, MouseMovment::EntityHookXML);
+	engine->RegisterBase<MouseMovment, Logic, UI>();
 }
 
 int main(int argc, char **argv)

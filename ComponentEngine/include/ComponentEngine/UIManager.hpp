@@ -117,6 +117,9 @@ namespace ComponentEngine
 		static bool StringDropBox(const char* lable, const char* payloadType, StringDropInstance& inst);
 		template<typename T>
 		static bool DropBox(const char* lable, const char* payloadType, DropBoxInstance<T>& inst);
+		static bool IsWindowFocused();
+		static bool ElementClicked();
+		static void KeyboardButtonInput(const char* lable,bool& focused, unsigned int& key);
 	private:
 		void RenderMainMenu();
 		//void RenderFPSCounter();
@@ -138,8 +141,6 @@ namespace ComponentEngine
 		void RenderEntity(Entity* entity);
 
 		void DestroyEntity(Entity* entity);
-
-		bool ElementClicked();
 		bool EdiableText(std::string& text,char*& temp_data, int max_size, bool editable = true);
 
 		void ResetSceneFocusEntity();

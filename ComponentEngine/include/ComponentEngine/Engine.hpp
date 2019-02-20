@@ -55,6 +55,8 @@ namespace ComponentEngine
 		void Rebuild();
 		void RenderFrame();
 		bool KeyDown(int key);
+		bool MouseKeyDown(int key);
+		glm::vec2 GetLastMouseMovment();
 		float Sync(int ups);
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path, bool merge_scenes = false);
@@ -87,6 +89,8 @@ namespace ComponentEngine
 		NativeWindowHandle* GetWindowHandle();
 
 		void RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
+
+		void GrabMouse(bool grab);
 
 		friend class UIManager;
 	private:
@@ -230,10 +234,15 @@ namespace ComponentEngine
 		static const unsigned int IS_RUNNING_LOCK;
 		static const unsigned int TOGGLE_FRAME_LIMITING;
 		static const unsigned int READ_KEY_PRESS;
+		static const unsigned int READ_MOUSE_DATA;
 
 		// Store the various locks that will be needed
-		std::mutex m_locks[3];
+		std::mutex m_locks[4];
 
 		bool m_keys[256];
+		glm::vec2 m_mousePosDelta;
+		glm::vec2 m_lastMousePos;
+		int m_lockedPosX;
+		int m_lockedPosY;
 	};
 }

@@ -75,6 +75,8 @@
 					<Scale x="1.0f" y="1.0f" z="1.0f" />
 				</Component>
 				<Component name="Camera" />
+        <Component name="KeyboardMovment" />
+        <Component name="MouseMovment" />
 			</GameObject>
 		</Scene>
 	</Scenes>

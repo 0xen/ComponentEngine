@@ -660,6 +660,26 @@ void ComponentEngine::ParticleSystem::ResetTimer()
 	engine->GetRendererMutex().unlock();
 }
 
+bool ComponentEngine::ParticleSystem::IsRunning()
+{
+	return m_running;
+}
+
+void ComponentEngine::ParticleSystem::SetRunning(bool running)
+{
+	m_running = running;
+}
+
+bool ComponentEngine::ParticleSystem::IsVisible()
+{
+	return m_visible;
+}
+
+void ComponentEngine::ParticleSystem::SetVisible(bool visible)
+{
+	m_visible = visible;
+}
+
 void ComponentEngine::ParticleSystem::RebuildConfig()
 {
 	ComponentEngine::Engine* engine = Engine::Singlton();

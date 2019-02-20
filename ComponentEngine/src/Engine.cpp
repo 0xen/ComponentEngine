@@ -18,6 +18,7 @@ using namespace Renderer;
 const unsigned int Engine::IS_RUNNING_LOCK = 0;
 const unsigned int Engine::TOGGLE_FRAME_LIMITING = 1;
 const unsigned int Engine::READ_KEY_PRESS = 2;
+const unsigned int Engine::READ_MOUSE_DATA = 3;
 
 Engine* Engine::m_engine = nullptr;
 
@@ -292,6 +293,19 @@ bool ComponentEngine::Engine::KeyDown(int key)
 	return m_keys[key];
 }
 
+bool ComponentEngine::Engine::MouseKeyDown(int key)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
+	return io.MouseDown[key];
+}
+
+glm::vec2 ComponentEngine::Engine::GetLastMouseMovment()
+{
+	std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
+	return m_mousePosDelta;
+}
+
 
 float ComponentEngine::Engine::Sync(int ups)
 {
@@ -507,6 +521,12 @@ void ComponentEngine::Engine::RegisterComponentBase(std::string name, void(*defa
 	m_component_register[name].xml_initilizer = xml_initilizer;
 }
 
+void ComponentEngine::Engine::GrabMouse(bool grab)
+{
+	SDL_SetRelativeMouseMode((SDL_bool)grab);
+	SDL_GetMouseState(&m_lockedPosX, &m_lockedPosY);
+}
+
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
 {
@@ -544,6 +564,7 @@ void ComponentEngine::Engine::UpdateWindow()
 
 	ImGuiIO& io = ImGui::GetIO();
 	SDL_Event event;
+	m_mousePosDelta = glm::vec2();
 	while (SDL_PollEvent(&event) > 0)
 	{
 		switch (event.type)
@@ -581,7 +602,15 @@ void ComponentEngine::Engine::UpdateWindow()
 				//io.MouseDown[0] = true;
 				break;
 			case SDL_MOUSEMOTION:
-				io.MousePos = ImVec2(event.motion.x, event.motion.y);
+			{
+				if (!SDL_GetRelativeMouseMode())
+				{
+					std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
+					io.MousePos = ImVec2(event.motion.x, event.motion.y);
+				}
+				m_lastMousePos = glm::vec2(event.motion.x, event.motion.y);
+				m_mousePosDelta = glm::vec2(event.motion.xrel, event.motion.yrel);
+			}
 				break;
 			case SDL_TEXTINPUT:
 			{

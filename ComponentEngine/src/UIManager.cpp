@@ -35,6 +35,11 @@ void ComponentEngine::UIManager::Render()
 	ImGui::Render();
 }
 
+bool ComponentEngine::UIManager::IsWindowFocused()
+{
+	return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
+}
+
 void ComponentEngine::UIManager::RenderMainMenu()
 {
 	if (ImGui::BeginMainMenuBar())
@@ -552,6 +557,35 @@ void ComponentEngine::UIManager::DestroyEntity(Entity * entity)
 bool ComponentEngine::UIManager::ElementClicked()
 {
 	return ImGui::IsItemHovered() && ImGui::IsMouseClicked(0);
+}
+
+void ComponentEngine::UIManager::KeyboardButtonInput(const char* lable, bool & focused, unsigned int & key)
+{
+	if (focused)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		for (int i = 0; i < 512; i++)
+		{
+			if (io.KeysDown[i])
+			{
+				key = i;
+				focused = false;
+			}
+		}
+		static char tempBuffer[2]{ ' ','\0' };
+		ImGui::SetKeyboardFocusHere();
+		ImGui::CaptureKeyboardFromApp(true);
+		bool change = ImGui::InputText(lable, tempBuffer, 1, ImGuiInputTextFlags_ReadOnly);
+	}
+	else
+	{
+		const char* keyName = SDL_GetScancodeName(static_cast<SDL_Scancode>(key));
+		ImGui::InputText(lable, (char*)keyName, strlen(keyName), ImGuiInputTextFlags_ReadOnly);
+		if (UIManager::ElementClicked())
+		{
+			focused = true;
+		}
+	}
 }
 
 bool ComponentEngine::UIManager::EdiableText(std::string & text, char *& temp_data, int max_size, bool editable)

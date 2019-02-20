@@ -47,7 +47,7 @@ namespace ComponentEngine
 				float updateTime;       // Byte 12
 				float maxLife;          // Byte 13
 				float emissionRate;     // Byte 14
-				float scale;     // Byte 15
+				float scale;            // Byte 15
 			}memory;
 
 		};
@@ -97,13 +97,17 @@ namespace ComponentEngine
 		ParticleSystem(enteez::Entity * entity);
 		~ParticleSystem();
 
-		virtual void Build();
+		virtual void Build(); 
 
 		virtual void Update(float frame_time);
 		virtual void Display();
 		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 		void ResetTimer();
+		bool IsRunning();
+		void SetRunning(bool running);
+		bool IsVisible();
+		void SetVisible(bool visible);
 	private:
 
 		void RebuildConfig();

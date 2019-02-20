@@ -16,24 +16,21 @@ namespace pugi
 namespace ComponentEngine
 {
 
-	class KeyboardMovment : public Logic , public UI
+	class MouseMovment : public Logic , public UI
 	{
-		enteez::Entity* m_entity;
-		struct KeyInstance
+		enum MouseStatus
 		{
-			unsigned int key;
-			bool focused;
+			Locked,    // Locked onto the scene
+			Unlocked,  // Unlocked but still have scene focus
+			UnlockedUI // Unlocked and interacting with the ui
 		};
-		/*
-		0 : Forward
-		1 : Back
-		2 : Left
-		3: Right
-		*/
-		KeyInstance keys[4];
+		enteez::Entity* m_entity;
 		float m_speed;
+		unsigned int m_unlockCameraKey;
+		bool m_unlockCameraKeyFocus;
+		MouseStatus status;
 	public:
-		KeyboardMovment(enteez::Entity* entity);
+		MouseMovment(enteez::Entity* entity);
 		virtual void Update(float frame_time);
 		virtual void Display();
 		static void EntityHookDefault(enteez::Entity& entity);
