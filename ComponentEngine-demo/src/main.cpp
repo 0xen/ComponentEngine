@@ -24,6 +24,8 @@ void RegisterCustomComponents()
 
 int main(int argc, char **argv)
 {
+
+
 	engine = Engine::Singlton();
 	engine->Start();
 	RegisterCustomComponents();
@@ -41,5 +43,6 @@ int main(int argc, char **argv)
 	engine->Join();
 	engine->Stop();
 	delete engine;
+
     return 0;
 }

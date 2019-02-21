@@ -21,6 +21,7 @@ set(common_headers
     include/ComponentEngine/UIManager.hpp
     include/ComponentEngine/Type.hpp
     include/ComponentEngine/TemplateType.hpp
+    include/ComponentEngine/PhysicsWorld.hpp
 )
 
 set(common_source
@@ -33,6 +34,7 @@ set(common_source
     src/ThreadHandler.cpp
     src/ThreadManager.cpp
     src/UIManager.cpp
+    src/PhysicsWorld.cpp
 )
 
 
@@ -52,6 +54,7 @@ set(component_headers
     include/ComponentEngine/Components/Renderer.hpp
     include/ComponentEngine/Components/Logic.hpp
     include/ComponentEngine/Components/Indestructable.hpp
+    include/ComponentEngine/Components/Rigidbody.hpp
 )
 
 set(component_source
@@ -64,6 +67,7 @@ set(component_source
     src/Components/ParticalSystem.cpp
     src/Components/Renderer.cpp
     src/Components/Indestructable.cpp
+    src/Components/Rigidbody.cpp
 )
 
 
@@ -158,6 +162,10 @@ target_link_libraries( ${project_name} optimized ../../../Renderer/build/rendere
 target_link_libraries(${project_name} ../../../Renderer/build/renderer/Release/Renderer)
 target_link_libraries(${project_name} ../../../EnteeZ/build/EnteeZ/Release/EnteeZ)
 
+
+target_link_libraries(${project_name} BulletDynamics)
+target_link_libraries(${project_name} BulletCollision)
+target_link_libraries(${project_name} LinearMath)
 
 find_package(Vulkan)
 

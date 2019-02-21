@@ -611,30 +611,26 @@ void ComponentEngine::ParticleSystem::EntityHookXML(enteez::Entity & entity, pug
 	pugi::xml_node velocity_node = component_data.child("VelocityAndDrag");
 	if (velocity_node)
 	{
-
 		particel_system.m_config.directionalVelocity = velocity_node.child("DirectionalVelocity").attribute("value").as_float(1.0f);
 
 		particel_system.m_config.xVelocityStatic = velocity_node.child("VelocityX").attribute("static").as_bool(false);
 		particel_system.m_config.yVelocityStatic = velocity_node.child("VelocityY").attribute("static").as_bool(false);
 		particel_system.m_config.zVelocityStatic = velocity_node.child("VelocityZ").attribute("static").as_bool(false);
 
-
 		particel_system.m_config.xVelocity = glm::vec2(
 			velocity_node.child("VelocityX").attribute("min").as_float(-1.0f),
-			velocity_node.child("VelocityX").attribute("max").as_float(1.0f)
+			velocity_node.child("VelocityX").attribute(particel_system.m_config.xVelocityStatic ? "min" : "max").as_float(1.0f)
 		);
 
 		particel_system.m_config.yVelocity = glm::vec2(
 			velocity_node.child("VelocityY").attribute("min").as_float(-1.0f),
-			velocity_node.child("VelocityY").attribute("max").as_float(1.0f)
+			velocity_node.child("VelocityY").attribute(particel_system.m_config.yVelocityStatic ? "min" : "max").as_float(1.0f)
 		);
 
-		particel_system.m_config.yVelocity = glm::vec2(
-			velocity_node.child("VelocityY").attribute("min").as_float(-1.0f),
-			velocity_node.child("VelocityY").attribute("max").as_float(1.0f)
+		particel_system.m_config.zVelocity = glm::vec2(
+			velocity_node.child("VelocityZ").attribute("min").as_float(-1.0f),
+			velocity_node.child("VelocityZ").attribute(particel_system.m_config.zVelocityStatic ? "min" : "max").as_float(1.0f)
 		);
-
-
 
 	}
 

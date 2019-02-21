@@ -4,6 +4,7 @@
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
 #include <ComponentEngine\Components\ParticalSystem.hpp>
+#include <ComponentEngine\Components\Rigidbody.hpp>
 #include <ComponentEngine\UIManager.hpp>
 
 #include <lodepng.h>
@@ -66,6 +67,7 @@ void ComponentEngine::Engine::Start()
 	InitWindow();
 	InitEnteeZ();
 	InitRenderer();
+	InitPhysicsWorld();
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
 	m_running = true;
@@ -100,6 +102,11 @@ void ComponentEngine::Engine::Start()
 		UpdateScene();
 	}, 60, "Scene Buffer Swapping");
 
+	// Update physics world
+	m_threadManager->AddTask([&](float frameTime) {
+		m_physicsWorld->Update(frameTime);
+	}, 60, "PhysicsWorld");
+
 	// Add Update Scene task
 	m_threadManager->AddTask([&](float frameTime) {
 		EntityManager& em = GetEntityManager();
@@ -116,26 +123,6 @@ void ComponentEngine::Engine::Start()
 	}, 60, "Scene Update");
 
 }
-
-/*void ComponentEngine::Engine::AddThread(ThreadHandler* handler, const char* name)
-{
-	if (m_threading)
-	{
-
-		ThreadData* data = new ThreadData();
-		data->data_lock.lock();
-		handler->StartThread();
-		data->thread_instance = handler;
-		data->name = name;
-		data->delta_time = SDL_GetPerformanceCounter();
-		data->frame_limited = true;
-		std::thread::id id = data->thread_instance->GetID();
-		m_thread_linker[id] = data;
-		m_thread_data.push_back(data);
-		data->data_lock.unlock();
-	}
-
-}*/
 
 void ComponentEngine::Engine::Stop()
 {
@@ -168,6 +155,7 @@ void ComponentEngine::Engine::Stop()
 
 	GetEntityManager().Clear();
 	DeInitEnteeZ();
+	DeInitPhysicsWorld();
 	DeInitRenderer();
 	DeInitWindow();
 	GetRendererMutex().unlock();
@@ -527,6 +515,10 @@ void ComponentEngine::Engine::GrabMouse(bool grab)
 	SDL_GetMouseState(&m_lockedPosX, &m_lockedPosY);
 }
 
+PhysicsWorld * ComponentEngine::Engine::GetPhysicsWorld()
+{
+	return m_physicsWorld;
+}
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
 {
@@ -663,6 +655,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 	RegisterBase<ParticleSystem, Logic, UI>();
 	RegisterBase<Camera, Logic, UI, TransferBuffers>();
+	RegisterBase<Rigidbody, Logic, UI>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -784,9 +777,20 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
 	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
 	RegisterComponentBase("Camera", Camera::EntityHookDefault, Camera::EntityHookXML);
+	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault, Rigidbody::EntityHookXML);
 	
 
 	RegisterComponentBase("Indestructable", nullptr, nullptr);
+}
+
+void ComponentEngine::Engine::InitPhysicsWorld()
+{
+	m_physicsWorld = new PhysicsWorld(this);
+}
+
+void ComponentEngine::Engine::DeInitPhysicsWorld()
+{
+	delete m_physicsWorld;
 }
 
 

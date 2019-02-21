@@ -59,6 +59,8 @@ namespace ComponentEngine
 		void SetWorldY(float y);
 		void SetWorldZ(float z);
 
+		void SetWorld(float x, float y, float z);
+
 		void MoveWorldX(float x);
 		void MoveWorldY(float y);
 		void MoveWorldZ(float z);
@@ -66,6 +68,9 @@ namespace ComponentEngine
 		void MoveLocalX(float x);
 		void MoveLocalY(float y);
 		void MoveLocalZ(float z);
+
+		void SetLocalMat4(glm::mat4 mat4);
+		glm::mat4& GetLocalMat4();
 
 		float GetWorldX();
 		float GetWorldY();

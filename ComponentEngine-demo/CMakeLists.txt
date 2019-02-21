@@ -4,7 +4,6 @@ set(project_name ComponentEngine-demo)
 project(${project_name})
 
 set(HAVE_LIBC TRUE)
-
 set(src
     src/main.cpp
     src/ItemHover.cpp
@@ -37,6 +36,10 @@ target_link_libraries( ${project_name} optimized ../../../EnteeZ/build/EnteeZ/Re
 
 target_link_libraries(${project_name} SDL2main)
 target_link_libraries(${project_name} SDL2-static)
+
+target_link_libraries(${project_name} BulletDynamics)
+target_link_libraries(${project_name} BulletCollision)
+target_link_libraries(${project_name} LinearMath)
 
 
 find_package(Vulkan)

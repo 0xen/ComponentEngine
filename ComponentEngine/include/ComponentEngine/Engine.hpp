@@ -11,6 +11,7 @@
 #include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\ThreadManager.hpp>
 #include <ComponentEngine/pugixml.hpp>
+#include <ComponentEngine/PhysicsWorld.hpp>
 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -92,6 +93,8 @@ namespace ComponentEngine
 
 		void GrabMouse(bool grab);
 
+		PhysicsWorld* GetPhysicsWorld();
+
 		friend class UIManager;
 	private:
 		Engine();
@@ -107,6 +110,9 @@ namespace ComponentEngine
 		void InitRenderer();
 		void DeInitRenderer();
 		void InitComponentHooks();
+
+		void InitPhysicsWorld();
+		void DeInitPhysicsWorld();
 
 		void LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent = nullptr);
 		void LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name);
@@ -228,6 +234,7 @@ namespace ComponentEngine
 		std::string m_currentSceneDirectory;
 		pugi::xml_document m_xml_scene;
 
+		PhysicsWorld* m_physicsWorld;
 
 		ThreadManager* m_threadManager;
 

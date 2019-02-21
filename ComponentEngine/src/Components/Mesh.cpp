@@ -81,6 +81,10 @@ void ComponentEngine::Mesh::EntityHookXML(enteez::Entity & entity, pugi::xml_nod
 				std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
 				entity.RemoveComponent<Mesh>();
 			}
+			else
+			{
+				Send(mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
+			}
 		}
 
 		
@@ -92,19 +96,9 @@ void ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
 
 	if (!entity.HasComponent<Mesh>())
 	{
-
 		enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity);
 		mesh->SetName("Mesh");
-	}
-	else
-	{
-		/*enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity, path);
-		mesh->SetName("Mesh");
-		if (!mesh->Get().Loaded())
-		{
-			std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
-			entity.RemoveComponent<Mesh>();
-		}*/
+		Send(mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
 	}
 
 }
@@ -408,6 +402,7 @@ void ComponentEngine::Mesh::LoadModel()
 	m_model = model;
 	*/
 	m_loaded = true;
+
 	Send(m_entity, OnComponentEnter<Mesh>(this));
 }
 

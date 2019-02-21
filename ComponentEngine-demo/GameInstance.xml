@@ -1,57 +1,34 @@
 <?xml version="1.0"?>
 <Game>
 	<Prefabs>
-		<GameObject name="RendererPrefab">
-			<Component name="Renderer" />
-		</GameObject>
-		<GameObject name="LetterBlockA" prefab="RendererPrefab">
-			<Component name="Transformation">
-				<Position x="-0.5f" y="0.0f" z="0.0f" />
-				<Rotation x="0.0f" y="0.0f" z="0.0f" />
-				<Scale x="1.0f" y="1.0f" z="1.0f" />
-			</Component>
+
+		<GameObject name="LetterBlockA">
+      <Component name="Renderer" />
 			<Component name="Mesh">
 				<Path value="/Resources/Models/Blocks/LetterBlockA.obj" />
 			</Component>
 		</GameObject>
+
 		<GameObject name="TexturedCube" prefab="RendererPrefab">
+      <Component name="Renderer" />
 			<Component name="Mesh">
 				<Path value="/Resources/Models/Cube.obj" />
 			</Component>
 		</GameObject>
-		<GameObject name="Teapot" prefab="RendererPrefab">
-			<Component name="Mesh">
-				<Path value="/Resources/Models/Teapot.obj" />
-			</Component>
-		</GameObject>
-	</Prefabs>
-	<Scenes>
-		<Scene>
-			<GameObject name="TexturedCubeGrass" prefab="TexturedCube">
-				<Component name="Transformation">
-					<Position x="0.0f" y="0.0f" z="0.0f" />
-					<Rotation x="0.0f" y="0.0f" z="0.0f" />
-					<Scale x="1.0f" y="1.0f" z="1.0f" />
-				</Component>
-			</GameObject>
-			<GameObject name="LetterBlock" prefab="LetterBlockA">
-				<Component name="Transformation">
-					<Position x="-1.0f" y="0.0f" z="0.0f" />
-					<Rotation x="0.0f" y="0.0f" z="0.0f" />
-					<Scale x="1.0f" y="1.0f" z="1.0f" />
-				</Component>
-			</GameObject>
-			<GameObject name="Teapot" prefab="Teapot">
-				<Component name="Transformation">
-					<Position x="3.0f" y="0.0f" z="0.0f" />
-					<Rotation x="0.0f" y="180.0f" z="0.0f" />
-					<Scale x="1.0f" y="1.0f" z="1.0f" />
-				</Component>
-				<Component name="ParticleSystem" visible="1" running="1">
-					<Color useColorRange="1">
-						<StartColor R="1.0f" G="1.0f" B="1.0f" A="0.1f" />
-						<EndColor R="1.0f" G="1.0f" B="1.0f" A="0.0f" />
-					</Color>
+
+    <GameObject name="Teapot" prefab="RendererPrefab">
+      <Component name="Renderer" />
+      <Component name="Mesh">
+        <Path value="/Resources/Models/Teapot.obj" />
+      </Component>
+    </GameObject>
+
+    <GameObject name="TeapotSteam">
+      <Component name="ParticleSystem" visible="1" running="1">
+          <Color useColorRange="1">
+            <StartColor R="1.0f" G="1.0f" B="1.0f" A="0.1f" />
+            <EndColor R="1.0f" G="1.0f" B="1.0f" A="0.0f" />
+          </Color>
           <Particle dynamicParticleCount="1">
             <EmitterOffset x="1.8f" y="0.65f" z="0.0f"/>
             <EmissionRate value="0.01f"/>
@@ -66,8 +43,126 @@
             <VelocityZ static="0" min="-0.4f" max="0.4"/>
           </VelocityAndDrag>
 
+        </Component>
+    </GameObject>
+
+    <GameObject name="BlockFire">
+      <Component name="ParticleSystem" visible="1" running="1">
+          <Color useColorRange="1">
+            <StartColor R="1.0f" G="0.5f" B="0.0f" A="1.0f" />
+            <EndColor R="1.0f" G="0.0f" B="0.0f" A="1.0f" />
+          </Color>
+          <Particle dynamicParticleCount="1">
+            <EmitterOffset x="0.0f" y="0.0f" z="0.0f"/>
+            <EmissionRate value="0.01f"/>
+            <MaxLife value="1.0f"/>
+            <Scale value="0.2f"/>
+            <!-- <ParticleCount value="100"\> -->
+          </Particle>
+          <VelocityAndDrag>
+            <DirectionalVelocity value="1.3f"/>
+            <VelocityX static="0" min="-0.4" max="0.4"/>
+            <VelocityY static="1" min="1.0f"/>
+            <VelocityZ static="0" min="-0.4f" max="0.4"/>
+          </VelocityAndDrag>
+
+        </Component>
+    </GameObject>
+
+    <GameObject name="ShowerSpray">
+      <Component name="ParticleSystem" visible="1" running="1">
+          <Color useColorRange="1">
+            <StartColor R="0.56f" G="1.0f" B="1.0f" A="0.7f" />
+            <EndColor R="0.0f" G="0.27f" B="0.33f" A="0.7f" />
+          </Color>
+          <Particle dynamicParticleCount="1">
+            <EmitterOffset x="0.0f" y="0.0f" z="0.0f"/>
+            <EmissionRate value="0.01f"/>
+            <MaxLife value="2.0f"/>
+            <Scale value="0.1f"/>
+            <!-- <ParticleCount value="100"\> -->
+          </Particle>
+          <VelocityAndDrag>
+            <DirectionalVelocity value="2.0f"/>
+            <VelocityX static="0" min="-0.2" max="0.2"/>
+            <VelocityY static="1" min="-1.0f"/>
+            <VelocityZ static="0" min="-0.2f" max="0.2"/>
+          </VelocityAndDrag>
+
+        </Component>
+    </GameObject>
+
+    <GameObject name="TeapotHeatEffect">
+      <Component name="ParticleSystem" visible="1" running="1">
+          <Color useColorRange="1">
+            <StartColor R="1.0f" G="0.5f" B="0.0f" A="1.0f" />
+            <EndColor R="1.0f" G="0.0f" B="0.0f" A="1.0f" />
+          </Color>
+          <Particle dynamicParticleCount="1">
+            <EmitterOffset x="0.0f" y="-0.9f" z="0.0f"/>
+            <EmissionRate value="0.01f"/>
+            <MaxLife value="0.6f"/>
+            <Scale value="0.1f"/>
+            <!-- <ParticleCount value="100"\> -->
+          </Particle>
+          <VelocityAndDrag>
+            <DirectionalVelocity value="2.0f"/>
+            <VelocityX static="0" min="-1.0f" max="1.0f"/>
+            <VelocityY static="1" min="0.07f" max="1.0f"/>
+            <VelocityZ static="0" min="-1.0f" max="1.0f"/>
+          </VelocityAndDrag>
+
+        </Component>
+    </GameObject>
+
+	</Prefabs>
+	<Scenes>
+		<Scene>
+			<!--<GameObject name="TexturedCubeGrass" prefab="TexturedCube">
+				<Component name="Transformation">
+					<Position x="0.0f" y="0.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="-10.0f" y="-10.0f" z="-10.0f" />
 				</Component>
+			</GameObject>-->
+      <GameObject name="LetterBlockFireStatic" prefab="LetterBlockA">
+        <Component name="Transformation">
+          <Position x="7.0f" y="-2.0f" z="0.0f" />
+          <Rotation x="0.0f" y="0.0f" z="0.0f" />
+          <Scale x="1.0f" y="1.0f" z="1.0f" />
+        </Component>
+        <GameObject name="Fire" prefab="BlockFire"/>
+      </GameObject>
+      <GameObject name="LetterBlockMover" prefab="LetterBlockA">
+        <Component name="Transformation">
+          <Position x="5.5f" y="-2.0f" z="0.0f" />
+          <Rotation x="0.0f" y="0.0f" z="0.0f" />
+          <Scale x="1.0f" y="1.0f" z="1.0f" />
+        </Component>
+        <GameObject name="Fire" prefab="BlockFire"/>
+      </GameObject>
+
+			<GameObject name="Teapot" prefab="Teapot">
+				<Component name="Transformation">
+					<Position x="3.0f" y="0.0f" z="0.0f" />
+					<Rotation x="0.0f" y="180.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+				
+        <GameObject name="Steam" prefab="TeapotSteam" />
+        <GameObject name="TeapotHeat" prefab="TeapotHeatEffect" />
 			</GameObject>
+
+      <GameObject name="ShowerSpray" prefab="ShowerSpray">
+        <Component name="Transformation">
+          <Position x="-3.0f" y="2.0f" z="0.0f" />
+          <Rotation x="0.0f" y="0.0f" z="0.0f" />
+          <Scale x="1.0f" y="1.0f" z="1.0f" />
+        </Component>
+      </GameObject>
+
+
+
 			<GameObject name="Camera">
 				<Component name="Transformation">
 					<Position x="0.0f" y="0.0f" z="10.0f" />
@@ -76,7 +171,7 @@
 				</Component>
 				<Component name="Camera" />
         <Component name="KeyboardMovment" />
-        <Component name="MouseMovment" />
+        <!--<Component name="MouseMovment" />-->
 			</GameObject>
 		</Scene>
 	</Scenes>

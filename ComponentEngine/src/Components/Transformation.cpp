@@ -50,6 +50,14 @@ void ComponentEngine::Transformation::SetWorldZ(float z)
 	PushToPositionArray();
 }
 
+void ComponentEngine::Transformation::SetWorld(float x, float y, float z)
+{
+	(m_local_mat4)[3][0] = x;
+	(m_local_mat4)[3][1] = y;
+	(m_local_mat4)[3][2] = z;
+	PushToPositionArray();
+}
+
 void ComponentEngine::Transformation::MoveWorldX(float x)
 {
 	(m_local_mat4)[3][0] += x;
@@ -96,6 +104,17 @@ void ComponentEngine::Transformation::MoveLocalZ(float z)
 	(m_local_mat4)[3][1] += zFacing.y;
 	(m_local_mat4)[3][2] += zFacing.z;
 	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::SetLocalMat4(glm::mat4 mat4)
+{
+	m_local_mat4 = mat4;
+	PushToPositionArray();
+}
+
+glm::mat4& ComponentEngine::Transformation::GetLocalMat4()
+{
+	return m_local_mat4;
 }
 
 float ComponentEngine::Transformation::GetWorldX()
