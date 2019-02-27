@@ -6,6 +6,43 @@
 
 namespace ComponentEngine
 {
+	struct ParticleSystemVisibility
+	{
+		bool visible;
+	};
+	struct OnCollisionEnter
+	{
+		enteez::Entity* collider;
+	};
+	struct OnCollisionExit
+	{
+		enteez::Entity* collider;
+	};
+	struct OnCollision
+	{
+		enteez::Entity* collider;
+	};
+
+	enum CollisionRecordingState
+	{
+		Begin,
+		End
+	};
+
+	struct CollisionRecording
+	{
+		CollisionRecordingState state;
+	};
+
+	struct CollisionEvent
+	{
+		enteez::Entity* collider;
+	};
+
+	struct TransformationChange
+	{
+		glm::mat4 mat;
+	};
 
 	struct RenderStatus
 	{
@@ -55,6 +92,26 @@ namespace ComponentEngine
 	}
 	template<class T>
 	inline T & OnComponentEnter<T>::GetComponent()
+	{
+		return *m_component;
+	}
+
+	template<class T>
+	class OnComponentChange : public TemplateType<T>
+	{
+	public:
+		OnComponentChange(T* component);
+		T& GetComponent();
+	private:
+		T * m_component;
+	};
+	template<class T>
+	inline OnComponentChange<T>::OnComponentChange(T * component)
+	{
+		m_component = component;
+	}
+	template<class T>
+	inline T & OnComponentChange<T>::GetComponent()
 	{
 		return *m_component;
 	}

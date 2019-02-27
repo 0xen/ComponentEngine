@@ -141,34 +141,7 @@ void ComponentEngine::UIManager::RendererExplorer()
 
 
 		}
-
-
 		RendererFolder(sceneFolder);
-		
-		/*
-		static ComponentDropInstance<Transformation> inst("Transformation");
-		if (ComponentDropBox<Transformation>("PLayer Transformation",inst))
-		{
-
-
-			inst.component->MoveWorldZ(-5);
-
-		}
-
-		ImGui::Button("Some mesh");
-
-		static std::string heya = "somePath/mesh.obj";
-		DropPayload("Mesh", heya.c_str(), &heya, sizeof(heya));
-
-
-		static StringDropInstance inst2("Mesh");
-		if (StringDropBox("Mesh", "Mesh", inst2))
-		{
-			std::cout << inst2.data << std::endl;
-		}*/
-
-
-
 	}
 	ImGui::End();
 }

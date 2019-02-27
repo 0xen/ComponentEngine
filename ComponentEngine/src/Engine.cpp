@@ -5,6 +5,9 @@
 #include <ComponentEngine\Components\Renderer.hpp>
 #include <ComponentEngine\Components\ParticalSystem.hpp>
 #include <ComponentEngine\Components\Rigidbody.hpp>
+#include <ComponentEngine\Components\ICollisionShape.hpp>
+#include <ComponentEngine\Components\BoxCollision.hpp>
+#include <ComponentEngine\Components\SphereCollision.hpp>
 #include <ComponentEngine\UIManager.hpp>
 
 #include <lodepng.h>
@@ -130,10 +133,12 @@ void ComponentEngine::Engine::Stop()
 	{
 		return;
 	}
+	m_threadManager->ChangeMode(ThreadMode::Joined);
 	{
 		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
 		m_running = false;
 	}
+
 
 
 	GetRendererMutex().lock();
@@ -195,32 +200,10 @@ bool ComponentEngine::Engine::Running()
 	}
 }
 
-bool ComponentEngine::Engine::Running(int ups)
-{
-	Sync(ups);
-	return Running();
-}
-
 void ComponentEngine::Engine::Update()
 {
 	m_threadManager->Update();
 	GetRendererMutex().lock();
-
-	/*if (m_main_thread == std::this_thread::get_id())
-	{
-		for (auto i : m_thread_data)
-		{
-			if (i->thread_instance != nullptr)
-			{
-				if (i->thread_instance->Joined())
-				{
-					i->thread_instance->Loop();
-				}
-			}
-		}
-	}*/
-
-
 	UpdateWindow();
 	GetRendererMutex().unlock();
 }
@@ -332,6 +315,7 @@ float ComponentEngine::Engine::Sync(int ups)
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 {
+	GetRendererMutex().lock();
 	m_currentScene = path;
 
 	{ // Get directory
@@ -364,7 +348,6 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 	pugi::xml_node scene_node = scenes_node.child("Scene");
 	if (!scene_node)return false;
 
-
 	pugi::xml_node prefabs_node = game_node.child("Prefabs");
 
 	for (pugi::xml_node node : scene_node.children("GameObject"))
@@ -372,8 +355,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 		LoadXMLGameObject(node, prefabs_node);
 	}
 
-
-
+	GetRendererMutex().unlock();
 	return true;
 }
 
@@ -564,7 +546,7 @@ void ComponentEngine::Engine::UpdateWindow()
 		case SDL_QUIT:
 			if (Running())
 			{
-				Stop();
+				RequestStop();
 				return;
 			}
 			break;
@@ -653,9 +635,15 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
-	RegisterBase<ParticleSystem, Logic, UI>();
-	RegisterBase<Camera, Logic, UI, TransferBuffers>();
-	RegisterBase<Rigidbody, Logic, UI>();
+	RegisterBase<ParticleSystem, Logic, UI, MsgRecive<ParticleSystemVisibility>>();
+	RegisterBase<Camera, Logic, UI, TransferBuffers>(); 
+	RegisterBase<Rigidbody,
+		MsgRecive<TransformationChange>, MsgRecive<OnComponentEnter<ICollisionShape>>,
+		MsgRecive<CollisionRecording>, MsgRecive<CollisionEvent>,
+		MsgRecive<OnComponentChange<ICollisionShape>>, MsgRecive<OnComponentExit<ICollisionShape>>, Logic, UI
+	>();
+	RegisterBase<BoxCollision, ICollisionShape, Logic, UI>();
+	RegisterBase<SphereCollision, ICollisionShape, Logic, UI>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -778,6 +766,8 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
 	RegisterComponentBase("Camera", Camera::EntityHookDefault, Camera::EntityHookXML);
 	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault, Rigidbody::EntityHookXML);
+	RegisterComponentBase("BoxCollision", BoxCollision::EntityHookDefault, BoxCollision::EntityHookXML);
+	RegisterComponentBase("SphereCollision", SphereCollision::EntityHookDefault, SphereCollision::EntityHookXML);
 	
 
 	RegisterComponentBase("Indestructable", nullptr, nullptr);
@@ -815,13 +805,14 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi
 
 
 
-	for (pugi::xml_node node : xml_entity.children("Component"))
-	{
-		AttachXMLComponent(node, entity);
-	}
 	for (pugi::xml_node node : xml_entity.children("GameObject"))
 	{
 		LoadXMLGameObject(node, prefab_node, entity);
+	}
+
+	for (pugi::xml_node node : xml_entity.children("Component"))
+	{
+		AttachXMLComponent(node, entity);
 	}
 	// If this object has a parent, add it to the object
 	if (parent != nullptr)
@@ -880,7 +871,6 @@ void ComponentEngine::Engine::InitImGUI()
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
-	// light style from Pacôme Danhiez (user itamago) https://github.com/ocornut/imgui/pull/511#issuecomment-175719267
 	style.Alpha = 1.0f;
 	style.FrameRounding = 3.0f;
 	style.WindowBorderSize = 0.0f;
@@ -1117,50 +1107,6 @@ void ComponentEngine::Engine::ToggleThreading()
 	m_threading = !m_threading;
 
 	m_threadManager->ChangeMode(m_threading ? ThreadMode::Threading : ThreadMode::Joined);
-
-	/*for (int i = m_thread_data.size() - 1; i >= 0 ; i--)
-	{
-		auto it = m_thread_data.begin() + i;
-
-		ThreadData* data = *it;
-		data->ResetTimers();
-		if (data->thread_instance != nullptr)
-		{
-
-			if (!m_threading)
-			{
-				// Thread has to be stored this way otherwise it plays up and points to the wrong thing
-				std::thread::id id = data->thread_instance->GetID();
-
-				data->thread_instance->Join();
-
-				data->data_lock.lock();
-
-				auto find = m_thread_linker.find(id);
-				if (find != m_thread_linker.end())
-				{
-					m_thread_linker.erase(find);
-				}
-				data->data_lock.unlock();
-			}
-			else
-			{
-				data->data_lock.lock();
-
-				data->thread_instance->StartThread();
-				// Thread has to be stored this way otherwise it plays up and points to the wrong thing
-				std::thread::id id = data->thread_instance->GetID();
-
-				m_thread_linker[id] = data;
-				data->data_lock.unlock();
-			}
-
-
-
-
-		}
-
-	}*/
 
 }
 

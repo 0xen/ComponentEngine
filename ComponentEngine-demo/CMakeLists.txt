@@ -6,15 +6,23 @@ project(${project_name})
 set(HAVE_LIBC TRUE)
 set(src
     src/main.cpp
+    src/WaterSourceController.cpp
+    src/BlockMoveController.cpp
+    src/Flamable.cpp
     src/ItemHover.cpp
     src/KeyboardMovment.cpp
     src/MouseMovment.cpp
+    src/TeapotController.cpp
 )
 
 set(headers
+	include/WaterSourceController.hpp
+	include/BlockMoveController.hpp
+    include/Flamable.hpp
     include/ItemHover.hpp
     include/KeyboardMovment.hpp
     include/MouseMovment.hpp
+    include/TeapotController.hpp
 )
 
 

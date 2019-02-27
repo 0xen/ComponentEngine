@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));
 
+
 	///-----initialization_end-----
 
 	//keep track of the shapes, we release memory at exit.

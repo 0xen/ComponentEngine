@@ -107,8 +107,7 @@ void ComponentEngine::ParticleSystem::Build()
 		m_compute_pipeline->AttachDescriptorSet(0, m_partical_vertex_set);
 	}
 
-
-	assert(m_compute_pipeline->Build() && "Unable to build pipeline");
+	m_compute_pipeline->Build();
 	
 	m_compute_program = renderer->CreateComputeProgram();
 	m_compute_program->AttachPipeline(m_compute_pipeline);
@@ -192,7 +191,7 @@ void ComponentEngine::ParticleSystem::Update(float frame_time)
 	(positionMatrix)[3][1] += xFacing.y + yFacing.y + zFacing.y;
 	(positionMatrix)[3][2] += xFacing.z + yFacing.z + zFacing.z;
 
-	m_config.buffer_config.memory.emitter = (positionMatrix)[3];// m_config.emmitter_offset + m_entity->GetComponent<Transformation>().GetWorldPosition();
+	m_config.buffer_config.memory.emitter = (positionMatrix)[3];
 	m_config.buffer_config.memory.totalTime += frame_time;
 	m_config.buffer_config.memory.updateTime = frame_time;
 
@@ -640,6 +639,19 @@ void ComponentEngine::ParticleSystem::EntityHookXML(enteez::Entity & entity, pug
 
 }
 
+void ComponentEngine::ParticleSystem::ReciveMessage(enteez::Entity * sender, ParticleSystemVisibility & message)
+{
+	SetVisible(message.visible);
+	SetRunning(message.visible);
+	if (message.visible)
+	{
+		glm::mat4 positionMatrix = m_entity->GetComponent<Transformation>().Get();
+
+		m_config.buffer_config.memory.emitter = (positionMatrix)[3];
+		ResetTimer();
+	}
+}
+
 void ComponentEngine::ParticleSystem::ResetTimer()
 {
 
@@ -663,7 +675,9 @@ bool ComponentEngine::ParticleSystem::IsRunning()
 
 void ComponentEngine::ParticleSystem::SetRunning(bool running)
 {
+	m_particle_lock.lock();
 	m_running = running;
+	m_particle_lock.unlock();
 }
 
 bool ComponentEngine::ParticleSystem::IsVisible()
@@ -673,7 +687,13 @@ bool ComponentEngine::ParticleSystem::IsVisible()
 
 void ComponentEngine::ParticleSystem::SetVisible(bool visible)
 {
+
+	m_particle_lock.lock();
+
 	m_visible = visible;
+	m_model->ShouldRender(m_visible);
+
+	m_particle_lock.unlock();
 }
 
 void ComponentEngine::ParticleSystem::RebuildConfig()

@@ -69,8 +69,10 @@ namespace ComponentEngine
 		void MoveLocalY(float y);
 		void MoveLocalZ(float z);
 
-		void SetLocalMat4(glm::mat4 mat4);
+		void SetLocalMat4(glm::mat4 mat4, bool updatePhysics = false);
+		void SetWorldMat4(glm::mat4 mat4, bool updatePhysics = false);
 		glm::mat4& GetLocalMat4();
+		glm::mat4& GetMat4();
 
 		float GetWorldX();
 		float GetWorldY();
@@ -100,7 +102,7 @@ namespace ComponentEngine
 	private:
 		void AddChild(Transformation* trans);
 		void RemoveChild(Transformation* trans);
-		void PushToPositionArray();
+		void PushToPositionArray(bool updatePhysics = true);
 		enteez::Entity* m_entity;
 		glm::mat4* m_mat4;
 		glm::mat4 m_local_mat4;

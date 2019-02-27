@@ -2,7 +2,9 @@
 
 #include <ComponentEngine\Components\UI.hpp>
 #include <ComponentEngine\Components\Logic.hpp>
+#include <ComponentEngine/Components/ComponentMessages.hpp>
 #include <ComponentEngine\ThreadHandler.hpp>
+#include <ComponentEngine\Components\MsgRecive.hpp>
 
 #include <glm\glm.hpp>
 
@@ -91,7 +93,7 @@ namespace ComponentEngine
 		glm::vec4 color;
 	};
 
-	class ParticleSystem : public Logic, public UI
+	class ParticleSystem : public Logic, public UI, public MsgRecive<ParticleSystemVisibility>
 	{
 	public:
 		ParticleSystem(enteez::Entity * entity);
@@ -103,6 +105,8 @@ namespace ComponentEngine
 		virtual void Display();
 		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
+
+		virtual void ReciveMessage(enteez::Entity* sender, ParticleSystemVisibility& message);
 		void ResetTimer();
 		bool IsRunning();
 		void SetRunning(bool running);

@@ -33,6 +33,7 @@ void ComponentEngine::RendererComponent::EntityHookXML(enteez::Entity & entity, 
 void ComponentEngine::RendererComponent::Display()
 {
 	bool change = ImGui::Checkbox("Render",&m_render);
+
 	if (change)
 	{
 		Send(m_entity, RenderStatus(m_render));

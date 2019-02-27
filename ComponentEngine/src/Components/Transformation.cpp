@@ -61,19 +61,19 @@ void ComponentEngine::Transformation::SetWorld(float x, float y, float z)
 void ComponentEngine::Transformation::MoveWorldX(float x)
 {
 	(m_local_mat4)[3][0] += x;
-	PushToPositionArray();
+	PushToPositionArray(true);
 }
 
 void ComponentEngine::Transformation::MoveWorldY(float y)
 {
 	(m_local_mat4)[3][1] += y;
-	PushToPositionArray();
+	PushToPositionArray(true);
 }
 
 void ComponentEngine::Transformation::MoveWorldZ(float z)
 {
 	(m_local_mat4)[3][2] += z;
-	PushToPositionArray();
+	PushToPositionArray(true);
 }
 
 void ComponentEngine::Transformation::MoveLocalX(float x)
@@ -106,15 +106,34 @@ void ComponentEngine::Transformation::MoveLocalZ(float z)
 	PushToPositionArray();
 }
 
-void ComponentEngine::Transformation::SetLocalMat4(glm::mat4 mat4)
+void ComponentEngine::Transformation::SetLocalMat4(glm::mat4 mat4, bool updatePhysics)
 {
 	m_local_mat4 = mat4;
-	PushToPositionArray();
+	PushToPositionArray(updatePhysics);
+}
+
+void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePhysics)
+{
+	Mesh::GetModelPositionTransferLock().lock();
+	*m_mat4 = mat4;
+	for (int i = 0; i < m_children.size(); i++)
+	{
+		m_children[i]->PushToPositionArray();
+	}
+	if (updatePhysics)
+		Send(m_entity, TransformationChange{ *m_mat4 });
+	Mesh::GetModelPositionTransferLock().unlock();
+
 }
 
 glm::mat4& ComponentEngine::Transformation::GetLocalMat4()
 {
 	return m_local_mat4;
+}
+
+glm::mat4 & ComponentEngine::Transformation::GetMat4()
+{
+	return *m_mat4;
 }
 
 float ComponentEngine::Transformation::GetWorldX()
@@ -271,7 +290,6 @@ enteez::Entity * ComponentEngine::Transformation::GetEntity()
 void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
 {
 
-
 	std::vector<Transformation*> children;
 	if(entity.HasComponent<Transformation>())
 	{
@@ -333,7 +351,7 @@ void ComponentEngine::Transformation::RemoveChild(Transformation * trans)
 	}
 }
 
-void ComponentEngine::Transformation::PushToPositionArray()
+void ComponentEngine::Transformation::PushToPositionArray(bool updatePhysics)
 {
 	Mesh::GetModelPositionTransferLock().lock();
 	*m_mat4 = m_local_mat4;
@@ -344,6 +362,8 @@ void ComponentEngine::Transformation::PushToPositionArray()
 	{
 		m_children[i]->PushToPositionArray();
 	}
+	if(updatePhysics)
+		Send(m_entity, TransformationChange{ *m_mat4 });
 	Mesh::GetModelPositionTransferLock().unlock();
 }
 

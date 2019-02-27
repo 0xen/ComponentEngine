@@ -55,6 +55,9 @@ set(component_headers
     include/ComponentEngine/Components/Logic.hpp
     include/ComponentEngine/Components/Indestructable.hpp
     include/ComponentEngine/Components/Rigidbody.hpp
+    include/ComponentEngine/Components/ICollisionShape.hpp
+    include/ComponentEngine/Components/BoxCollision.hpp
+    include/ComponentEngine/Components/SphereCollision.hpp
 )
 
 set(component_source
@@ -68,6 +71,9 @@ set(component_source
     src/Components/Renderer.cpp
     src/Components/Indestructable.cpp
     src/Components/Rigidbody.cpp
+    src/Components/ICollisionShape.cpp
+    src/Components/BoxCollision.cpp
+    src/Components/SphereCollision.cpp
 )
 
 

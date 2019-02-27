@@ -1,6 +1,7 @@
 #pragma once
 
 #include <btBulletDynamicsCommon.h>
+#include <ComponentEngine\ThreadHandler.hpp>
 
 namespace ComponentEngine
 {
@@ -9,6 +10,7 @@ namespace ComponentEngine
 	class PhysicsWorld
 	{
 	public:
+		ordered_lock m_physics_lock;
 		PhysicsWorld(Engine* engine);
 		~PhysicsWorld();
 		void Update(float update_time);
@@ -22,6 +24,7 @@ namespace ComponentEngine
 		btBroadphaseInterface* m_overlappingPairCache;
 		btSequentialImpulseConstraintSolver* m_solver;
 		btDiscreteDynamicsWorld* m_dynamicsWorld;
+
 	};
 
 }
