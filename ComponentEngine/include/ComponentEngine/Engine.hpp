@@ -32,6 +32,23 @@ using namespace Renderer;
 
 namespace ComponentEngine
 {
+	enum ConsoleState
+	{
+		Default,
+		Info,
+		Warning,
+		Error
+	};
+	struct PipelinePack
+	{
+		IGraphicsPipeline* pipeline = nullptr;
+	};
+	struct ConsoleMessage
+	{
+		std::string message;
+		unsigned int count;
+		ConsoleState state;
+	};
 	class UIManager;
 	class Engine : public EnteeZ
 	{
@@ -54,12 +71,16 @@ namespace ComponentEngine
 		void UpdateUI(float delta);
 		void Rebuild();
 		void RenderFrame();
+		void Log(std::string data, ConsoleState state = Default);
 		bool KeyDown(int key);
 		bool MouseKeyDown(int key);
 		glm::vec2 GetLastMouseMovment();
 		float Sync(int ups);
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path, bool merge_scenes = false);
+
+		PipelinePack& GetPipeline(std::string name);
+
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
 		IDescriptorPool* GetCameraPool();
@@ -152,6 +173,8 @@ namespace ComponentEngine
 		// Rendering Data
 		IRenderer* m_renderer = nullptr;
 
+		std::map<std::string, PipelinePack> m_pipelines;
+
 		// Default pipeline data
 		IGraphicsPipeline* m_default_pipeline = nullptr;
 		IDescriptorPool* m_camera_pool;
@@ -221,6 +244,7 @@ namespace ComponentEngine
 		ordered_lock m_logic_lock;
 		ordered_lock m_thread_data_lock;
 
+		std::vector<ConsoleMessage> m_console;
 		std::vector<ThreadData*> m_thread_data;
 		std::map<std::thread::id, ThreadData*> m_thread_linker;
 
@@ -241,9 +265,10 @@ namespace ComponentEngine
 		static const unsigned int TOGGLE_FRAME_LIMITING;
 		static const unsigned int READ_KEY_PRESS;
 		static const unsigned int READ_MOUSE_DATA;
+		static const unsigned int CONSOLE_LOCK;
 
 		// Store the various locks that will be needed
-		std::mutex m_locks[4];
+		std::mutex m_locks[5];
 
 		bool m_keys[256];
 		glm::vec2 m_mousePosDelta;
@@ -251,4 +276,5 @@ namespace ComponentEngine
 		int m_lockedPosX;
 		int m_lockedPosY;
 	};
+	
 }

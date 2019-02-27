@@ -235,7 +235,6 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, Collisio
 			if (!contained)
 			{
 				// Just collided
-				std::cout << "New Collision" << std::endl;
 				Send(m_entity, OnCollisionEnter{ m_collisionStaging->at(i) });
 			}
 
@@ -246,7 +245,6 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, Collisio
 		for (int i = 0; i < m_currentCollisions->size(); i++)
 		{
 			// Exited collision
-			std::cout << "Exited" << std::endl;
 			Send(m_entity, OnCollisionExit{ m_currentCollisions->at(i) });
 		}
 

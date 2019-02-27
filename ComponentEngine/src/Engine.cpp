@@ -23,6 +23,7 @@ const unsigned int Engine::IS_RUNNING_LOCK = 0;
 const unsigned int Engine::TOGGLE_FRAME_LIMITING = 1;
 const unsigned int Engine::READ_KEY_PRESS = 2;
 const unsigned int Engine::READ_MOUSE_DATA = 3;
+const unsigned int Engine::CONSOLE_LOCK = 4;
 
 Engine* Engine::m_engine = nullptr;
 
@@ -125,6 +126,7 @@ void ComponentEngine::Engine::Start()
 		m_logic_lock.unlock();
 	}, 60, "Scene Update");
 
+	Log("Starting Engine", Info);
 }
 
 void ComponentEngine::Engine::Stop()
@@ -164,6 +166,7 @@ void ComponentEngine::Engine::Stop()
 	DeInitRenderer();
 	DeInitWindow();
 	GetRendererMutex().unlock();
+	Log("Stopping Engine", Info);
 }
 
 void ComponentEngine::Engine::Join()
@@ -256,6 +259,29 @@ void ComponentEngine::Engine::RenderFrame()
 	// Update all renderer's via there Update function
 	IRenderer::UpdateAll();
 	GetRendererMutex().unlock();
+}
+
+
+
+void ComponentEngine::Engine::Log(std::string data, ConsoleState state)
+{
+	std::stringstream ss;
+	ss << "(%i) " << data;
+
+	std::lock_guard<std::mutex> guard(m_locks[CONSOLE_LOCK]);
+
+	if (m_console.size() > 0 && m_console[m_console.size() - 1].message == ss.str() && m_console[m_console.size() - 1].state == state)
+	{
+		m_console[m_console.size() - 1].count++;
+	}
+	else
+	{
+		ConsoleMessage message;
+		message.message = ss.str();
+		message.count = 1;
+		message.state = state;
+		m_console.push_back(message);
+	}
 }
 
 bool ComponentEngine::Engine::KeyDown(int key)
@@ -357,6 +383,12 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 
 	GetRendererMutex().unlock();
 	return true;
+}
+
+PipelinePack& ComponentEngine::Engine::GetPipeline(std::string name)
+{
+	if (m_pipelines.find(name) != m_pipelines.end())m_pipelines[name];
+	return m_pipelines["Default"];
 }
 
 IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
@@ -724,6 +756,7 @@ void ComponentEngine::Engine::InitRenderer()
 	m_default_pipeline->UseCulling(true);
 
 	bool sucsess = m_default_pipeline->Build();
+	m_pipelines["Default"] = PipelinePack{ m_default_pipeline };
 	// Build and check default pipeline
 	assert(sucsess && "Unable to build default pipeline");
 	InitImGUI();

@@ -35,7 +35,6 @@ void ComponentEngine::TeapotController::ReciveMessage(enteez::Entity * sender, O
 	{
 
 		Send(m_entity, ParticleSystemVisibility{ true }, true);
-		std::cout << "Teapot Boiling" << std::endl;
 	}
 }
 
@@ -45,6 +44,5 @@ void ComponentEngine::TeapotController::ReciveMessage(enteez::Entity * sender, O
 	{
 
 		Send(m_entity, ParticleSystemVisibility{ false }, true);
-		std::cout << "Teapot Extinguished" << std::endl;
 	}
 }

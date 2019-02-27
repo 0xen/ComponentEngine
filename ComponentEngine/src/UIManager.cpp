@@ -7,6 +7,8 @@
 const unsigned int ComponentEngine::UIManager::SCENE_HIERARCHY = 0;
 const unsigned int ComponentEngine::UIManager::COMPONENT_HIERARCHY = 1;
 const unsigned int ComponentEngine::UIManager::EXPLORER = 2;
+const unsigned int ComponentEngine::UIManager::THREADING_MANAGER = 3;
+const unsigned int ComponentEngine::UIManager::CONSOLE = 4;
 
 ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 {
@@ -14,19 +16,21 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 	m_open[SCENE_HIERARCHY] = true;
 	m_open[EXPLORER] = true;
 	m_open[COMPONENT_HIERARCHY] = true;
+	m_open[THREADING_MANAGER] = true;
+	m_open[CONSOLE] = true;
 	m_thread_time_update_delay = 0.0f;
 }
 
 void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
-	//ImGui::ShowTestWindow();
+	ImGui::ShowTestWindow();
 
 	DockSpace();
 	RenderMainMenu();
 
-	ThreadingWindow();
-
+	if (m_open[THREADING_MANAGER])ThreadingWindow();
+	if (m_open[CONSOLE])AddConsole();
 	if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
 	if (m_open[COMPONENT_HIERARCHY]) RenderComponentHierarchy();
 	if (m_open[EXPLORER]) RendererExplorer();
@@ -72,6 +76,8 @@ void ComponentEngine::UIManager::RenderMainMenu()
 			ImGui::MenuItem("Scene Hierarchy", NULL, &m_open[SCENE_HIERARCHY]);
 			ImGui::MenuItem("Component Hierarchy", NULL, &m_open[COMPONENT_HIERARCHY]);
 			ImGui::MenuItem("Explorer", NULL, &m_open[EXPLORER]);
+			ImGui::MenuItem("Threading Manager", NULL, &m_open[THREADING_MANAGER]);
+			ImGui::MenuItem("Console", NULL, &m_open[CONSOLE]);
 			ImGui::EndMenu();
 		}
 
@@ -128,7 +134,7 @@ void ComponentEngine::UIManager::RendererExplorer()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
-	if (ImGui::Begin("Explorer", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	if (ImGui::Begin("Explorer", &m_open[EXPLORER], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
 	{
 		if (sceneFolder.path.longForm != Engine::Singlton()->GetCurrentSceneDirectory())
 		{
@@ -249,7 +255,7 @@ void ComponentEngine::UIManager::RenderComponentHierarchy()
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
 	static bool v_borders = false;
-	if (ImGui::Begin("Components", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	if (ImGui::Begin("Components", &m_open[COMPONENT_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
 	{
 		EntityManager& em = m_engine->GetEntityManager();
 
@@ -368,7 +374,7 @@ void ComponentEngine::UIManager::ThreadingWindow()
 
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
-	if (ImGui::Begin("Worker Threads", &m_open[SCENE_HIERARCHY], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
+	if (ImGui::Begin("Worker Threads", &m_open[THREADING_MANAGER], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar))
 	{
 
 
@@ -677,6 +683,44 @@ void ComponentEngine::UIManager::AddComponentDialougeMenu()
 
 		ImGui::EndPopup();
 	}
+}
+
+void ComponentEngine::UIManager::AddConsole()
+{
+	static int window_height = 370;
+	ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	if (ImGui::Begin("Console", &m_open[CONSOLE], ImGuiWindowFlags_NoCollapse))
+	{
+
+
+		std::lock_guard<std::mutex> guard(m_engine->m_locks[m_engine->CONSOLE_LOCK]);
+		for (int i = 0; i < m_engine->m_console.size(); i++)
+		{
+			ImGui::PushID(i);
+			ConsoleMessage& message = m_engine->m_console[i];
+			switch (message.state)
+			{
+			case Default:
+				ImGui::Text(message.message.c_str(), message.count);
+				break;
+			case Info:
+				ImGui::TextColored(ImVec4(0.5f, 1.0f, 1.0f, 1.0f), message.message.c_str(), message.count);
+				break;
+			case Warning:
+				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.5f, 1.0f), message.message.c_str(), message.count);
+				break;
+			case Error:
+				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), message.message.c_str(), message.count);
+				break;
+			}
+
+			ImGui::PopID();
+		}
+
+
+
+	}
+	ImGui::End();
 }
 
 void ComponentEngine::UIManager::Tooltip(const char * text)

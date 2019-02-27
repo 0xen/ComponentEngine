@@ -212,11 +212,12 @@ void ComponentEngine::Mesh::LoadModel()
 		}
 
 		// TEMP
-		IGraphicsPipeline* last_created_pipeline = Engine::Singlton()->GetDefaultGraphicsPipeline();
+		PipelinePack& last_created_pipeline = Engine::Singlton()->GetPipeline("Default");
 
 		std::vector<IDescriptorSet*> materials_descriptor_set;
 		for (auto& m : materials)
 		{
+
 			if (m_materials.find(m.name) == m_materials.end())
 			{
 				// For now use the same shader for everything, just create duplicate pipelines to emulate the functionality
@@ -249,11 +250,6 @@ void ComponentEngine::Mesh::LoadModel()
 
 		}
 		
-		/*
-		
-			
-
-		*/
 
 		// Create the mesh instance
 		MeshInstance& mesh_instance = m_mesh_instance[m_file_path.data.longForm];
@@ -349,7 +345,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 				material_mesh.model_pool->AttachDescriptorSet(1, materials_descriptor_set[mesh_it->first]);
 				
-				last_created_pipeline->AttachModelPool(material_mesh.model_pool);
+				last_created_pipeline.pipeline->AttachModelPool(material_mesh.model_pool);
 
 				++j;
 			}

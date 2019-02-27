@@ -149,6 +149,7 @@ namespace ComponentEngine
 		void AddEntityDialougeMenu(Entity* parent);
 		void AddComponentDialougeMenu();
 
+		void AddConsole();
 
 
 
@@ -162,12 +163,14 @@ namespace ComponentEngine
 		static const unsigned int SCENE_HIERARCHY;
 		static const unsigned int COMPONENT_HIERARCHY;
 		static const unsigned int EXPLORER;
+		static const unsigned int THREADING_MANAGER;
+		static const unsigned int CONSOLE;
 
 		float m_thread_time_update_delay;
 		std::map<Engine::ThreadData*, std::vector<float>> m_thread_times_miliseconds;
 		std::map<Engine::ThreadData*, float> m_thread_times_fraction_last;
 
-		bool m_open[3];
+		bool m_open[5];
 	};
 	template<typename T>
 	inline bool UIManager::ComponentDropBox(const char* lable, ComponentDropInstance<T>& inst)

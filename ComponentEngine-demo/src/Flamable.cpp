@@ -54,6 +54,5 @@ void ComponentEngine::Flamable::ReciveMessage(enteez::Entity * sender, OnCollisi
 	if (message.collider->HasComponent<Flamable>() && message.collider->GetComponent<Flamable>().OnFire() && !m_onFire)
 	{
 		SetOnFire(true);
-		std::cout << "Caught on fire" << std::endl;
 	}
 }
