@@ -183,6 +183,7 @@ bool ComponentEngine::Engine::Running()
 		{
 			m_request_stop = false;
 			Stop();
+			return false;
 		}
 		else if (m_request_toggle_threading)
 		{
@@ -385,9 +386,26 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 	return true;
 }
 
+void ComponentEngine::Engine::AddPipeline(std::string name, PipelinePack pipeline)
+{
+	m_pipelines[name] = pipeline;
+}
+
 PipelinePack& ComponentEngine::Engine::GetPipeline(std::string name)
 {
-	if (m_pipelines.find(name) != m_pipelines.end())m_pipelines[name];
+	if (m_pipelines.find(name) != m_pipelines.end())return m_pipelines[name];
+	return m_pipelines["Default"];
+}
+
+PipelinePack & ComponentEngine::Engine::GetPipelineContaining(std::string name)
+{
+	for (auto p : m_pipelines)
+	{
+		if (Common::Contains(name, p.first))
+		{
+			return m_pipelines[p.first];
+		}
+	}
 	return m_pipelines["Default"];
 }
 
@@ -444,7 +462,7 @@ float ComponentEngine::Engine::GetLastThreadTime()
 	return loop_time;
 }
 
-ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
+TextureStorage& ComponentEngine::Engine::GetTexture(std::string path)
 {
 	if (m_texture_storage.find(path) == m_texture_storage.end())
 	{
@@ -456,7 +474,34 @@ ITextureBuffer * ComponentEngine::Engine::GetTexture(std::string path)
 
 		ITextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
 		texture->SetData(BufferSlot::Primary);
-		m_texture_storage[path] = texture;
+		m_texture_storage[path].texture = texture;
+
+
+		m_texture_storage[path].texture_maps_pool = GetRenderer()->CreateDescriptorPool({
+			GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+		});
+
+
+		IDescriptorSet* texture_maps_descriptor_set = m_texture_storage[path].texture_maps_pool->CreateDescriptorSet();
+
+		texture_maps_descriptor_set->AttachBuffer(0, texture);
+
+		texture_maps_descriptor_set->UpdateSet();
+
+		m_texture_storage[path].texture_descriptor_set = texture_maps_descriptor_set;
+
+
+
+
+
+
+
+
+		{
+			std::stringstream ss;
+			ss << "Loaded texture" << path;
+			Log(ss.str(), Info);
+		}
 	}
 	return m_texture_storage[path];
 }
@@ -712,8 +757,8 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Create default pipeline
 	m_default_pipeline = m_renderer->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
+		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Default/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Default/frag.spv" }
 		});
 
 	// Tell the pipeline what data is should expect in the forum of Vertex input
@@ -751,7 +796,7 @@ void ComponentEngine::Engine::InitRenderer()
 		Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
 		});
 
-	m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
+	//m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
 
 	m_default_pipeline->UseCulling(true);
 
@@ -772,7 +817,9 @@ void ComponentEngine::Engine::DeInitRenderer()
 
 	for (auto it = m_texture_storage.begin(); it != m_texture_storage.end(); it++)
 	{
-		delete it->second;
+		delete it->second.texture_maps_pool;
+		delete it->second.texture_descriptor_set;
+		delete it->second.texture;
 	}
 	m_texture_storage.clear();
 

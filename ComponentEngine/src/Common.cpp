@@ -20,3 +20,8 @@ void ComponentEngine::Common::Replace(std::string & str, std::string old, std::s
 		pos += newStr.length();
 	}
 }
+
+bool ComponentEngine::Common::Contains(std::string target, std::string search)
+{
+	return target.find(search) != std::string::npos;
+}

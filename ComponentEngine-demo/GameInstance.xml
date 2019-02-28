@@ -356,17 +356,30 @@
 
 
 
-			<GameObject name="Camera">
-				<Component name="Transformation">
-					<Position x="0.0f" y="0.0f" z="40.0f" />
-					<Rotation x="0.0f" y="0.0f" z="0.0f" />
-					<Scale x="1.0f" y="1.0f" z="1.0f" />
-				</Component>
-				<Component name="Camera" />
-        <Component name="KeyboardMovment" />
-        
-        <!--<Component name="MouseMovment" />-->
-			</GameObject>
+      <GameObject name="Camera">
+      	<Component name="Transformation">
+      	  <Position x="0.0f" y="0.0f" z="40.0f" />
+      	  <Rotation x="0.0f" y="0.0f" z="0.0f" />
+      	  <Scale x="1.0f" y="1.0f" z="1.0f" />
+      	</Component>
+      	<Component name="Camera" />
+      	<Component name="KeyboardMovment" />
+      <!--<Component name="MouseMovment" />-->
+      </GameObject>
+
+
+      <GameObject name="TextureBlock1">
+      	<Component name="Transformation">
+      	  <Position x="0.0f" y="0.0f" z="0.0f" />
+      	  <Rotation x="0.0f" y="0.0f" z="0.0f" />
+      	  <Scale x="1.0f" y="1.0f" z="1.0f" />
+      	</Component>
+      	<Component name="Mesh">
+      	  <Path value="/Resources/Models/cube.obj" />
+      	</Component>
+      	<Component name="Renderer" />
+      <!--<Component name="MouseMovment" />-->
+      </GameObject>
 
 
 

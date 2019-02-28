@@ -211,45 +211,6 @@ void ComponentEngine::Mesh::LoadModel()
 			return;
 		}
 
-		// TEMP
-		PipelinePack& last_created_pipeline = Engine::Singlton()->GetPipeline("Default");
-
-		std::vector<IDescriptorSet*> materials_descriptor_set;
-		for (auto& m : materials)
-		{
-
-			if (m_materials.find(m.name) == m_materials.end())
-			{
-				// For now use the same shader for everything, just create duplicate pipelines to emulate the functionality
-
-
-				m_materials[m.name].m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
-					Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
-					});
-
-
-				IDescriptorSet* texture_maps_descriptor_set = /*Engine::Singlton()->GetTextureMapsPool()*/m_materials[m.name].m_texture_maps_pool->CreateDescriptorSet();
-				if (m.diffuse_texname.empty())
-				{
-					std::stringstream ss;
-					ss << Engine::Singlton()->GetCurrentSceneDirectory();
-					ss << "/Resources/Models/default.png";
-					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(ss.str()));
-				}
-				else
-				{
-					texture_maps_descriptor_set->AttachBuffer(0, Engine::Singlton()->GetTexture(m_dir + m.diffuse_texname));
-				}
-				texture_maps_descriptor_set->UpdateSet();
-
-				m_materials[m.name].m_texture_descriptor_set = texture_maps_descriptor_set;
-
-			}
-			
-			materials_descriptor_set.push_back(m_materials[m.name].m_texture_descriptor_set);
-
-		}
-		
 
 		// Create the mesh instance
 		MeshInstance& mesh_instance = m_mesh_instance[m_file_path.data.longForm];
@@ -329,6 +290,16 @@ void ComponentEngine::Mesh::LoadModel()
 			{
 				MaterialMesh& material_mesh = sub_mesh.material_meshes[j];
 
+
+				unsigned int material_id = mesh_it->first;
+
+				tinyobj::material_t& material = materials[material_id];
+
+				PipelinePack& pipeline = Engine::Singlton()->GetPipelineContaining(material.name);
+
+				bool nonDefaultPipeline = pipeline.pipeline != Engine::Singlton()->GetDefaultGraphicsPipeline();
+
+
 				material_mesh.vertexBuffer =
 					Engine::Singlton()->GetRenderer()->CreateVertexBuffer(mesh_it->second.vertexData.data(), sizeof(MeshVertex), mesh_it->second.vertexData.size());
 				material_mesh.vertexBuffer->SetData(BufferSlot::Primary);
@@ -343,15 +314,20 @@ void ComponentEngine::Mesh::LoadModel()
 				material_mesh.model_pool->AttachBuffer(0, mesh_instance.model_position_buffer);
 
 
-				material_mesh.model_pool->AttachDescriptorSet(1, materials_descriptor_set[mesh_it->first]);
+				if (pipeline.modelCreatePointer != nullptr)
+				{
+					pipeline.modelCreatePointer(pipeline.pipeline, material_mesh.model_pool, m_dir.c_str(), material);
+				}
 				
-				last_created_pipeline.pipeline->AttachModelPool(material_mesh.model_pool);
+				pipeline.pipeline->AttachModelPool(material_mesh.model_pool);
 
 				++j;
 			}
 
 		}
-
+		std::stringstream ss;
+		ss << "Loaded model: " << m_file_path.data.longForm;
+		Engine::Singlton()->Log(ss.str(), Info);
 
 	}
 

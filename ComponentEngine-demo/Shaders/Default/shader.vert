@@ -1,21 +1,42 @@
 #version 450
 
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 layout(set = 0, binding = 0) uniform UniformBufferObjectStatic {
     mat4 view;
     mat4 proj;
 }ubo;
 
-layout(location = 0) in vec4 inPosition;
-layout(location = 1) in vec4 inColor;
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inUV;
+layout(location = 2) in vec3 inNormal;
+layout(location = 3) in vec3 inDiffuseColor;
 
-layout(location = 2) in mat4 model;
+layout(location = 4) in mat4 model_matrix;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec2 uv;
+layout(location = 1) out vec3 normal;
+layout(location = 2) out vec3 diffuseColor;
+layout(location = 3) out vec3 fragPos;
+layout(location = 4) out vec3 viewPos;
+
+
 
 void main()
 {
-	mat4 MVP = ubo.proj * ubo.view * model;
-	gl_Position = MVP * inPosition;
+	
+	vec4 model_pos = vec4(inPosition,1.0f);
+	vec4 world_position = model_matrix * model_pos;
+	gl_Position = ubo.proj * ubo.view * world_position;
+	uv = inUV;
+	diffuseColor = inDiffuseColor;
 
-	outColor = inColor;
+	fragPos = world_position.xyz;
+    normal = (model_matrix * vec4(inNormal, 0.0f)).xyz;
+
+
+    viewPos = ubo.view[3].xyz;
+
+
 }

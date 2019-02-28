@@ -36,6 +36,28 @@ void RegisterCustomComponents()
 	engine->RegisterBase<TeapotController, UI, MsgRecive<OnCollisionEnter>, MsgRecive<OnCollisionExit>>();
 }
 
+
+void LoadTexturedShaderModel(IGraphicsPipeline* pipeline, IModelPool* modelPool,const char* workingDir, tinyobj::material_t material)
+{
+	std::string textureName = material.diffuse_texname;
+
+	std::stringstream ss;
+	if (textureName.empty())
+	{
+		ss << Engine::Singlton()->GetCurrentSceneDirectory();
+		ss << "/Resources/Models/default.png";
+		modelPool->AttachDescriptorSet(1, Engine::Singlton()->GetTexture(ss.str()).texture_descriptor_set);
+	}
+	else
+	{
+		ss << workingDir;
+		ss << material.diffuse_texname;
+		modelPool->AttachDescriptorSet(1, Engine::Singlton()->GetTexture(ss.str()).texture_descriptor_set);
+	}
+
+
+}
+
 void SetupShaders()
 {
 	m_default_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
@@ -48,9 +70,9 @@ void SetupShaders()
 		VertexInputRate::INPUT_RATE_VERTEX,
 		{
 			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
-		{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
-		{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
-		{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
+			{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
+			{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+			{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
 		},
 		sizeof(MeshVertex),
 		0
@@ -79,21 +101,24 @@ void SetupShaders()
 	m_default_pipeline->UseCulling(true);
 
 	bool sucsess = m_default_pipeline->Build();
+
+	engine->AddPipeline("Textured", { m_default_pipeline ,LoadTexturedShaderModel });
 }
 
 void CleanupShaders()
 {
-
 	delete m_default_pipeline;
 }
+ 
 
 int main(int argc, char **argv)
 {
+
 	engine = Engine::Singlton();
 	engine->Start();
 
-	RegisterCustomComponents();
 	SetupShaders();
+	RegisterCustomComponents();
 
 	// Load the scene
 	engine->GetThreadManager()->AddTask([&](float frameTime) {

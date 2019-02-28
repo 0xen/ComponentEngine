@@ -12,6 +12,7 @@
 #include <ComponentEngine\ThreadManager.hpp>
 #include <ComponentEngine/pugixml.hpp>
 #include <ComponentEngine/PhysicsWorld.hpp>
+#include <ComponentEngine\tiny_obj_loader.h>
 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -39,9 +40,17 @@ namespace ComponentEngine
 		Warning,
 		Error
 	};
+
+	struct TextureStorage
+	{
+		Renderer::IDescriptorPool* texture_maps_pool;
+		Renderer::IDescriptorSet* texture_descriptor_set;
+		Renderer::ITextureBuffer* texture;
+	};
 	struct PipelinePack
 	{
 		IGraphicsPipeline* pipeline = nullptr;
+		std::function<void(IGraphicsPipeline*, IModelPool*, const char* workingDir, tinyobj::material_t)> modelCreatePointer = nullptr;
 	};
 	struct ConsoleMessage
 	{
@@ -79,7 +88,11 @@ namespace ComponentEngine
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path, bool merge_scenes = false);
 
+
+		void AddPipeline(std::string name, PipelinePack pipeline);
+
 		PipelinePack& GetPipeline(std::string name);
+		PipelinePack& GetPipelineContaining(std::string name);
 
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
 		IRenderer* GetRenderer();
@@ -89,7 +102,7 @@ namespace ComponentEngine
 
 		float GetThreadDeltaTime();
 		float GetLastThreadTime();
-		ITextureBuffer* GetTexture(std::string path);
+		TextureStorage& GetTexture(std::string path);
 
 		std::string GetCurrentScene();
 		std::string GetCurrentSceneDirectory();
@@ -251,7 +264,8 @@ namespace ComponentEngine
 		std::map<std::string, ComponentTemplate> m_component_register;
 
 		std::map<std::string, void(*)(enteez::Entity& entity)> m_component_gui;
-		std::map<std::string, ITextureBuffer*> m_texture_storage;
+
+		std::map<std::string, TextureStorage> m_texture_storage;
 
 		std::string m_currentScene;
 		std::string m_currentSceneDirectory;
