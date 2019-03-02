@@ -16,7 +16,8 @@ using namespace enteez;
 using namespace Renderer;
 
 Engine* engine;
-IGraphicsPipeline* m_default_pipeline = nullptr;
+IGraphicsPipeline* textured_lighting_pipeline = nullptr;
+IGraphicsPipeline* textured_pipeline = nullptr;
 
 void RegisterCustomComponents()
 {
@@ -60,54 +61,61 @@ void LoadTexturedShaderModel(IGraphicsPipeline* pipeline, IModelPool* modelPool,
 
 void SetupShaders()
 {
-	m_default_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
+	{// Textured Pipeline
+		textured_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
 		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
 		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
+			});
+
+		// Tell the pipeline what data is should expect in the forum of Vertex input
+		textured_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelBinding());
+
+		textured_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelPositionBinding());
+
+		// Tell the pipeline what the input data will be payed out like
+		textured_pipeline->AttachDescriptorPool(engine->GetCameraPool());
+		// Attach the camera descriptor set to the pipeline
+		textured_pipeline->AttachDescriptorSet(0, engine->GetCameraDescriptorSet());
+
+		textured_pipeline->AttachDescriptorPool(engine->GetTextureMapsPool());
+
+		textured_pipeline->UseCulling(true);
+
+		bool sucsess = textured_pipeline->Build();
+
+		engine->AddPipeline("Textured_", { textured_pipeline ,LoadTexturedShaderModel });
+	}
+
+	{// Textured Lighting Pipeline
+		textured_lighting_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
+		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/TexturedLighting/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/TexturedLighting/frag.spv" }
 		});
 
-	// Tell the pipeline what data is should expect in the forum of Vertex input
-	m_default_pipeline->AttachVertexBinding({
-		VertexInputRate::INPUT_RATE_VERTEX,
-		{
-			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
-			{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
-			{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
-			{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
-		},
-		sizeof(MeshVertex),
-		0
-		});
+		// Tell the pipeline what data is should expect in the forum of Vertex input
+		textured_lighting_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelBinding());
 
-	m_default_pipeline->AttachVertexBinding({
-		VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
-		{
-			{	// Vertex Bindings
-				4, // Location
-				DataFormat::MAT4_FLOAT, // Format
-				0 // Offset from start of data structure
-			}
-		},
-		sizeof(glm::mat4), // Total size
-		1 // Binding
-		});
+		textured_lighting_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelPositionBinding());
 
-	// Tell the pipeline what the input data will be payed out like
-	m_default_pipeline->AttachDescriptorPool(engine->GetCameraPool());
-	// Attach the camera descriptor set to the pipeline
-	m_default_pipeline->AttachDescriptorSet(0, engine->GetCameraDescriptorSet());
+		// Tell the pipeline what the input data will be payed out like
+		textured_lighting_pipeline->AttachDescriptorPool(engine->GetCameraPool());
+		// Attach the camera descriptor set to the pipeline
+		textured_lighting_pipeline->AttachDescriptorSet(0, engine->GetCameraDescriptorSet());
 
-	m_default_pipeline->AttachDescriptorPool(engine->GetTextureMapsPool());
+		textured_lighting_pipeline->AttachDescriptorPool(engine->GetTextureMapsPool());
 
-	m_default_pipeline->UseCulling(true);
+		textured_lighting_pipeline->UseCulling(true);
 
-	bool sucsess = m_default_pipeline->Build();
+		bool sucsess = textured_lighting_pipeline->Build();
 
-	engine->AddPipeline("Textured", { m_default_pipeline ,LoadTexturedShaderModel });
+		engine->AddPipeline("TexturedLighting_", { textured_lighting_pipeline ,LoadTexturedShaderModel });
+	}
+	
 }
 
 void CleanupShaders()
 {
-	delete m_default_pipeline;
+	delete textured_lighting_pipeline;
 }
  
 

@@ -18,7 +18,7 @@ using namespace ComponentEngine;
 
 std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
-const unsigned int Mesh::m_buffer_size_step = 100;
+const unsigned int Mesh::m_buffer_size_step = 1000;
 
 ordered_lock ComponentEngine::Mesh::m_transformation_lock;
 

@@ -435,6 +435,37 @@ IDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
 	return m_texture_maps_pool;
 }
 
+VertexBase ComponentEngine::Engine::GetDefaultVertexModelBinding()
+{
+	return VertexBase{
+			VertexInputRate::INPUT_RATE_VERTEX,
+			{
+				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
+				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
+				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+				{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
+			},
+			sizeof(MeshVertex),
+			0
+	};
+}
+
+VertexBase ComponentEngine::Engine::GetDefaultVertexModelPositionBinding()
+{
+	return VertexBase{
+			VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
+			{
+				{	// Vertex Bindings
+					4, // Location
+					DataFormat::MAT4_FLOAT, // Format
+					0 // Offset from start of data structure
+				}
+			},
+			sizeof(glm::mat4), // Total size
+			1 // Binding
+	};
+}
+
 float ComponentEngine::Engine::GetThreadDeltaTime()
 {
 	std::thread::id id = std::this_thread::get_id();
@@ -596,7 +627,7 @@ void ComponentEngine::Engine::InitWindow()
 		m_title,
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		m_width, m_height,
-		GetWindowFlags(m_api) | SDL_WINDOW_RESIZABLE
+		GetWindowFlags(m_api) | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
 	);
 	//SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	SDL_ShowWindow(m_window);
@@ -762,30 +793,9 @@ void ComponentEngine::Engine::InitRenderer()
 		});
 
 	// Tell the pipeline what data is should expect in the forum of Vertex input
-	m_default_pipeline->AttachVertexBinding({
-		VertexInputRate::INPUT_RATE_VERTEX,
-		{
-			{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
-		{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
-		{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
-		{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
-		},
-		sizeof(MeshVertex),
-		0
-		});
+	m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelBinding());
 
-	m_default_pipeline->AttachVertexBinding({
-		VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
-		{
-			{	// Vertex Bindings
-				4, // Location
-				DataFormat::MAT4_FLOAT, // Format
-				0 // Offset from start of data structure
-			}
-		},
-		sizeof(glm::mat4), // Total size
-		1 // Binding
-		});
+	m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelPositionBinding());
 
 	// Tell the pipeline what the input data will be payed out like
 	m_default_pipeline->AttachDescriptorPool(m_camera_pool);
@@ -947,7 +957,7 @@ void ComponentEngine::Engine::InitImGUI()
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable | ImGuiBackendFlags_HasMouseHoveredViewport;
 
 	ImGuiStyle& style = ImGui::GetStyle();
 

@@ -1,5 +1,6 @@
 #version 450
 
+layout (set = 1, binding = 0) uniform sampler2D diffuse_texture;
 
 layout(location = 0) out vec4 outColor;
 
@@ -54,7 +55,7 @@ void main()
 
 	vec3 specular_material = vec3(1.0f);
 
-	vec3 diffuse_material = inDiffuseColor;
+	vec3 diffuse_material = texture(diffuse_texture, inUV, 0.0f).xyz * inDiffuseColor;
 
 	vec4 final_color;
 

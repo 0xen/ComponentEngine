@@ -100,6 +100,9 @@ namespace ComponentEngine
 		IDescriptorSet* GetCameraDescriptorSet();
 		IDescriptorPool* GetTextureMapsPool();
 
+		VertexBase GetDefaultVertexModelBinding();
+		VertexBase GetDefaultVertexModelPositionBinding();
+
 		float GetThreadDeltaTime();
 		float GetLastThreadTime();
 		TextureStorage& GetTexture(std::string path);
