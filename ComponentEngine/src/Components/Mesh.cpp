@@ -18,7 +18,7 @@ using namespace ComponentEngine;
 
 std::map<std::string, MeshInstance> Mesh::m_mesh_instance;
 std::map<std::string, MaterialStorage> Mesh::m_materials;
-const unsigned int Mesh::m_buffer_size_step = 1000;
+const unsigned int Mesh::m_buffer_size_step = 100;
 
 ordered_lock ComponentEngine::Mesh::m_transformation_lock;
 
@@ -345,6 +345,23 @@ void ComponentEngine::Mesh::LoadModel()
 		{
 			MaterialMesh& material_meshe = sub_mesh.material_meshes[k];
 
+			unsigned int currentLargestEntityIndex = material_meshe.model_pool->GetLargestIndex();
+
+			if (currentLargestEntityIndex >= mesh_instance.model_position_buffer->GetElementCount(BufferSlot::Primary))
+			{ 
+				unsigned int newBufferSize = mesh_instance.model_position_buffer->GetElementCount(BufferSlot::Primary) * 4;
+				glm::mat4* newMat = new glm::mat4[newBufferSize];
+				memcpy(newMat, mesh_instance.model_position_array, sizeof(glm::mat4) * mesh_instance.model_position_buffer->GetElementCount(BufferSlot::Primary));
+
+				mesh_instance.model_position_array = newMat;
+				//mesh_instance.model_position_array.resize(m_buffer_size_step);
+				mesh_instance.model_position_buffer->Resize(BufferSlot::Primary, newMat, newBufferSize);
+				mesh_instance.model_position_buffer->Resize(BufferSlot::Secondery, newMat, newBufferSize);
+			}
+
+
+			
+
 			IModel* model = material_meshe.model_pool->CreateModel();
 
 			m_mesh_index = model->GetModelPoolIndex();
@@ -362,17 +379,6 @@ void ComponentEngine::Mesh::LoadModel()
 	m_mesh_instance[m_file_path.data.longForm].used_instances++;
 
 
-	/*
-	IModel* model = m_mesh_instance[m_path].model_pool->CreateModel();
-	model->ShouldRender(false);
-	model->GetData<glm::mat4>(0) = glm::mat4(0.0f);
-
-	Send(TransformationPtrRedirect(&model->GetData<glm::mat4>(0)));
-
-	m_mesh_instance[m_path].model_pool->Update();
-
-	m_model = model;
-	*/
 	m_loaded = true;
 
 	Send(m_entity, OnComponentEnter<Mesh>(this));

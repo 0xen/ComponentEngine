@@ -65,7 +65,7 @@ void SetupShaders()
 		textured_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
 		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
 		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
-			});
+		});
 
 		// Tell the pipeline what data is should expect in the forum of Vertex input
 		textured_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelBinding());
@@ -79,7 +79,7 @@ void SetupShaders()
 
 		textured_pipeline->AttachDescriptorPool(engine->GetTextureMapsPool());
 
-		textured_pipeline->UseCulling(true);
+		textured_pipeline->UseCulling(false);
 
 		bool sucsess = textured_pipeline->Build();
 
@@ -115,9 +115,9 @@ void SetupShaders()
 
 void CleanupShaders()
 {
+	delete textured_pipeline;
 	delete textured_lighting_pipeline;
 }
- 
 
 int main(int argc, char **argv)
 {

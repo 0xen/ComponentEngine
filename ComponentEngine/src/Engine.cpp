@@ -342,6 +342,7 @@ float ComponentEngine::Engine::Sync(int ups)
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 {
+	m_logic_lock.lock();
 	GetRendererMutex().lock();
 	m_currentScene = path;
 
@@ -383,6 +384,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 	}
 
 	GetRendererMutex().unlock();
+	m_logic_lock.unlock();
 	return true;
 }
 
