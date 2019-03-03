@@ -63,15 +63,3 @@ public:
 		}
 	}
 };
-
-/*
-class ThreadHandler : public std::thread
-{
-public:
-	ThreadHandler();
-	ThreadHandler(void(*entry_point)());
-	ordered_lock& ThreadLock();
-private:
-	ordered_lock m_thread_lock;
-};
-*/

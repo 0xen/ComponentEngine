@@ -6,10 +6,10 @@ using namespace ComponentEngine;
 
 ThreadManager::ThreadManager(ThreadMode mode)
 {
-	m_delta_time = SDL_GetPerformanceCounter();
 	m_seccond_delta = 0;
 	m_thread_activity.resize(20);
 	m_seccond_delta = 0;
+	m_delta_update = 0;
 	m_delta_time = SDL_GetPerformanceCounter();
 
 	unsigned int thread_count = (unsigned int)(((float)std::thread::hardware_concurrency() * 1.5f) + 0.5f);
@@ -74,7 +74,8 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups
 void ThreadManager::Update()
 {
 
-	float delta = Engine::Singlton()->GetLastThreadTime();
+	float delta = GetDeltaTime() + m_delta_update;// Engine::Singlton()->GetLastThreadTime();
+	m_delta_update = 0.0f;
 
 	{ // Schedualed task
 		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
@@ -88,6 +89,8 @@ void ThreadManager::Update()
 				task->queued = true;
 				task->lastDelta = task->deltaTime;
 				task->deltaTime = 0;
+				task->totalCount++;
+				task->acumalitiveTime += task->lastDelta;
 				{
 					std::unique_lock<std::mutex> acquire(m_task_pool_lock);
 					m_task_pool.push_back(task);
@@ -95,7 +98,6 @@ void ThreadManager::Update()
 			}
 		}
 	}
-	std::unique_lock<std::mutex> acquire_mode_lock(m_activity_lock);
 	if (m_mode == Joined)
 	{
 		WorkerTask* task;
@@ -114,19 +116,35 @@ void ThreadManager::Update()
 		}
 
 		float newDelta = GetDeltaTime();
-		delta += newDelta;
 		m_active_time += newDelta;
-
-		m_seccond_delta += delta;
-		if (m_seccond_delta > 1.0f)
-		{
-			memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
-			m_thread_activity[19] = m_active_time;
-			m_active_time = 0;
-			m_seccond_delta = 0;
-		}
+		m_delta_update += newDelta;
 	}
+	// Calculate how much preformance this thread is using
+	m_seccond_delta += delta;
+	if (m_seccond_delta > 1.0f)
+	{
+		{ // Generate a process time for the worker threads
+			std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
 
+			for (int i = 0; i < m_schedualed_tasks.size(); ++i)
+			{
+				WorkerTask*& task = m_schedualed_tasks[i];
+
+				memcpy(task->taskActivity.data(), task->taskActivity.data() + 1, sizeof(float) * 19);
+				float averageUPS = task->acumalitiveTime > 0 ? 1.0f / (task->acumalitiveTime / task->totalCount) : 0.0f;
+				task->acumalitiveTime = 0.0f;
+				task->totalCount = 0;
+				task->taskActivity[19] = averageUPS;
+			}
+		}
+
+
+
+		memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
+		m_thread_activity[19] = m_active_time;
+		m_active_time = 0;
+		m_seccond_delta = 0;
+	}
 
 }
 
@@ -260,4 +278,9 @@ bool WorkerThread::Running()
 {
 	std::unique_lock<std::mutex> acquire(m_worker_lock);
 	return m_mode == ThreadMode::Threading;
+}
+
+WorkerTask::WorkerTask()
+{
+	taskActivity.resize(20);
 }

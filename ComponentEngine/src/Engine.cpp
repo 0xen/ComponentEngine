@@ -76,7 +76,7 @@ void ComponentEngine::Engine::Start()
 	m_main_thread = std::this_thread::get_id();
 	m_running = true;
 
-	ThreadData* data = new ThreadData();
+	/*ThreadData* data = new ThreadData();
 	data->data_lock.lock();
 	//data->thread_instance = nullptr;
 	data->name = "Renderer";
@@ -84,7 +84,7 @@ void ComponentEngine::Engine::Start()
 	data->frame_limited = true;
 	m_thread_data.push_back(data);
 	m_thread_linker[m_main_thread] = data;
-	data->data_lock.unlock();
+	data->data_lock.unlock();*/
 
 	m_threadManager = new ThreadManager(ThreadMode::Threading);
 
@@ -176,7 +176,7 @@ void ComponentEngine::Engine::Join()
 
 bool ComponentEngine::Engine::Running()
 {
-	NewThreadUpdatePass();
+	//NewThreadUpdatePass();
 	if (m_main_thread == std::this_thread::get_id())
 	{
 		if (m_request_stop)
@@ -304,7 +304,7 @@ glm::vec2 ComponentEngine::Engine::GetLastMouseMovment()
 	return m_mousePosDelta;
 }
 
-
+/*
 float ComponentEngine::Engine::Sync(int ups)
 {
 	std::thread::id id = std::this_thread::get_id();
@@ -338,7 +338,7 @@ float ComponentEngine::Engine::Sync(int ups)
 	float loop_time = data->loop_time;
 	data->data_lock.unlock();
 	return loop_time;
-}
+}*/
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 {
@@ -467,8 +467,8 @@ VertexBase ComponentEngine::Engine::GetDefaultVertexModelPositionBinding()
 			1 // Binding
 	};
 }
-
-float ComponentEngine::Engine::GetThreadDeltaTime()
+ 
+/*float ComponentEngine::Engine::GetThreadDeltaTime()
 {
 	std::thread::id id = std::this_thread::get_id();
 	Uint64 now = SDL_GetPerformanceCounter();
@@ -493,7 +493,7 @@ float ComponentEngine::Engine::GetLastThreadTime()
 	float loop_time = data->loop_time;
 	data->data_lock.unlock();
 	return loop_time;
-}
+}*/
 
 TextureStorage& ComponentEngine::Engine::GetTexture(std::string path)
 {
@@ -1132,7 +1132,7 @@ void ComponentEngine::Engine::DeInitImGUI()
 }
 
 
-void ComponentEngine::Engine::NewThreadUpdatePass()
+/*void ComponentEngine::Engine::NewThreadUpdatePass()
 {
 	std::thread::id id = std::this_thread::get_id();
 
@@ -1166,7 +1166,7 @@ void ComponentEngine::Engine::NewThreadUpdatePass()
 	// Reset the process time delta and delta loop time for this loop
 	data->delta_process_time = 0.0f;
 	data->delta_loop_time = 0.0f;
-}
+}*/
 
 
 void ComponentEngine::Engine::RequestStop()
@@ -1179,7 +1179,7 @@ void ComponentEngine::Engine::RequestToggleThreading()
 	m_request_toggle_threading = true;
 }
 
-void ComponentEngine::Engine::ToggleFrameLimiting()
+/*void ComponentEngine::Engine::ToggleFrameLimiting()
 {
 	std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
 	std::thread::id id = std::this_thread::get_id();
@@ -1187,7 +1187,7 @@ void ComponentEngine::Engine::ToggleFrameLimiting()
 	if (it == m_thread_linker.end())return;
 	ThreadData*& data = m_thread_linker[id];
 	data->frame_limited = !data->frame_limited;
-}
+}*/
 
 bool ComponentEngine::Engine::Threading()
 {

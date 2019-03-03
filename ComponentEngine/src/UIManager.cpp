@@ -61,13 +61,16 @@ void ComponentEngine::UIManager::RenderMainMenu()
 
 		if (ImGui::BeginMenu("Edit"))
 		{
-			bool test = m_engine->Threading();
+			/*bool test = m_engine->Threading();
 			if (ImGui::MenuItem("Toggle Threading", NULL, &test))
 			{
 				m_engine->GetRendererMutex().lock();
 				m_engine->RequestToggleThreading();
 				m_engine->GetRendererMutex().unlock();
-			}
+			}*/
+
+
+
 			ImGui::EndMenu();
 		}
 
@@ -428,6 +431,15 @@ void ComponentEngine::UIManager::ThreadingWindow()
 					if (ups < 1) ups = 1;
 					task->ups = ups;
 				}
+
+				float processTime = task->taskActivity[task->taskActivity.size() - 1];
+
+				ImGui::PlotLines("", task->taskActivity.data(), task->taskActivity.size(), 0, "", 0.0f, task->ups);
+
+				ImGui::SameLine();
+				ImGui::Text("UPS:%.2", processTime);
+
+
 
 				ImGui::PopID();
 			}

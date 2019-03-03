@@ -84,7 +84,7 @@ namespace ComponentEngine
 		bool KeyDown(int key);
 		bool MouseKeyDown(int key);
 		glm::vec2 GetLastMouseMovment();
-		float Sync(int ups);
+		//float Sync(int ups);
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path, bool merge_scenes = false);
 
@@ -103,8 +103,8 @@ namespace ComponentEngine
 		VertexBase GetDefaultVertexModelBinding();
 		VertexBase GetDefaultVertexModelPositionBinding();
 
-		float GetThreadDeltaTime();
-		float GetLastThreadTime();
+		//float GetThreadDeltaTime();
+		//float GetLastThreadTime();
 		TextureStorage& GetTexture(std::string path);
 
 		std::string GetCurrentScene();
@@ -158,11 +158,11 @@ namespace ComponentEngine
 		void UpdateImGUI();
 		void DeInitImGUI();
 
-		void NewThreadUpdatePass();
+		//void NewThreadUpdatePass();
 		void RequestStop();
 		void RequestToggleThreading();
 
-		void ToggleFrameLimiting();
+		//void ToggleFrameLimiting();
 		bool Threading();
 		void ToggleThreading();
 
@@ -249,8 +249,6 @@ namespace ComponentEngine
 			bool frame_limited;
 
 			const char* name;
-
-
 			ordered_lock data_lock;
 
 			//ThreadHandler* thread_instance = nullptr;
@@ -261,8 +259,8 @@ namespace ComponentEngine
 		ordered_lock m_thread_data_lock;
 
 		std::vector<ConsoleMessage> m_console;
-		std::vector<ThreadData*> m_thread_data;
-		std::map<std::thread::id, ThreadData*> m_thread_linker;
+		//std::vector<ThreadData*> m_thread_data;
+		//std::map<std::thread::id, ThreadData*> m_thread_linker;
 
 		std::map<std::string, ComponentTemplate> m_component_register;
 

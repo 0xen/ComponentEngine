@@ -25,13 +25,17 @@ enum TaskType
 
 struct WorkerTask
 {
+	WorkerTask();
 	TaskType type;
 	std::function<void(float)> funcPtr;
 	unsigned int ups;
 	float deltaTime; // How long since last update
 	float lastDelta; // How long it took before the function was calld
+	float acumalitiveTime; // All delta times added together from a frame to be averaged out
+	unsigned int totalCount = 0; // Running total count of runs
 	bool queued = false;
 	std::string name;
+	std::vector<float> taskActivity;
 };
 
 
@@ -68,7 +72,6 @@ class ThreadManager
 public:
 	std::mutex m_schedualed_task_lock;
 	std::mutex m_task_pool_lock;
-	std::mutex m_activity_lock;
 
 
 	ThreadManager(ThreadMode mode);
@@ -105,6 +108,7 @@ private:
 	// Time since last seccond
 	float m_seccond_delta;
 	float m_active_time;
+	float m_delta_update; // Count up all time in update function
 	std::vector<float> m_thread_activity;
 
 };
