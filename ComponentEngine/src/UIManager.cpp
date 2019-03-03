@@ -59,8 +59,8 @@ void ComponentEngine::UIManager::RenderMainMenu()
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("Edit"))
-		{
+		/*if (ImGui::BeginMenu("Edit"))
+		{*/
 			/*bool test = m_engine->Threading();
 			if (ImGui::MenuItem("Toggle Threading", NULL, &test))
 			{
@@ -71,8 +71,8 @@ void ComponentEngine::UIManager::RenderMainMenu()
 
 
 
-			ImGui::EndMenu();
-		}
+		/*	ImGui::EndMenu();
+		}*/
 
 		if (ImGui::BeginMenu("Window"))
 		{
@@ -437,7 +437,7 @@ void ComponentEngine::UIManager::ThreadingWindow()
 				ImGui::PlotLines("", task->taskActivity.data(), task->taskActivity.size(), 0, "", 0.0f, task->ups);
 
 				ImGui::SameLine();
-				ImGui::Text("UPS:%.2", processTime);
+				ImGui::Text("UPS:%.2f", processTime);
 
 
 

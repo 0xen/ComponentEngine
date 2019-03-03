@@ -361,9 +361,6 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 				m_currentSceneDirectory = m_currentScene.substr(0, lastForwardSlash);
 			}
 		}
-		
-		
-
 	}
 
 
@@ -790,8 +787,8 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Create default pipeline
 	m_default_pipeline = m_renderer->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Default/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Default/frag.spv" }
+		{ ShaderStage::VERTEX_SHADER, "../Shaders/Default/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/Default/frag.spv" }
 		});
 
 	// Tell the pipeline what data is should expect in the forum of Vertex input

@@ -36,6 +36,5 @@ void ComponentEngine::WaterSourceController::ReciveMessage(enteez::Entity * send
 	if (message.collider->HasComponent<Flamable>() && message.collider->GetComponent<Flamable>().OnFire())
 	{
 		message.collider->GetComponent<Flamable>().SetOnFire(false);
-		std::cout << "Extinguished Fire" << std::endl;
 	}
 }

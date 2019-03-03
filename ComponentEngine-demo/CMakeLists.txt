@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 2.6)
 set(project_name ComponentEngine-demo)
 project(${project_name})
 
+set(
+    CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG
+    ${CMAKE_HOME_DIRECTORY}/ComponentEngine-demo/debug-bin
+    )
+set(
+    CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE
+    ${CMAKE_HOME_DIRECTORY}/ComponentEngine-demo/bin
+    )
+
+
 set(HAVE_LIBC TRUE)
 set(src
     src/main.cpp
@@ -33,6 +43,9 @@ include_directories(../../EnteeZ/EnteeZ/include)
 
 
 add_executable(${project_name} ${src} ${headers})
+
+
+set_property(TARGET ${project_name} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/ComponentEngine-demo/debug-bin")
 
 target_link_libraries(${project_name} ComponentEngine)
 
