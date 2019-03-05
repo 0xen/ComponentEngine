@@ -50,7 +50,7 @@ namespace ComponentEngine
 
 	enum PlayState
 	{
-		Running,
+		Playing,
 		Paused
 	};
 

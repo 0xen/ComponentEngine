@@ -129,6 +129,7 @@ namespace ComponentEngine
 		void DockSpace();
 
 		void PlayPause();
+		void AboutPage();
 		void RendererExplorer();
 		void RendererFolder(Folder& folder);
 
@@ -167,12 +168,15 @@ namespace ComponentEngine
 		static const unsigned int THREADING_MANAGER;
 		static const unsigned int CONSOLE;
 		static const unsigned int PLAY_PAUSE;
+		static const unsigned int ABOUT;
+
+		bool m_fullscreenOnPlay = false;
 
 		float m_thread_time_update_delay;
 		std::map<Engine::ThreadData*, std::vector<float>> m_thread_times_miliseconds;
 		std::map<Engine::ThreadData*, float> m_thread_times_fraction_last;
 
-		bool m_open[6];
+		bool m_open[7];
 	};
 	template<typename T>
 	inline bool UIManager::ComponentDropBox(const char* lable, ComponentDropInstance<T>& inst)

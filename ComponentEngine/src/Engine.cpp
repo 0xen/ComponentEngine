@@ -107,7 +107,7 @@ void ComponentEngine::Engine::Start()
 		EntityManager& em = GetEntityManager();
 
 		m_logic_lock.lock();
-		if (m_play_state == PlayState::Running)
+		if (m_play_state == PlayState::Playing)
 		{
 			for (auto e : em.GetEntitys())
 			{

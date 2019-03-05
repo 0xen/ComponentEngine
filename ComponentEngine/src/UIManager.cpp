@@ -10,6 +10,7 @@ const unsigned int ComponentEngine::UIManager::EXPLORER = 2;
 const unsigned int ComponentEngine::UIManager::THREADING_MANAGER = 3;
 const unsigned int ComponentEngine::UIManager::CONSOLE = 4;
 const unsigned int ComponentEngine::UIManager::PLAY_PAUSE = 5;
+const unsigned int ComponentEngine::UIManager::ABOUT = 6;
 
 ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 {
@@ -19,6 +20,7 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 	m_open[COMPONENT_HIERARCHY] = true;
 	m_open[THREADING_MANAGER] = true;
 	m_open[CONSOLE] = true;
+	m_fullscreenOnPlay = true;
 	m_thread_time_update_delay = 0.0f;
 }
 
@@ -32,11 +34,14 @@ void ComponentEngine::UIManager::Render()
 
 
 	PlayPause();
-	if (m_open[THREADING_MANAGER])ThreadingWindow();
-	if (m_open[CONSOLE])AddConsole();
-	if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
-	if (m_open[COMPONENT_HIERARCHY]) RenderComponentHierarchy();
-	if (m_open[EXPLORER]) RendererExplorer();
+	if (Engine::Singlton()->GetPlayState() != PlayState::Playing || !m_fullscreenOnPlay)
+	{
+		if (m_open[THREADING_MANAGER])ThreadingWindow();
+		if (m_open[CONSOLE])AddConsole();
+		if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
+		if (m_open[COMPONENT_HIERARCHY]) RenderComponentHierarchy();
+		if (m_open[EXPLORER]) RendererExplorer();
+	}
 
 
 	ImGui::Render();
@@ -55,9 +60,9 @@ void ComponentEngine::UIManager::RenderMainMenu()
 		{
 			if (ImGui::MenuItem("Exit"))
 			{
-m_engine->GetRendererMutex().lock();
-m_engine->RequestStop();
-m_engine->GetRendererMutex().unlock();
+				m_engine->GetRendererMutex().lock();
+				m_engine->RequestStop();
+				m_engine->GetRendererMutex().unlock();
 			}
 			ImGui::EndMenu();
 		}
@@ -89,9 +94,7 @@ m_engine->GetRendererMutex().unlock();
 
 		if (ImGui::BeginMenu("About"))
 		{
-			ImGui::MenuItem("About", NULL, &m_open[SCENE_HIERARCHY]);
-
-
+			ImGui::MenuItem("About", NULL, &m_open[ABOUT]);
 			ImGui::EndMenu();
 		}
 
@@ -154,19 +157,51 @@ void ComponentEngine::UIManager::PlayPause()
 	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight));
 	if (ImGui::Begin("Play Pause", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking))
 	{
-		if(Engine::Singlton()->GetPlayState() == PlayState::Running)
+		if(Engine::Singlton()->GetPlayState() == PlayState::Playing)
 		{
-			if (ImGui::ArrowButton("##left", ImGuiDir_Right))
+			if (ImGui::Button("||"))
 			{
 				Engine::Singlton()->SetPlayState(PlayState::Paused);
 			}
 		}
 		else
 		{
+			if (ImGui::ArrowButton("##left", ImGuiDir_Right))
+			{
+				Engine::Singlton()->SetPlayState(PlayState::Playing);
+			}
+			ImGui::SameLine();
+			ImGui::Checkbox("Fullscreen on play", &m_fullscreenOnPlay);
+		}
+
+	}
+	ImGui::End();
+}
+
+void ComponentEngine::UIManager::AboutPage()
+{
+	//static int window_height = 370;
+	//ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	ImGuiStyle& style = ImGui::GetStyle();
+	int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight));
+	if (ImGui::Begin("About", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking))
+	{
+		if (Engine::Singlton()->GetPlayState() == PlayState::Playing)
+		{
 			if (ImGui::Button("||"))
 			{
-				Engine::Singlton()->SetPlayState(PlayState::Running);
+				Engine::Singlton()->SetPlayState(PlayState::Paused);
 			}
+		}
+		else
+		{
+			if (ImGui::ArrowButton("##left", ImGuiDir_Right))
+			{
+				Engine::Singlton()->SetPlayState(PlayState::Playing);
+			}
+			ImGui::SameLine();
+			ImGui::Checkbox("Fullscreen on play", &m_fullscreenOnPlay);
 		}
 
 	}
