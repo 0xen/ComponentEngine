@@ -431,6 +431,9 @@
 					<Component name="Renderer" />
 				</GameObject>
 			</GameObject>
+			<GameObject name="Partical">
+				<Component name="ParticleSystem" running="1" visible="1" />
+			</GameObject>
 		</Scene>
 	</Scenes>
 </Game>

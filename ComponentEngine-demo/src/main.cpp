@@ -56,7 +56,6 @@ void LoadTexturedShaderModel(IGraphicsPipeline* pipeline, IModelPool* modelPool,
 		modelPool->AttachDescriptorSet(1, Engine::Singlton()->GetTexture(ss.str()).texture_descriptor_set);
 	}
 
-
 }
 
 void SetupShaders()
@@ -113,34 +112,9 @@ void SetupShaders()
 	
 }
 
-void CleanupShaders()
-{
-	delete textured_pipeline;
-	delete textured_lighting_pipeline;
-}
-
-#include <direct.h>
-#define GetCurrentDir _getcwd
-//std::string GetCurrentWorkingDir(void) {
-//	char buff[FILENAME_MAX];
-//	GetCurrentDir(buff, FILENAME_MAX);
-//	std::string current_working_dir(buff);
-//	return current_working_dir;
-//}
 
 int main(int argc, char **argv)
 {
-
-	char result[MAX_PATH];
-	
-
-	std::cout << std::string(result, GetModuleFileName(NULL, result, MAX_PATH)) << std::endl;
-
-	char buff[FILENAME_MAX];
-	GetCurrentDir(buff, FILENAME_MAX);
-	std::string current_working_dir(buff);
-
-	std::cout << current_working_dir << std::endl;
 
 	engine = Engine::Singlton();
 	engine->Start();
@@ -156,7 +130,6 @@ int main(int argc, char **argv)
 	{
 		engine->Update();
 	}
-	CleanupShaders();
 
 	//engine->Join();
 	engine->Stop();

@@ -459,7 +459,7 @@ void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 
 	Transformation& entityTeansformation = entity->GetComponent<Transformation>();
 
-	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnDoubleClick;
 	if (!entityTeansformation.HasChildren())
 	{
 		flags |= ImGuiTreeNodeFlags_Leaf;

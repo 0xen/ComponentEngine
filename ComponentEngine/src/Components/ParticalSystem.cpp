@@ -15,7 +15,7 @@ ComponentEngine::ParticleSystem::ParticleSystem(enteez::Entity * entity)
 	// Initilize the system with default values
 	m_config.buffer_config.memory.updateTime = 0;
 	m_config.buffer_config.memory.totalTime = 0;
-	m_config.buffer_config.memory.maxLife = 1.0f;
+	m_config.buffer_config.memory.maxLife = 2.0f;
 	m_config.buffer_config.memory.emissionRate = 0.001f;
 	m_config.buffer_config.memory.startColor = glm::vec4(0.976f, 0.941f, 0.475f, 1.0f);
 	m_config.buffer_config.memory.endColor = glm::vec4(0.965f, 0.486f, 0.004f, 1.0f);
@@ -754,9 +754,11 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 
 		m_model_pool->SetVertexBuffer(m_vertex_buffer);
 
+		m_model_pool->SetVertexDrawCount(m_particleCount);
+
 		m_compute_pipeline->SetX(m_particleCount);
 
-		assert(m_compute_pipeline->Build() && "Unable to build pipeline");
+		//m_compute_pipeline->Build();
 
 		m_compute_program->Build();
 

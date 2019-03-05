@@ -41,6 +41,13 @@ namespace ComponentEngine
 		Error
 	};
 
+	enum EngineStates
+	{
+		Stopped,
+		Running,
+		Stoping
+	};
+
 	struct TextureStorage
 	{
 		Renderer::IDescriptorPool* texture_maps_pool;
@@ -177,7 +184,7 @@ namespace ComponentEngine
 		int m_width;
 		int m_height;
 
-		bool m_running = false;
+		EngineStates m_running = Stopped;
 		bool m_request_stop = false;
 		bool m_request_toggle_threading = false;
 		bool m_threading = true;

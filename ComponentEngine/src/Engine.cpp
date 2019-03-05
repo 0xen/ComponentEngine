@@ -30,7 +30,7 @@ Engine* Engine::m_engine = nullptr;
 bool ComponentEngine::Engine::IsRunning()
 {
 	std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
-	return m_running;
+	return m_running == EngineStates::Running;
 }
 
 ComponentEngine::Engine::Engine()
@@ -74,7 +74,7 @@ void ComponentEngine::Engine::Start()
 	InitPhysicsWorld();
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
-	m_running = true;
+	m_running = EngineStates::Running;
 
 	/*ThreadData* data = new ThreadData();
 	data->data_lock.lock();
@@ -131,14 +131,14 @@ void ComponentEngine::Engine::Start()
 
 void ComponentEngine::Engine::Stop()
 {
-	if (!IsRunning())
+	if (m_running != EngineStates::Stoping)
 	{
 		return;
 	}
 	m_threadManager->ChangeMode(ThreadMode::Joined);
 	{
 		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
-		m_running = false;
+		m_running = EngineStates::Stopped;
 	}
 
 
@@ -181,8 +181,9 @@ bool ComponentEngine::Engine::Running()
 	{
 		if (m_request_stop)
 		{
-			m_request_stop = false;
-			Stop();
+			m_running = EngineStates::Stoping;
+			/*m_request_stop = false;
+			Stop();*/
 			return false;
 		}
 		else if (m_request_toggle_threading)
@@ -200,7 +201,7 @@ bool ComponentEngine::Engine::Running()
 	else
 	{
 		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
-		return m_running;
+		return m_running == EngineStates::Stopped;;
 	}
 }
 
@@ -835,8 +836,14 @@ void ComponentEngine::Engine::DeInitRenderer()
 
 	delete m_default_camera;
 	m_default_camera = nullptr;
-	delete m_default_pipeline;
-	m_default_pipeline = nullptr;
+	//delete m_default_pipeline;
+	//m_default_pipeline = nullptr;
+
+	for (auto& pipeline : m_pipelines)
+	{
+		delete pipeline.second.pipeline;
+	}
+
 	delete m_camera_pool;
 	m_camera_pool = nullptr;
 	delete m_texture_maps_pool;
