@@ -128,6 +128,7 @@ namespace ComponentEngine
 		// Used as the central docking system for the windows
 		void DockSpace();
 
+		void PlayPause();
 		void RendererExplorer();
 		void RendererFolder(Folder& folder);
 
@@ -165,12 +166,13 @@ namespace ComponentEngine
 		static const unsigned int EXPLORER;
 		static const unsigned int THREADING_MANAGER;
 		static const unsigned int CONSOLE;
+		static const unsigned int PLAY_PAUSE;
 
 		float m_thread_time_update_delay;
 		std::map<Engine::ThreadData*, std::vector<float>> m_thread_times_miliseconds;
 		std::map<Engine::ThreadData*, float> m_thread_times_fraction_last;
 
-		bool m_open[5];
+		bool m_open[6];
 	};
 	template<typename T>
 	inline bool UIManager::ComponentDropBox(const char* lable, ComponentDropInstance<T>& inst)

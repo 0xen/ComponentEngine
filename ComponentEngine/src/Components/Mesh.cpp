@@ -139,7 +139,8 @@ void ComponentEngine::Mesh::Display()
 
 	if (m_loaded)
 	{
-		ImGui::Text("Mesh Instance Count: %d", m_mesh_instance[m_file_path.data.longForm].used_instances);
+		MeshInstance& meshInstance = m_mesh_instance[m_file_path.data.longForm];
+		ImGui::Text("Mesh Instance Count: %d", meshInstance.used_instances);
 		ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
 		ImGui::Text("Vertex Count: %d", m_vertex_count);
 	}
@@ -160,6 +161,8 @@ void ComponentEngine::Mesh::Display()
 			Engine::Singlton()->GetRendererMutex().unlock();
 		}
 	}
+
+
 }
 
 void ComponentEngine::Mesh::SetBufferData()

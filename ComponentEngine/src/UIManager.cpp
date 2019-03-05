@@ -9,6 +9,7 @@ const unsigned int ComponentEngine::UIManager::COMPONENT_HIERARCHY = 1;
 const unsigned int ComponentEngine::UIManager::EXPLORER = 2;
 const unsigned int ComponentEngine::UIManager::THREADING_MANAGER = 3;
 const unsigned int ComponentEngine::UIManager::CONSOLE = 4;
+const unsigned int ComponentEngine::UIManager::PLAY_PAUSE = 5;
 
 ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 {
@@ -29,6 +30,8 @@ void ComponentEngine::UIManager::Render()
 	DockSpace();
 	RenderMainMenu();
 
+
+	PlayPause();
 	if (m_open[THREADING_MANAGER])ThreadingWindow();
 	if (m_open[CONSOLE])AddConsole();
 	if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
@@ -84,6 +87,14 @@ void ComponentEngine::UIManager::RenderMainMenu()
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("About"))
+		{
+			ImGui::MenuItem("About", NULL, &m_open[SCENE_HIERARCHY]);
+
+
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
 	}
 }
@@ -131,6 +142,31 @@ void ComponentEngine::UIManager::DockSpace()
 
 	ImGui::End();
 
+}
+
+void ComponentEngine::UIManager::PlayPause()
+{
+	//static int window_height = 370;
+	//ImGui::SetNextWindowSize(ImVec2(420, window_height));
+	ImGuiStyle& style = ImGui::GetStyle();
+	int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
+	//style.tit
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x/2, titlebarHeight));
+	if (ImGui::Begin("Play Pause", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking))
+	{
+		
+		if (ImGui::ArrowButton("##left", ImGuiDir_Right))
+		{
+
+		}
+		ImGui::SameLine();
+		if(ImGui::Button("||"))
+		{
+
+		}
+
+	}
+	ImGui::End();
 }
 
 void ComponentEngine::UIManager::RendererExplorer()
