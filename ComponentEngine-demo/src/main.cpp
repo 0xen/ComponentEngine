@@ -62,8 +62,8 @@ void SetupShaders()
 {
 	{// Textured Pipeline
 		textured_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/Textured/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/Textured/frag.spv" }
+		{ ShaderStage::VERTEX_SHADER, "../Shaders/Textured/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/Textured/frag.spv" }
 		});
 
 		// Tell the pipeline what data is should expect in the forum of Vertex input
@@ -87,8 +87,8 @@ void SetupShaders()
 
 	{// Textured Lighting Pipeline
 		textured_lighting_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/TexturedLighting/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/TexturedLighting/frag.spv" }
+		{ ShaderStage::VERTEX_SHADER, "../Shaders/TexturedLighting/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/TexturedLighting/frag.spv" }
 		});
 
 		// Tell the pipeline what data is should expect in the forum of Vertex input

@@ -76,16 +76,6 @@ void ComponentEngine::Engine::Start()
 	m_main_thread = std::this_thread::get_id();
 	m_running = EngineStates::Running;
 
-	/*ThreadData* data = new ThreadData();
-	data->data_lock.lock();
-	//data->thread_instance = nullptr;
-	data->name = "Renderer";
-	data->delta_time = SDL_GetPerformanceCounter();
-	data->frame_limited = true;
-	m_thread_data.push_back(data);
-	m_thread_linker[m_main_thread] = data;
-	data->data_lock.unlock();*/
-
 	m_threadManager = new ThreadManager(ThreadMode::Threading);
 
 	// Render a frame so you know it has not crashed xD
@@ -1022,8 +1012,8 @@ void ComponentEngine::Engine::InitImGUI()
 
 	// Setup ImGUI Pipeline
 	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../../ImGUI/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../../ImGUI/frag.spv" }
+		{ ShaderStage::VERTEX_SHADER, "../Shaders/ImGUI/vert.spv" },
+		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/ImGUI/frag.spv" }
 		}, true);
 	m_imgui.m_imgui_pipeline->UseDepth(false);
 

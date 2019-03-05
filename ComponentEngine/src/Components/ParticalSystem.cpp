@@ -83,7 +83,7 @@ void ComponentEngine::ParticleSystem::Build()
 
 	m_particle_payload_buffer = renderer->CreateUniformBuffer(m_particle_payloads.data(), BufferChain::Single,sizeof(ParticlePayload), m_particle_payloads.size(), true);
 
-	m_compute_pipeline = renderer->CreateComputePipeline("../../ComponentEngine-demo/Shaders/ParticalEffect/comp.spv", m_particleCount, 1, 1);
+	m_compute_pipeline = renderer->CreateComputePipeline("../Shaders/ParticalEffect/comp.spv", m_particleCount, 1, 1);
 
 	RebuildAll();
 
@@ -124,9 +124,9 @@ void ComponentEngine::ParticleSystem::Build()
 
 		// Create default pipeline
 		m_graphics_pipeline = renderer->CreateGraphicsPipeline({
-			{ ShaderStage::VERTEX_SHADER, "../../ComponentEngine-demo/Shaders/ParticalEffect/vert.spv" },
-			{ ShaderStage::GEOMETRY_SHADER, "../../ComponentEngine-demo/Shaders/ParticalEffect/geom.spv" },
-			{ ShaderStage::FRAGMENT_SHADER, "../../ComponentEngine-demo/Shaders/ParticalEffect/frag.spv" },
+			{ ShaderStage::VERTEX_SHADER, "../Shaders/ParticalEffect/vert.spv" },
+			{ ShaderStage::GEOMETRY_SHADER, "../Shaders/ParticalEffect/geom.spv" },
+			{ ShaderStage::FRAGMENT_SHADER, "../Shaders/ParticalEffect/frag.spv" },
 			});
 
 		// Tell the pipeline what data is should expect in the forum of Vertex input
