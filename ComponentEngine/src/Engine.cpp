@@ -75,6 +75,7 @@ void ComponentEngine::Engine::Start()
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
 	m_running = EngineStates::Running;
+	m_play_state = PlayState::Paused;
 
 	m_threadManager = new ThreadManager(ThreadMode::Threading);
 
@@ -102,17 +103,21 @@ void ComponentEngine::Engine::Start()
 	}, 60, "PhysicsWorld");
 
 	// Add Update Scene task
-	m_threadManager->AddTask([&](float frameTime) {
+	m_threadManager->AddTask([&,this](float frameTime) {
 		EntityManager& em = GetEntityManager();
 
 		m_logic_lock.lock();
-		for (auto e : em.GetEntitys())
+		if (m_play_state == PlayState::Running)
 		{
-			e->ForEach<Logic>([&](enteez::Entity* entity, Logic& logic)
+			for (auto e : em.GetEntitys())
 			{
-				logic.Update(frameTime);
-			});
+				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
+				{
+					logic.Update(frameTime);
+				});
+			}
 		}
+		
 		m_logic_lock.unlock();
 	}, 60, "Scene Update");
 
@@ -593,6 +598,18 @@ void ComponentEngine::Engine::GrabMouse(bool grab)
 {
 	SDL_SetRelativeMouseMode((SDL_bool)grab);
 	SDL_GetMouseState(&m_lockedPosX, &m_lockedPosY);
+}
+
+void ComponentEngine::Engine::SetPlayState(PlayState play_state)
+{
+	m_logic_lock.lock();
+	m_play_state = play_state;
+	m_logic_lock.unlock();
+}
+
+PlayState ComponentEngine::Engine::GetPlayState()
+{
+	return m_play_state;
 }
 
 PhysicsWorld * ComponentEngine::Engine::GetPhysicsWorld()

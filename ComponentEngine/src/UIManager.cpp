@@ -55,22 +55,22 @@ void ComponentEngine::UIManager::RenderMainMenu()
 		{
 			if (ImGui::MenuItem("Exit"))
 			{
-				m_engine->GetRendererMutex().lock();
-				m_engine->RequestStop();
-				m_engine->GetRendererMutex().unlock();
+m_engine->GetRendererMutex().lock();
+m_engine->RequestStop();
+m_engine->GetRendererMutex().unlock();
 			}
 			ImGui::EndMenu();
 		}
 
 		/*if (ImGui::BeginMenu("Edit"))
 		{*/
-			/*bool test = m_engine->Threading();
-			if (ImGui::MenuItem("Toggle Threading", NULL, &test))
-			{
-				m_engine->GetRendererMutex().lock();
-				m_engine->RequestToggleThreading();
-				m_engine->GetRendererMutex().unlock();
-			}*/
+		/*bool test = m_engine->Threading();
+		if (ImGui::MenuItem("Toggle Threading", NULL, &test))
+		{
+			m_engine->GetRendererMutex().lock();
+			m_engine->RequestToggleThreading();
+			m_engine->GetRendererMutex().unlock();
+		}*/
 
 
 
@@ -118,7 +118,7 @@ void ComponentEngine::UIManager::DockSpace()
 	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
 	// When using ImGuiDockNodeFlags_PassthruDockspace, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
-	if (opt_flags & ImGuiDockNodeFlags_PassthruDockspace)
+	if (opt_flags& ImGuiDockNodeFlags_PassthruDockspace)
 		window_flags |= ImGuiWindowFlags_NoBackground;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -129,8 +129,8 @@ void ComponentEngine::UIManager::DockSpace()
 	ImGui::PopStyleVar(2);
 
 	// Dockspace
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	ImGuiIO & io = ImGui::GetIO();
+	if (io.ConfigFlags& ImGuiConfigFlags_DockingEnable)
 	{
 		ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), opt_flags);
@@ -151,18 +151,22 @@ void ComponentEngine::UIManager::PlayPause()
 	ImGuiStyle& style = ImGui::GetStyle();
 	int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
 	//style.tit
-	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x/2, titlebarHeight));
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight));
 	if (ImGui::Begin("Play Pause", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking))
 	{
-		
-		if (ImGui::ArrowButton("##left", ImGuiDir_Right))
+		if(Engine::Singlton()->GetPlayState() == PlayState::Running)
 		{
-
+			if (ImGui::ArrowButton("##left", ImGuiDir_Right))
+			{
+				Engine::Singlton()->SetPlayState(PlayState::Paused);
+			}
 		}
-		ImGui::SameLine();
-		if(ImGui::Button("||"))
+		else
 		{
-
+			if (ImGui::Button("||"))
+			{
+				Engine::Singlton()->SetPlayState(PlayState::Running);
+			}
 		}
 
 	}

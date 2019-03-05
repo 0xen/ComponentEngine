@@ -48,6 +48,12 @@ namespace ComponentEngine
 		Stoping
 	};
 
+	enum PlayState
+	{
+		Running,
+		Paused
+	};
+
 	struct TextureStorage
 	{
 		Renderer::IDescriptorPool* texture_maps_pool;
@@ -136,6 +142,10 @@ namespace ComponentEngine
 
 		void GrabMouse(bool grab);
 
+		void SetPlayState(PlayState play_state);
+
+		PlayState GetPlayState();
+
 		PhysicsWorld* GetPhysicsWorld();
 
 		friend class UIManager;
@@ -184,12 +194,14 @@ namespace ComponentEngine
 		int m_width;
 		int m_height;
 
-		EngineStates m_running = Stopped;
+		EngineStates m_running = EngineStates::Stopped;
 		bool m_request_stop = false;
 		bool m_request_toggle_threading = false;
 		bool m_threading = true;
 
 		std::thread::id m_main_thread;
+
+		PlayState m_play_state;
 
 		UIManager* m_ui;
 
