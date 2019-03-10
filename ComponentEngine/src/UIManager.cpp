@@ -20,6 +20,8 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 	m_open[COMPONENT_HIERARCHY] = true;
 	m_open[THREADING_MANAGER] = true;
 	m_open[CONSOLE] = true;
+	m_open[ABOUT] = false;
+
 	m_fullscreenOnPlay = true;
 	m_thread_time_update_delay = 0.0f;
 }
@@ -32,8 +34,9 @@ void ComponentEngine::UIManager::Render()
 	DockSpace();
 	RenderMainMenu();
 
-
 	PlayPause();
+	if (m_open[ABOUT]) AboutPage();
+
 	if (Engine::Singlton()->GetPlayState() != PlayState::Playing || !m_fullscreenOnPlay)
 	{
 		if (m_open[THREADING_MANAGER])ThreadingWindow();
@@ -184,25 +187,53 @@ void ComponentEngine::UIManager::AboutPage()
 	//ImGui::SetNextWindowSize(ImVec2(420, window_height));
 	ImGuiStyle& style = ImGui::GetStyle();
 	int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
-	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight));
-	if (ImGui::Begin("About", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking))
+	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight + (ImGui::GetIO().DisplaySize.y) / 3));
+	if (ImGui::Begin("About", &m_open[ABOUT], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking))
 	{
-		if (Engine::Singlton()->GetPlayState() == PlayState::Playing)
+
+		ImGui::Text("Developed by: John Green");
+
+		ImGui::Text("");
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.5f, 1.0f), "Special Thanks To");
+		ImGui::Text("");
 		{
-			if (ImGui::Button("||"))
-			{
-				Engine::Singlton()->SetPlayState(PlayState::Paused);
-			}
-		}
-		else
-		{
-			if (ImGui::ArrowButton("##left", ImGuiDir_Right))
-			{
-				Engine::Singlton()->SetPlayState(PlayState::Playing);
-			}
+			ImGui::Text("Vulkan API:");
 			ImGui::SameLine();
-			ImGui::Checkbox("Fullscreen on play", &m_fullscreenOnPlay);
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://www.khronos.org/vulkan/");
 		}
+		{
+			ImGui::Text("ImGui: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://github.com/ocornut/imgui");
+		}
+		{
+			ImGui::Text("Bullet3: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://pybullet.org/");
+		}
+		{
+			ImGui::Text("SDL2: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://www.libsdl.org/");
+		}
+		{
+			ImGui::Text("GLM: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://glm.g-truc.net/");
+		}
+		{
+			ImGui::Text("PugiXML: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://pugixml.org/");
+		}
+		{
+			ImGui::Text("LodePNG: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://lodev.org/lodepng/");
+		}
+		ImGui::Text("");
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.5f, 1.0f), "Laurent Noel");
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.5f, 1.0f), "Nicky Danino");
 
 	}
 	ImGui::End();
