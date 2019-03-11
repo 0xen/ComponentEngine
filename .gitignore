@@ -1,6 +1,5 @@
 .codeblocks/*
 .vs*/
-bin/
 *.filters
 build/
 CMakeFiles

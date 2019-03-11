@@ -157,7 +157,8 @@ void ComponentEngine::UIManager::PlayPause()
 	ImGuiStyle& style = ImGui::GetStyle();
 	int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
 	//style.tit
-	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight));
+	static const int windowWidth = 47;
+	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2)- windowWidth, titlebarHeight));
 	if (ImGui::Begin("Play Pause", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking))
 	{
 		if(Engine::Singlton()->GetPlayState() == PlayState::Playing)
@@ -176,7 +177,7 @@ void ComponentEngine::UIManager::PlayPause()
 			ImGui::SameLine();
 			ImGui::Checkbox("Fullscreen on play", &m_fullscreenOnPlay);
 		}
-
+		std::cout<< ImGui::GetWindowSize().x<<std::endl;
 	}
 	ImGui::End();
 }
@@ -188,6 +189,7 @@ void ComponentEngine::UIManager::AboutPage()
 	ImGuiStyle& style = ImGui::GetStyle();
 	int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
 	ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, titlebarHeight + (ImGui::GetIO().DisplaySize.y) / 3));
+	ImGui::SetNextWindowPosCenter(ImGuiCond_Always);
 	if (ImGui::Begin("About", &m_open[ABOUT], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking))
 	{
 
@@ -230,6 +232,11 @@ void ComponentEngine::UIManager::AboutPage()
 			ImGui::Text("LodePNG: ");
 			ImGui::SameLine();
 			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://lodev.org/lodepng/");
+		}
+		{
+			ImGui::Text("Tiny OBJ Loader: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "https://github.com/syoyo/tinyobjloader");
 		}
 		ImGui::Text("");
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.5f, 1.0f), "Laurent Noel");
