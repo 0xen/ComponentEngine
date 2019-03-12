@@ -38,6 +38,11 @@ void ComponentEngine::KeyboardMovment::Update(float frame_time)
 		trans->MoveLocalX(m_speed * frame_time);
 }
 
+void ComponentEngine::KeyboardMovment::EditorUpdate(float frame_time)
+{
+	Update(frame_time);
+}
+
 void ComponentEngine::KeyboardMovment::Display()
 {
 	{ // Movment speed input

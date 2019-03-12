@@ -177,7 +177,6 @@ void ComponentEngine::UIManager::PlayPause()
 			ImGui::SameLine();
 			ImGui::Checkbox("Fullscreen on play", &m_fullscreenOnPlay);
 		}
-		std::cout<< ImGui::GetWindowSize().x<<std::endl;
 	}
 	ImGui::End();
 }

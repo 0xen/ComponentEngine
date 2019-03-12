@@ -117,6 +117,16 @@ void ComponentEngine::Engine::Start()
 				});
 			}
 		}
+		else
+		{
+			for (auto e : em.GetEntitys())
+			{
+				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
+				{
+					logic.EditorUpdate(frameTime);
+				});
+			}
+		}
 		
 		m_logic_lock.unlock();
 	}, 60, "Scene Update");

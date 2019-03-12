@@ -35,6 +35,7 @@ namespace ComponentEngine
 	public:
 		KeyboardMovment(enteez::Entity* entity);
 		virtual void Update(float frame_time);
+		virtual void EditorUpdate(float frame_time);
 		virtual void Display();
 		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
