@@ -99,7 +99,14 @@ void ComponentEngine::Engine::Start()
 
 	// Update physics world
 	m_threadManager->AddTask([&](float frameTime) {
-		m_physicsWorld->Update(frameTime);
+
+		m_logic_lock.lock();
+		bool playing = m_play_state == PlayState::Playing;
+		m_logic_lock.unlock();
+		if (playing)
+		{
+			m_physicsWorld->Update(frameTime);
+		}
 	}, 60, "PhysicsWorld");
 
 	// Add Update Scene task
@@ -1122,6 +1129,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 	m_imgui.model_pool->SetVertexDrawCount(index_count);
 
 
+	m_logic_lock.lock();
 	GetRendererMutex().lock();
 	if (IsRunning())
 	{
@@ -1129,6 +1137,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
 	}
 	GetRendererMutex().unlock();
+	m_logic_lock.unlock();
 }
 
 void ComponentEngine::Engine::DeInitImGUI()

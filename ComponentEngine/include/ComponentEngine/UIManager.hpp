@@ -130,6 +130,9 @@ namespace ComponentEngine
 
 		void PlayPause();
 		void AboutPage();
+
+
+
 		void RendererExplorer();
 		void RendererFolder(Folder& folder);
 
@@ -149,6 +152,7 @@ namespace ComponentEngine
 
 
 		void AddEntityDialougeMenu(Entity* parent);
+		void AddEntity(Entity* parent);
 		void AddComponentDialougeMenu();
 
 		void AddConsole();

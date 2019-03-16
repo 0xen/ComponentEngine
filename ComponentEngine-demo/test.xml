@@ -27,7 +27,7 @@
 				<Mass value="1.0f" />
 				<UseGravity value="1" />
 				<UseCollision value="1" />
-				<RollingFriction value="1.5f" />
+				<RollingFriction value="0.0f" />
 			</Component>
 		</GameObject>
 		<GameObject name="PhysicsBlockPile">
@@ -68,7 +68,7 @@
 			</GameObject>
 			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
 				<Component name="Transformation">
-					<Position x="0.0f" y="2.0f" z="0.0f" />
+					<Position x="0.0f" y="4.0f" z="0.0f" />
 					<Rotation x="0.0f" y="0.0f" z="0.0f" />
 					<Scale x="1.0f" y="1.0f" z="1.0f" />
 				</Component>
@@ -186,12 +186,12 @@
 				</Color>
 				<Particle dynamicParticleCount="1">
 					<EmitterOffset x="0.0f" y="0.0f" z="0.0f" />
-					<EmissionRate value="0.01f" />
-					<MaxLife value="2.0f" />
+					<EmissionRate value="0.001f" />
+					<MaxLife value="2.5f" />
 					<Scale value="0.1f" />
 				</Particle>
 				<VelocityAndDrag>
-					<DirectionalVelocity value="2.0f" />
+					<DirectionalVelocity value="3.0f" />
 					<VelocityX max="0.2" min="-0.2" static="0" />
 					<VelocityY min="-1.0f" static="1" />
 					<VelocityZ max="0.2" min="-0.2f" static="0" />
@@ -217,108 +217,6 @@
 					<VelocityZ max="1.0f" min="-1.0f" static="0" />
 				</VelocityAndDrag>
 			</Component>
-		</GameObject>
-		<GameObject name="TeapotGroup">
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
-			<GameObject name="Teapot" prefab="Teapot" />
 		</GameObject>
 	</Prefabs>
 	<Scenes>
@@ -358,8 +256,8 @@
 					<RollingFriction value="1.5f" />
 				</Component>
 				<Component name="Flamable" onFire="0" />
-				<Component name="BlockMoveController" />
 				<GameObject name="Fire" prefab="BlockFire" />
+				<Component name="BlockMoveController" />
 			</GameObject>
 			<GameObject name="Teapot">
 				<Component name="Transformation">
@@ -417,19 +315,71 @@
 					<Rotation x="0.0f" y="0.0f" z="0.0f" />
 					<Scale x="1.0f" y="1.0f" z="1.0f" />
 				</Component>
-				<Component name="Camera" />
+				<Component name="Camera">
+					<NearClip value="0.1f" />
+					<FarClip value="500.0f" />
+				</Component>
 				<Component name="KeyboardMovment" />
 				<GameObject name="Skybox">
 					<Component name="Transformation">
-						<Position x="0.0f" y="0.0f" z="0.0f" />
+						<Position x="0.0f" y="15.0f" z="0.0f" />
 						<Rotation x="0.0f" y="0.0f" z="0.0f" />
-						<Scale x="100.0f" y="100.0f" z="100.0f" />
+						<Scale x="400.0f" y="200.0f" z="400.0f" />
 					</Component>
 					<Component name="Mesh">
-						<Path value="/Resources/Models/skybox.obj" />
+						<Path value="/Resources/Models/skybox2.obj" />
 					</Component>
 					<Component name="Renderer" />
 				</GameObject>
+			</GameObject>
+			<GameObject name="BlockPile" prefab="PhysicsBlockPile">
+				<Component name="Transformation">
+					<Position x="0.5f" y="10.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+				<Component name="Transformation">
+					<Position x="1.0f" y="0.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+				<Component name="Transformation">
+					<Position x="0.0f" y="0.0f" z="0.0f" />
+					<Rotation x="0.0f" y="-0.1f" z="45.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+				<Component name="Transformation">
+					<Position x="-1.0f" y="0.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+				<Component name="Transformation">
+					<Position x="0.5f" y="1.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+				<Component name="Transformation">
+					<Position x="-0.5f" y="1.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+				<Component name="Transformation">
+					<Position x="0.0f" y="2.0f" z="0.0f" />
+					<Rotation x="0.0f" y="0.0f" z="0.0f" />
+					<Scale x="1.0f" y="1.0f" z="1.0f" />
+				</Component>
 			</GameObject>
 		</Scene>
 	</Scenes>

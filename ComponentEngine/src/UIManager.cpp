@@ -29,21 +29,25 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
-	ImGui::ShowTestWindow();
+	//ImGui::ShowTestWindow();
 
 	DockSpace();
-	RenderMainMenu();
 
 	PlayPause();
-	if (m_open[ABOUT]) AboutPage();
+
+	
+	RenderMainMenu();
 
 	if (Engine::Singlton()->GetPlayState() != PlayState::Playing || !m_fullscreenOnPlay)
 	{
+
+
 		if (m_open[THREADING_MANAGER])ThreadingWindow();
 		if (m_open[CONSOLE])AddConsole();
 		if (m_open[SCENE_HIERARCHY]) RenderSceneHierarchy();
 		if (m_open[COMPONENT_HIERARCHY]) RenderComponentHierarchy();
 		if (m_open[EXPLORER]) RendererExplorer();
+		if (m_open[ABOUT]) AboutPage();
 	}
 
 
@@ -57,10 +61,46 @@ bool ComponentEngine::UIManager::IsWindowFocused()
 
 void ComponentEngine::UIManager::RenderMainMenu()
 {
+	bool dissableInPlay = Engine::Singlton()->GetPlayState() != PlayState::Playing || !m_fullscreenOnPlay;
+
+
+
 	if (ImGui::BeginMainMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
+
+			if (ImGui::BeginMenu("Add", dissableInPlay))
+			{
+
+				if (ImGui::MenuItem("Entity", NULL, false, dissableInPlay))
+				{
+					AddEntity(m_current_scene_focus.entity);
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::Separator();
+
+
+
+
+			if (ImGui::MenuItem("Reload Scene"))
+			{
+				m_engine->m_logic_lock.lock();
+				m_engine->GetRendererMutex().lock();
+
+				m_engine->GetEntityManager().Clear();
+				
+				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+					m_engine->LoadScene(m_engine->GetCurrentScene().c_str());
+					m_engine->UpdateScene();
+				});
+
+				m_engine->GetRendererMutex().unlock();
+				m_engine->m_logic_lock.unlock();
+			}
+
+			ImGui::Separator();
 			if (ImGui::MenuItem("Exit"))
 			{
 				m_engine->GetRendererMutex().lock();
@@ -70,22 +110,21 @@ void ComponentEngine::UIManager::RenderMainMenu()
 			ImGui::EndMenu();
 		}
 
-		/*if (ImGui::BeginMenu("Edit"))
-		{*/
-		/*bool test = m_engine->Threading();
-		if (ImGui::MenuItem("Toggle Threading", NULL, &test))
+		
+		if (ImGui::BeginMenu("Edit"))
 		{
-			m_engine->GetRendererMutex().lock();
-			m_engine->RequestToggleThreading();
-			m_engine->GetRendererMutex().unlock();
-		}*/
+			bool validEntity = m_current_scene_focus.entity != nullptr;
+			if (ImGui::MenuItem("Remove Entity", NULL, false, validEntity && dissableInPlay))
+			{
+				DestroyEntity(m_current_scene_focus.entity);
+				ResetSceneFocusEntity();
+			}
+			//ImGui::Separator();
 
+			ImGui::EndMenu();
+		}
 
-
-		/*	ImGui::EndMenu();
-		}*/
-
-		if (ImGui::BeginMenu("Window"))
+		if (ImGui::BeginMenu("Window", dissableInPlay))
 		{
 			ImGui::MenuItem("Scene Hierarchy", NULL, &m_open[SCENE_HIERARCHY]);
 			ImGui::MenuItem("Component Hierarchy", NULL, &m_open[COMPONENT_HIERARCHY]);
@@ -95,11 +134,11 @@ void ComponentEngine::UIManager::RenderMainMenu()
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("About"))
+		ImGui::MenuItem("About", NULL, &m_open[ABOUT], dissableInPlay);
+		/*if (ImGui::BeginMenu("About", dissableInPlay))
 		{
-			ImGui::MenuItem("About", NULL, &m_open[ABOUT]);
 			ImGui::EndMenu();
-		}
+		}*/
 
 		ImGui::EndMainMenuBar();
 	}
@@ -149,7 +188,7 @@ void ComponentEngine::UIManager::DockSpace()
 	ImGui::End();
 
 }
-
+#include <imgui_internal.h>
 void ComponentEngine::UIManager::PlayPause()
 {
 	//static int window_height = 370;
@@ -245,6 +284,7 @@ void ComponentEngine::UIManager::AboutPage()
 	ImGui::End();
 }
 
+
 void ComponentEngine::UIManager::RendererExplorer()
 {
 	static int window_height = 370;
@@ -320,10 +360,15 @@ void ComponentEngine::UIManager::RenderSceneHierarchy()
 			ImGui::BeginChild("Child1", ImVec2(0.0f,0.0f), false);
 			{
 
-				bool open = ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen);
+				bool open = ImGui::TreeNodeEx("Scene", ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_OpenOnDoubleClick);
 
 				AddEntityDialougeMenu(nullptr);
 
+				if (ElementClicked())
+				{
+					ResetSceneFocusEntity();
+					m_current_scene_focus.entity = nullptr;
+				}
 
 				const ImGuiPayload* payload = nullptr;
 				if (DropTarget("Entity", payload))
@@ -341,11 +386,7 @@ void ComponentEngine::UIManager::RenderSceneHierarchy()
 					{
 						if (entity->GetComponent<Transformation>().GetParent() == nullptr)
 						{
-							ImGui::PushID(entity);
-
 							RenderEntityTreeNode(entity);
-
-							ImGui::PopID();
 						}
 					}
 
@@ -358,7 +399,6 @@ void ComponentEngine::UIManager::RenderSceneHierarchy()
 
 		ImGui::Columns(1);
 		ImGui::PopStyleVar();
-
 
 	}
 	ImGui::End();
@@ -568,13 +608,17 @@ void ComponentEngine::UIManager::ThreadingWindow()
 
 void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 {
-
+	ImGui::PushID(entity);
 	Transformation& entityTeansformation = entity->GetComponent<Transformation>();
 
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnDoubleClick;
 	if (!entityTeansformation.HasChildren())
 	{
 		flags |= ImGuiTreeNodeFlags_Leaf;
+	}
+	if (entity == m_current_scene_focus.entity)
+	{
+		flags |= ImGuiTreeNodeFlags_Selected;
 	}
 	bool open = ImGui::TreeNodeEx("GameObject", flags, "%s", entity->GetName().c_str());
 
@@ -631,8 +675,9 @@ void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 		}
 
 		ImGui::TreePop();
-
 	}
+
+	ImGui::PopID();
 }
 
 void ComponentEngine::UIManager::RenderEntity(Entity * entity)
@@ -748,13 +793,18 @@ void ComponentEngine::UIManager::AddEntityDialougeMenu(Entity * parent)
 	{
 		if (ImGui::Selectable("Add Entity"))
 		{
-			EntityManager& em = m_engine->GetEntityManager();
-			enteez::Entity* entity = em.CreateEntity("New Entity");
-			Transformation& a = entity->AddComponent<Transformation>(entity)->Get();
-			a.SetParent(parent);
+			AddEntity(parent);
 		}
 		ImGui::EndPopup();
 	}
+}
+
+void ComponentEngine::UIManager::AddEntity(Entity* parent)
+{
+	EntityManager& em = m_engine->GetEntityManager();
+	enteez::Entity* entity = em.CreateEntity("New Entity");
+	Transformation& a = entity->AddComponent<Transformation>(entity)->Get();
+	a.SetParent(parent);
 }
 
 void ComponentEngine::UIManager::AddComponentDialougeMenu()

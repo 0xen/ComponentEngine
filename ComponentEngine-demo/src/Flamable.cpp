@@ -1,7 +1,7 @@
 #include <Flamable.hpp>
 
 
-
+#include <ComponentEngine/Engine.hpp>
 #include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
@@ -54,5 +54,6 @@ void ComponentEngine::Flamable::ReciveMessage(enteez::Entity * sender, OnCollisi
 	if (message.collider->HasComponent<Flamable>() && message.collider->GetComponent<Flamable>().OnFire() && !m_onFire)
 	{
 		SetOnFire(true);
+		Engine::Singlton()->Log("Caught Fire");
 	}
 }
