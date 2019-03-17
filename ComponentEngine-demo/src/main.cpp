@@ -118,11 +118,9 @@ void SetupShaders()
 	
 }
 
-
 int main(int argc, char **argv)
 {
-
-	engine = Engine::Singlton();
+engine = Engine::Singlton();
 	engine->Start();
 	SetupShaders();
 	RegisterCustomComponents();

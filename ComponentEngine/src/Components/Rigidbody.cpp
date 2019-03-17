@@ -147,6 +147,19 @@ void ComponentEngine::Rigidbody::Display()
 	}
 }
 
+void ComponentEngine::Rigidbody::SetMass(float mass)
+{
+	m_mass = mass;
+	ICollisionShape* shape = nullptr;
+	m_entity->ForEach<ICollisionShape>([&](enteez::Entity * entity, ICollisionShape & found_shape)
+	{
+		shape = &found_shape;
+	});
+
+	RemoveRigidbody();
+	AddRigidbody(shape);
+}
+
 void ComponentEngine::Rigidbody::EntityHookDefault(enteez::Entity& entity)
 {
 	enteez::ComponentWrapper<Rigidbody>* mesh = entity.AddComponent<Rigidbody>(&entity);

@@ -39,7 +39,6 @@ set(headers
     include/TimedDestruction.hpp
 )
 
-
 include_directories(include)
 include_directories(../ComponentEngine/include)
 include_directories(../../Renderer/renderer/include)
@@ -67,7 +66,10 @@ target_link_libraries(${project_name} BulletCollision)
 target_link_libraries(${project_name} LinearMath)
 
 
+
+
 find_package(Vulkan)
+
 
 if(Vulkan_FOUND)
 	target_include_directories(${project_name} PRIVATE Vulkan::Vulkan)

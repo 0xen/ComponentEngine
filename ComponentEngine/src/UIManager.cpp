@@ -28,6 +28,12 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 
 void ComponentEngine::UIManager::Render()
 {
+	if (!Engine::Singlton()->GetEntityManager().ValidEntity(m_current_scene_focus.entity))
+	{
+		m_current_scene_focus.entity = nullptr;
+	}
+
+
 	ImGui::NewFrame();
 	//ImGui::ShowTestWindow();
 

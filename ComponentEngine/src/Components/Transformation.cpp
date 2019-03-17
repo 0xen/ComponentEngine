@@ -3,6 +3,7 @@
 #include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <EnteeZ\EnteeZ.hpp>
+#include <ComponentEngine/Engine.hpp>
 #include <imgui.h>
 
 using namespace ComponentEngine;
@@ -232,6 +233,13 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 	//m_rotation
 	m_local_mat4 = glm::rotate(m_local_mat4, angle, axis);
 	PushToPositionArray();
+}
+
+ComponentEngine::Transformation::~Transformation()
+{
+	Send(m_entity, m_entity, OnComponentExit<Transformation>(this));
+	if (m_parent != nullptr && Engine::Singlton()->GetEntityManager().ValidEntity(m_parent)) m_parent->GetComponent<Transformation>().RemoveChild(this);
+	if (m_origional)delete m_mat4;
 }
 
 void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, TransformationPtrRedirect & message)

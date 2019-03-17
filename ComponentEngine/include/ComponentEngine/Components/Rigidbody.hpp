@@ -48,6 +48,8 @@ namespace ComponentEngine
 		virtual void Update(float frame_time);
 		virtual void Display();
 
+		void SetMass(float mass);
+
 		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 

@@ -40,10 +40,10 @@ add_subdirectory_with_folder("Third Party/bullet3" third_party/bullet3)
 
 include_directories(third_party/SDL2/include)
 include_directories(third_party/bullet3/src)
-include_directories(../lodepng)
 include_directories(third_party/imgui)
 include_directories(../Renderer/renderer)
 include_directories(../EnteeZ/EnteeZ)
+include_directories(../lodepng)
 
 add_subdirectory(third_party/glm)
 include_directories(third_party/glm)

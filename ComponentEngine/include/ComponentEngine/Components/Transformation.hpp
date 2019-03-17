@@ -47,11 +47,7 @@ namespace ComponentEngine
 			m_origional = false;
 			//Send(m_entity, OnComponentEnter<Transformation>());
 		}
-		~Transformation()
-		{
-			Send(m_entity, m_entity, OnComponentExit<Transformation>(this));
-			if (m_origional)delete m_mat4;
-		}
+		~Transformation();
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
 		void Translate(glm::vec3 translation);

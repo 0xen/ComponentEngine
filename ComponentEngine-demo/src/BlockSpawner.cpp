@@ -9,13 +9,14 @@
 #include <ComponentEngine/Components/Mesh.hpp>
 #include <ComponentEngine/Components/BoxCollision.hpp>
 #include <ComponentEngine/Components/Rigidbody.hpp>
+#include <ComponentEngine/Components/ParticalSystem.hpp>
 #include <TimedDestruction.hpp>
 
 
 ComponentEngine::BlockSpawner::BlockSpawner(enteez::Entity * entity)
 {
 	m_entity = entity;
-	m_timeBetween = 2.0f;
+	m_timeBetween = 1.0f;
 	m_delta = m_timeBetween;
 }
 
@@ -40,26 +41,39 @@ void ComponentEngine::BlockSpawner::Update(float frame_time)
 		{// Renderer
 			RendererComponent::EntityHookDefault(*blockEntity);
 		}
+
+		int randomN = (rand() + (int)(frame_time * 100)) % 5;
+
 		{// Mesh
 			Mesh::EntityHookDefault(*blockEntity);
 			Mesh& mesh = blockEntity->GetComponent<Mesh>();
-			static const std::string paths[3] = {
+			static const std::string paths[5] = {
 			"../Resources/Models/Blocks/LetterBlockA.obj",
 			"../Resources/Models/Blocks/LetterBlockB.obj",
-			"../Resources/Models/Blocks/LetterBlockC.obj"
+			"../Resources/Models/Blocks/LetterBlockC.obj",
+			"../Resources/Models/Blocks/LetterBlockD.obj",
+			"../Resources/Models/Blocks/LetterBlockE.obj",
 			};
-			mesh.ChangePath(paths[(rand() + (int)(frame_time * 100)) % 3]);
+			mesh.ChangePath(paths[randomN]);
 			mesh.LoadModel();
 			if (!mesh.Loaded())
 			{
 				engine->Log("Failed to load block in block spawner", ConsoleState::Error);
 			}
 		}
-		{ // Rigidbody
-			Rigidbody::EntityHookDefault(*blockEntity);
-		}
 		{ // BoxCollision
 			BoxCollision::EntityHookDefault(*blockEntity);
+		}
+		{ // Rigidbody
+			Rigidbody::EntityHookDefault(*blockEntity);
+			static const float mass[5] = {
+				1.0f,
+				20.0f,
+				50.0f,
+				100.0f,
+				1000.0f
+			};
+			blockEntity->GetComponent<Rigidbody>().SetMass(mass[randomN]);
 		}
 		{ // TimedDestruction
 			TimedDestruction::EntityHookDefault(*blockEntity);

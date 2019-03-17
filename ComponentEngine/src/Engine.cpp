@@ -1094,7 +1094,9 @@ void ComponentEngine::Engine::InitImGUI()
 
 void ComponentEngine::Engine::UpdateImGUI()
 {
+	m_logic_lock.lock();
 	m_ui->Render();
+	m_logic_lock.unlock();
 	ImDrawData* imDrawData = ImGui::GetDrawData();
 
 	if (imDrawData == nullptr)return;
