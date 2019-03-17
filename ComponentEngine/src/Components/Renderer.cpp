@@ -11,12 +11,12 @@ using namespace ComponentEngine;
 ComponentEngine::RendererComponent::RendererComponent(enteez::Entity * entity) : m_entity(entity) /*: MsgSend(entity)*/
 {
 	m_render = true;
-	Send(m_entity, RenderStatus(m_render));
+	Send(m_entity, m_entity, RenderStatus(m_render));
 }
 
 ComponentEngine::RendererComponent::~RendererComponent()
 {
-	Send(m_entity, RenderStatus(false));
+	Send(m_entity, m_entity, RenderStatus(false));
 }
 
 void ComponentEngine::RendererComponent::EntityHookDefault(enteez::Entity & entity)
@@ -36,12 +36,12 @@ void ComponentEngine::RendererComponent::Display()
 
 	if (change)
 	{
-		Send(m_entity, RenderStatus(m_render));
+		Send(m_entity, m_entity, RenderStatus(m_render));
 	}
 }
 
 void ComponentEngine::RendererComponent::ReciveMessage(enteez::Entity * sender, ComponentEngine::OnComponentEnter<Mesh>& message)
 {
-	Send(m_entity, RenderStatus(m_render));
+	Send(m_entity, m_entity, RenderStatus(m_render));
 }
 

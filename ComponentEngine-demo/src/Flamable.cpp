@@ -22,7 +22,7 @@ bool ComponentEngine::Flamable::OnFire()
 void ComponentEngine::Flamable::SetOnFire(bool fire)
 {
 	m_onFire = fire;
-	Send(m_entity, ParticleSystemVisibility{ fire }, true);
+	Send(m_entity, m_entity, ParticleSystemVisibility{ fire }, true);
 }
 
 void ComponentEngine::Flamable::Display()

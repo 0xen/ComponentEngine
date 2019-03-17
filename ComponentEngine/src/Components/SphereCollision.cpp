@@ -12,12 +12,12 @@ ComponentEngine::SphereCollision::SphereCollision(enteez::Entity * entity) : ICo
 
 	CreateCollision();
 
-	Send(m_entity, OnComponentEnter<ICollisionShape>(this));
+	Send(m_entity, m_entity, OnComponentEnter<ICollisionShape>(this));
 }
 
 ComponentEngine::SphereCollision::~SphereCollision()
 {
-	Send(m_entity, OnComponentExit<ICollisionShape>(this));
+	Send(m_entity, m_entity, OnComponentExit<ICollisionShape>(this));
 }
 
 void ComponentEngine::SphereCollision::Display()
@@ -58,7 +58,7 @@ void ComponentEngine::SphereCollision::Rebuild()
 	btCollisionShape * temp = m_colShape;
 
 	CreateCollision();
-	Send(m_entity, OnComponentChange<ICollisionShape>(this));
+	Send(m_entity, m_entity, OnComponentChange<ICollisionShape>(this));
 
 	delete temp;
 }

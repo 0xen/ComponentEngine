@@ -57,7 +57,7 @@ void ComponentEngine::PhysicsWorld::Update(float update_time)
 	for (int i = 0; i < collisionObjects.size(); i++)
 	{
 		enteez::Entity* entity = static_cast<enteez::Entity*>(collisionObjects[i]->getCollisionShape()->getUserPointer());
-		Send(entity, CollisionRecording{ Begin });
+		Send(entity, entity, CollisionRecording{ Begin });
 	}
 
 	int numManifolds = m_dynamicsWorld->getDispatcher()->getNumManifolds();
@@ -71,14 +71,14 @@ void ComponentEngine::PhysicsWorld::Update(float update_time)
 		enteez::Entity* entity = static_cast<enteez::Entity*>(obA->getCollisionShape()->getUserPointer());
 		enteez::Entity* entity2 = static_cast<enteez::Entity*>(obB->getCollisionShape()->getUserPointer());
 
-		Send(entity, CollisionEvent{ entity2 });
-		Send(entity2, CollisionEvent{ entity });
+		Send(entity, entity, CollisionEvent{ entity2 });
+		Send(entity2, entity2, CollisionEvent{ entity });
 	}
 
 	for (int i = 0; i < collisionObjects.size(); i++)
 	{
 		enteez::Entity* entity = static_cast<enteez::Entity*>(collisionObjects[i]->getCollisionShape()->getUserPointer());
-		Send(entity, CollisionRecording{ End });
+		Send(entity, entity, CollisionRecording{ End });
 	}
 
 	m_physics_lock.unlock();

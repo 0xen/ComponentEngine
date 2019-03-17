@@ -38,6 +38,7 @@ namespace ComponentEngine
 		public MsgRecive<TransformationChange>, public MsgRecive<OnComponentEnter<ICollisionShape>>,
 		public MsgRecive<CollisionRecording>, public MsgRecive<CollisionEvent>,
 		public MsgRecive<OnComponentChange<ICollisionShape>>, public MsgRecive<OnComponentExit<ICollisionShape>>, 
+		public MsgRecive<OnComponentExit<Rigidbody>>,
 		public Logic, public UI
 	{
 	public:
@@ -54,6 +55,8 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<ICollisionShape>& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentChange<ICollisionShape>& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentExit<ICollisionShape>& message);
+		// to be called by other rigidbodys that know its colliding with
+		virtual void ReciveMessage(enteez::Entity* sender, OnComponentExit<Rigidbody>& message); 
 		virtual void ReciveMessage(enteez::Entity* sender, CollisionRecording& message);
 		virtual void ReciveMessage(enteez::Entity* sender, CollisionEvent& message);
 		

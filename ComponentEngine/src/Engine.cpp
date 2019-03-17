@@ -772,7 +772,8 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<Rigidbody,
 		MsgRecive<TransformationChange>, MsgRecive<OnComponentEnter<ICollisionShape>>,
 		MsgRecive<CollisionRecording>, MsgRecive<CollisionEvent>,
-		MsgRecive<OnComponentChange<ICollisionShape>>, MsgRecive<OnComponentExit<ICollisionShape>>, Logic, UI
+		MsgRecive<OnComponentChange<ICollisionShape>>, MsgRecive<OnComponentExit<ICollisionShape>>,
+		MsgRecive<OnComponentExit<Rigidbody>>, Logic, UI
 	>();
 	RegisterBase<BoxCollision, ICollisionShape, Logic, UI>();
 	RegisterBase<SphereCollision, ICollisionShape, Logic, UI>();

@@ -36,10 +36,19 @@ ComponentEngine::Rigidbody::Rigidbody(enteez::Entity * entity)
 
 ComponentEngine::Rigidbody::~Rigidbody()
 {
+	Engine* engine = Engine::Singlton();
+	engine->GetPhysicsWorld()->m_physics_lock.lock();
 	RemoveRigidbody();
+
+	for (int i = 0 ; i < m_currentCollisions->size(); i ++)
+	{
+		Send(m_currentCollisions->at(i), m_entity, OnComponentExit<Rigidbody>(this));
+	}
+
 
 	delete m_collisionFrameRecording;
 	delete m_currentCollisions;
+	engine->GetPhysicsWorld()->m_physics_lock.unlock();
 }
 
 void ComponentEngine::Rigidbody::Update(float frame_time)
@@ -208,9 +217,22 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, OnCompon
 	AddRigidbody(nullptr);
 }
 
+void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity* sender, OnComponentExit<Rigidbody>& message)
+{
+	auto it = std::find(m_currentCollisions->begin(), m_currentCollisions->end(), sender);
+	if (m_currentCollisions->end() != it)
+	{
+		m_currentCollisions->erase(it);
+	}
+}
+
 void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, CollisionRecording & message)
 {
+	Engine* engine = Engine::Singlton();
+	engine->GetPhysicsWorld()->m_physics_lock.lock();
+	// Update if we are recording collisions or not
 	m_recordingCollisions = message.state == Begin;
+	// If we have stopped recording collisions, stop
 	if (!m_recordingCollisions)
 	{
 		*m_collisionStaging = *m_collisionFrameRecording;
@@ -226,7 +248,7 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, Collisio
 				{
 					// Still colliding
 					contained = true;
-					Send(m_entity, OnCollision{ m_currentCollisions->at(j) });
+					Send(m_entity, m_entity, OnCollision{ m_currentCollisions->at(j) });
 					m_currentCollisions->erase(m_currentCollisions->begin() + j);
 					break;
 				}
@@ -235,7 +257,7 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, Collisio
 			if (!contained)
 			{
 				// Just collided
-				Send(m_entity, OnCollisionEnter{ m_collisionStaging->at(i) });
+				Send(m_entity, m_entity, OnCollisionEnter{ m_collisionStaging->at(i) });
 			}
 
 			m_collisionStaging->erase(m_collisionStaging->begin() + i);
@@ -245,7 +267,7 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, Collisio
 		for (int i = 0; i < m_currentCollisions->size(); i++)
 		{
 			// Exited collision
-			Send(m_entity, OnCollisionExit{ m_currentCollisions->at(i) });
+			Send(m_entity, m_entity, OnCollisionExit{ m_currentCollisions->at(i) });
 		}
 
 
@@ -263,6 +285,7 @@ void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, Collisio
 
 
 	}
+	engine->GetPhysicsWorld()->m_physics_lock.unlock();
 }
 
 void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, CollisionEvent & message)

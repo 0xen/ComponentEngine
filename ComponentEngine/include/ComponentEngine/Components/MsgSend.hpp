@@ -7,7 +7,7 @@
 namespace ComponentEngine
 {
 	template<typename T>
-	void Send(enteez::Entity* current_entity, T data, bool sendToChildren = false);
+	void Send(enteez::Entity* target, enteez::Entity* sender, T data, bool sendToChildren = false);
 }
 
 #include <ComponentEngine\Components\Transformation.hpp>
@@ -15,18 +15,18 @@ namespace ComponentEngine
 namespace ComponentEngine
 {
 	template<typename T>
-	void Send(enteez::Entity * current_entity, T data, bool sendToChildren)
+	void Send(enteez::Entity* target, enteez::Entity* sender, T data, bool sendToChildren)
 	{
-		current_entity->ForEach<MsgRecive<T>>([&data](enteez::Entity* entity, MsgRecive<T>& recive)
+		target->ForEach<MsgRecive<T>>([&data,&sender](enteez::Entity* entity, MsgRecive<T>& recive)
 			{
-				recive.ReciveMessage(entity, data);
+				recive.ReciveMessage(sender, data);
 			});
-		if (sendToChildren && current_entity->HasComponent<Transformation>())
+		if (sendToChildren && target->HasComponent<Transformation>())
 		{
-			std::vector<Transformation*> children = current_entity->GetComponent<Transformation>().GetChildren();
+			std::vector<Transformation*> children = target->GetComponent<Transformation>().GetChildren();
 			for (int i = 0; i < children.size(); i++)
 			{
-				Send(children[i]->GetEntity(), data, sendToChildren);
+				Send(children[i]->GetEntity(), sender, data, sendToChildren);
 			}
 		}
 	}

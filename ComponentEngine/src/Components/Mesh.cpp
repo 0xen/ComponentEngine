@@ -83,7 +83,7 @@ void ComponentEngine::Mesh::EntityHookXML(enteez::Entity & entity, pugi::xml_nod
 			}
 			else
 			{
-				Send(mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
+				Send(mesh->Get().m_entity, mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
 			}
 		}
 
@@ -98,7 +98,7 @@ void ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
 	{
 		enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity);
 		mesh->SetName("Mesh");
-		Send(mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
+		Send(mesh->Get().m_entity, mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
 	}
 
 }
@@ -383,7 +383,7 @@ void ComponentEngine::Mesh::LoadModel()
 		}
 	}
 	mesh_instance.model_position_array[m_mesh_index] = glm::mat4(1.0f);
-	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array, m_mesh_index));
+	Send(m_entity, m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array, m_mesh_index));
 
 	// Transfer over the buffer index data to the GPU so that a invalid matrix is not there
 	GetModelPositionTransferLock().lock();
@@ -396,7 +396,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 	m_loaded = true;
 
-	Send(m_entity, OnComponentEnter<Mesh>(this));
+	Send(m_entity, m_entity, OnComponentEnter<Mesh>(this));
 }
 
 void ComponentEngine::Mesh::UnloadModel()

@@ -37,7 +37,7 @@ namespace ComponentEngine
 			m_local_mat4 = glm::mat4(1.0f);
 			m_mat4 = new glm::mat4(1.0f);
 			m_origional = true;
-			Send(m_entity, OnComponentEnter<Transformation>(this));
+			Send(m_entity, m_entity, OnComponentEnter<Transformation>(this));
 		}
 		Transformation(enteez::Entity* entity, glm::mat4* mat4)
 		{
@@ -49,7 +49,7 @@ namespace ComponentEngine
 		}
 		~Transformation()
 		{
-			Send(m_entity, OnComponentExit<Transformation>(this));
+			Send(m_entity, m_entity, OnComponentExit<Transformation>(this));
 			if (m_origional)delete m_mat4;
 		}
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);

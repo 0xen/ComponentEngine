@@ -146,7 +146,7 @@ void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePh
 		m_children[i]->PushToPositionArray();
 	}
 	if (updatePhysics)
-		Send(m_entity, TransformationChange{ *matrix });
+		Send(m_entity, m_entity, TransformationChange{ *matrix });
 	Mesh::GetModelPositionTransferLock().unlock();
 
 }
@@ -443,7 +443,7 @@ void ComponentEngine::Transformation::PushToPositionArray(bool updatePhysics)
 		m_children[i]->PushToPositionArray();
 	}
 	if(updatePhysics)
-		Send(m_entity, TransformationChange{ *matrix });
+		Send(m_entity, m_entity, TransformationChange{ *matrix });
 	Mesh::GetModelPositionTransferLock().unlock();
 }
 

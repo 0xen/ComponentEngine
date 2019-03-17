@@ -12,12 +12,12 @@ ComponentEngine::BoxCollision::BoxCollision(enteez::Entity * entity) : ICollisio
 
 	CreateCollision();
 
-	Send(m_entity, OnComponentEnter<ICollisionShape>(this));
+	Send(m_entity, m_entity, OnComponentEnter<ICollisionShape>(this));
 }
 
 ComponentEngine::BoxCollision::~BoxCollision()
 {
-	Send(m_entity, OnComponentExit<ICollisionShape>(this));
+	Send(m_entity, m_entity, OnComponentExit<ICollisionShape>(this));
 }
 
 void ComponentEngine::BoxCollision::Display()
@@ -63,7 +63,7 @@ void ComponentEngine::BoxCollision::Rebuild()
 	btCollisionShape * temp = m_colShape;
 
 	CreateCollision();
-	Send(m_entity, OnComponentChange<ICollisionShape>(this));
+	Send(m_entity, m_entity, OnComponentChange<ICollisionShape>(this));
 
 	delete temp;
 }
