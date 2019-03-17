@@ -83,10 +83,10 @@
 
 		<GameObject name="StaticBlockA" prefab="LetterBlockA">
 			<Component name="Rigidbody">
-				<Mass value="10000.0f"/>
+				<Mass value="0.0f"/>
 				<UseGravity value="0"/>
 				<UseCollision value="1"/>
-				<RollingFriction value="1.5f"/>
+				<RollingFriction value="0.0f"/>
 			</Component>
 		</GameObject>
 
@@ -136,6 +136,74 @@
 					<Scale x="1.0f" y="1.0f" z="1.0f"/>
 				</Component>
 			</GameObject>
+		</GameObject>
+
+
+		<GameObject name="BlockStairs">
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="-4.0f" y="0.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="-3.0f" y="1.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="-2.0f" y="2.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="-1.0f" y="3.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="0.0f" y="4.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="1.0f" y="5.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="2.0f" y="6.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="3.0f" y="7.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+			<GameObject name="LetterBlock" prefab="StaticBlockA">
+				<Component name="Transformation">
+					<Position x="4.0f" y="8.0f" z="0.0f"/>
+					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
+					<Scale x="1.0f" y="1.0f" z="1.0f"/>
+				</Component>
+			</GameObject>
+
 		</GameObject>
 
 		<GameObject name="TexturedCube" prefab="RendererPrefab">
@@ -361,60 +429,27 @@
 			</GameObject>
 			
 
-			<GameObject name="BlockPile" prefab="PhysicsBlockPile">
+
+			<GameObject name="BlockPile" prefab="BlockStairs">
 				<Component name="Transformation">
-					<Position x="0.5f" y="10.0f" z="0.0f"/>
+					<Position x="15.5f" y="-4.0f" z="10.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
 					<Scale x="1.0f" y="1.0f" z="1.0f"/>
 				</Component>
 			</GameObject>
 
 
-			<!-- Bottom row -->
-			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
+
+
+			<GameObject name="BlockSpawner">
 				<Component name="Transformation">
-					<Position x="1.0f" y="0.0f" z="0.0f"/>
+					<Position x="18.8f" y="5.5f" z="10.0f"/>
 					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
 					<Scale x="1.0f" y="1.0f" z="1.0f"/>
 				</Component>
+				<Component name="BlockSpawner"/>
 			</GameObject>
-			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
-				<Component name="Transformation">
-					<Position x="0.0f" y="0.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="-0.1f" z="45.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-			</GameObject>
-			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
-				<Component name="Transformation">
-					<Position x="-1.0f" y="0.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-			</GameObject>
-			<!-- Middle Row -->
-			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
-				<Component name="Transformation">
-					<Position x="0.5f" y="1.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-			</GameObject>
-			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
-				<Component name="Transformation">
-					<Position x="-0.5f" y="1.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-			</GameObject>
-			<!-- Top Row -->
-			<GameObject name="LetterBlock" prefab="PhysicsBlockA">
-				<Component name="Transformation">
-					<Position x="0.0f" y="2.0f" z="0.0f"/>
-					<Rotation x="0.0f" y="0.0f" z="0.0f"/>
-					<Scale x="1.0f" y="1.0f" z="1.0f"/>
-				</Component>
-			</GameObject>
+
 
 
 		</Scene>

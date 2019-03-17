@@ -123,7 +123,7 @@ namespace ComponentEngine
 		std::string GetCurrentScene();
 		std::string GetCurrentSceneDirectory();
 
-		//ordered_lock& GetLogicMutex();
+		ordered_lock& GetLogicMutex();
 		ordered_lock& GetRendererMutex();
 
 		ThreadManager* GetThreadManager();

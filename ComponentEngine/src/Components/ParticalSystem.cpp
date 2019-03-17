@@ -176,6 +176,12 @@ void ComponentEngine::ParticleSystem::Update(float frame_time)
 	m_particle_lock.lock();
 	engine->GetRendererMutex().lock();
 
+	if (!m_ran_initial_build)
+	{
+		m_ran_initial_build = true;
+		RebuildAll();
+	}
+
 	// Get the models matrix
 	glm::mat4 positionMatrix = m_entity->GetComponent<Transformation>().Get();
 
@@ -538,8 +544,6 @@ void ComponentEngine::ParticleSystem::EntityHookDefault(enteez::Entity & entity)
 	enteez::ComponentWrapper<ParticleSystem>* wrapper = entity.AddComponent<ParticleSystem>(&entity);
 	wrapper->SetName("Particle System");
 	ParticleSystem& particel_system = wrapper->Get();
-	particel_system.m_config.emmitter_offset = entity.GetComponent<Transformation>().GetWorldPosition();
-	particel_system.RebuildAll();
 }
 
 void ComponentEngine::ParticleSystem::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
@@ -636,9 +640,6 @@ void ComponentEngine::ParticleSystem::EntityHookXML(enteez::Entity & entity, pug
 
 	}
 
-
-	particel_system.m_config.emmitter_offset = entity.GetComponent<Transformation>().GetWorldPosition();
-	particel_system.RebuildAll();
 
 
 }

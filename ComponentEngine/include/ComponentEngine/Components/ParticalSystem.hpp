@@ -151,5 +151,6 @@ namespace ComponentEngine
 		bool m_running = true;
 		bool m_visible = true;
 
+		bool m_ran_initial_build = false;
 	};
 }

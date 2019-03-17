@@ -118,7 +118,7 @@ namespace ComponentEngine
 		template<typename T>
 		static bool DropBox(const char* lable, const char* payloadType, DropBoxInstance<T>& inst);
 		static bool IsWindowFocused();
-		static bool ElementClicked();
+		static bool ElementClicked(bool repeated = false);
 		static void KeyboardButtonInput(const char* lable,bool& focused, unsigned int& key);
 	private:
 		void RenderMainMenu();
@@ -130,8 +130,6 @@ namespace ComponentEngine
 
 		void PlayPause();
 		void AboutPage();
-
-
 
 		void RendererExplorer();
 		void RendererFolder(Folder& folder);

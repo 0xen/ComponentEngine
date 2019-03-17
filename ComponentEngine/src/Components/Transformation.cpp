@@ -7,23 +7,35 @@
 
 using namespace ComponentEngine;
 
-void ComponentEngine::Transformation::MemoryPointTo(glm::mat4 * new_mat4, bool transfer_old_data)
+void ComponentEngine::Transformation::MemoryPointTo(glm::mat4** new_mat4, int index, bool transfer_old_data)
 {
+	m_index = index;
 	if (transfer_old_data)
-		memcpy(new_mat4, m_mat4, sizeof(glm::mat4));
+		memcpy(&((*new_mat4)[index]), m_mat4, sizeof(glm::mat4));
 	if (m_origional)
 	{
 		m_origional = false;
 		// Cleanup as this memory was reserved by us
 		delete m_mat4;
+		m_mat4 = nullptr;
 	}
-	m_mat4 = new_mat4;
+	m_global_position_array = new_mat4;
 	PushToPositionArray();
 }
 
 glm::mat4 & Transformation::Get()
 {
-	return *m_mat4;
+	glm::mat4* matrix = nullptr;
+
+	if (m_origional)
+	{
+		matrix = m_mat4;
+	}
+	else
+	{
+		matrix = &((*m_global_position_array)[m_index]);
+	}
+	return *matrix;
 }
 
 void Transformation::Translate(glm::vec3 translation)
@@ -115,13 +127,26 @@ void ComponentEngine::Transformation::SetLocalMat4(glm::mat4 mat4, bool updatePh
 void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePhysics)
 {
 	Mesh::GetModelPositionTransferLock().lock();
-	*m_mat4 = mat4;
+
+	glm::mat4* matrix = nullptr;
+
+	if (m_origional)
+	{
+		matrix = m_mat4;
+	}
+	else
+	{
+		matrix = &((*m_global_position_array)[m_index]);
+	}
+
+
+	*matrix = mat4;
 	for (int i = 0; i < m_children.size(); i++)
 	{
 		m_children[i]->PushToPositionArray();
 	}
 	if (updatePhysics)
-		Send(m_entity, TransformationChange{ *m_mat4 });
+		Send(m_entity, TransformationChange{ *matrix });
 	Mesh::GetModelPositionTransferLock().unlock();
 
 }
@@ -133,7 +158,17 @@ glm::mat4& ComponentEngine::Transformation::GetLocalMat4()
 
 glm::mat4 & ComponentEngine::Transformation::GetMat4()
 {
-	return *m_mat4;
+	glm::mat4* matrix = nullptr;
+
+	if (m_origional)
+	{
+		matrix = m_mat4;
+	}
+	else
+	{
+		matrix = &((*m_global_position_array)[m_index]);
+	}
+	return *matrix;
 }
 
 float ComponentEngine::Transformation::GetWorldX()
@@ -158,7 +193,17 @@ glm::vec3 ComponentEngine::Transformation::GetLocalPosition()
 
 glm::vec3 ComponentEngine::Transformation::GetWorldPosition()
 {
-	return (*m_mat4)[3];
+	glm::mat4* matrix = nullptr;
+
+	if (m_origional)
+	{
+		matrix = m_mat4;
+	}
+	else
+	{
+		matrix = &((*m_global_position_array)[m_index]);
+	}
+	return (*matrix)[3];
 }
 
 void Transformation::Scale(glm::vec3 scale)
@@ -191,7 +236,7 @@ void ComponentEngine::Transformation::Rotate(glm::vec3 axis, float angle)
 
 void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, TransformationPtrRedirect & message)
 {
-	MemoryPointTo(message.mat_ptr, true);
+	MemoryPointTo(message.mat_ptr, message.offset, true);
 }
 
 void ComponentEngine::Transformation::Display()
@@ -287,7 +332,31 @@ enteez::Entity * ComponentEngine::Transformation::GetEntity()
 	return m_entity;
 }
 
-void ComponentEngine::Transformation::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
+void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity& entity)
+{
+	std::vector<Transformation*> children;
+	if (entity.HasComponent<Transformation>())
+	{
+		Transformation& trans = entity.GetComponent<Transformation>();
+		children = trans.GetChildren();
+	}
+
+	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>(&entity);
+	trans_wrapper->SetName("Transformation");
+	Transformation& trans = trans_wrapper->Get();
+
+
+
+	// Add children if it has a transformation previously
+	for (Transformation* child : children)
+	{
+		trans.AddChild(child);
+	}
+	// Update parent and children transformations
+	trans.PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
 {
 
 	std::vector<Transformation*> children;
@@ -354,16 +423,27 @@ void ComponentEngine::Transformation::RemoveChild(Transformation * trans)
 void ComponentEngine::Transformation::PushToPositionArray(bool updatePhysics)
 {
 	Mesh::GetModelPositionTransferLock().lock();
-	*m_mat4 = m_local_mat4;
+	glm::mat4* matrix = nullptr;
+
+	if (m_origional)
+	{
+		matrix = m_mat4;
+	}
+	else
+	{
+		matrix = &((*m_global_position_array)[m_index]);
+	}
+
+	*matrix = m_local_mat4;
 	if (m_parent != nullptr && m_parent->HasComponent<Transformation>())
-		(*m_mat4) = m_parent->GetComponent<Transformation>().Get() * m_local_mat4;
+		(*matrix) = m_parent->GetComponent<Transformation>().Get() * m_local_mat4;
 
 	for (int i = 0; i < m_children.size(); i++)
 	{
 		m_children[i]->PushToPositionArray();
 	}
 	if(updatePhysics)
-		Send(m_entity, TransformationChange{ *m_mat4 });
+		Send(m_entity, TransformationChange{ *matrix });
 	Mesh::GetModelPositionTransferLock().unlock();
 }
 

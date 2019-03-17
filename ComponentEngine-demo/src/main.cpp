@@ -9,6 +9,8 @@
 #include <BlockMoveController.hpp>
 #include <WaterSourceController.hpp>
 #include <TeapotController.hpp>
+#include <BlockSpawner.hpp>
+#include <TimedDestruction.hpp>
 #include <iostream>
 
 using namespace ComponentEngine;
@@ -35,6 +37,10 @@ void RegisterCustomComponents()
 	engine->RegisterBase<WaterSourceController, UI, MsgRecive<OnCollisionEnter>>();
 	engine->RegisterComponentBase("TeapotController", TeapotController::EntityHookDefault, TeapotController::EntityHookXML);
 	engine->RegisterBase<TeapotController, UI, MsgRecive<OnCollisionEnter>, MsgRecive<OnCollisionExit>>();
+	engine->RegisterComponentBase("BlockSpawner", BlockSpawner::EntityHookDefault, BlockSpawner::EntityHookXML);
+	engine->RegisterBase<BlockSpawner, Logic>();
+	engine->RegisterComponentBase("TimedDestruction", TimedDestruction::EntityHookDefault, TimedDestruction::EntityHookXML);
+	engine->RegisterBase<TimedDestruction, Logic>();
 }
 
 

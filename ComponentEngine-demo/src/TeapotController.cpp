@@ -42,7 +42,6 @@ void ComponentEngine::TeapotController::ReciveMessage(enteez::Entity * sender, O
 {
 	if (message.collider->HasComponent<Flamable>() && message.collider->GetComponent<Flamable>().OnFire())
 	{
-
 		Send(m_entity, ParticleSystemVisibility{ false }, true);
 	}
 }

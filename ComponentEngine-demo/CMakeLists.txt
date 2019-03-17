@@ -19,20 +19,24 @@ set(src
     src/WaterSourceController.cpp
     src/BlockMoveController.cpp
     src/Flamable.cpp
+    src/BlockSpawner.cpp
     src/ItemHover.cpp
     src/KeyboardMovment.cpp
     src/MouseMovment.cpp
     src/TeapotController.cpp
+    src/TimedDestruction.cpp
 )
-
+ 
 set(headers
 	include/WaterSourceController.hpp
 	include/BlockMoveController.hpp
     include/Flamable.hpp
+    include/BlockSpawner.hpp
     include/ItemHover.hpp
     include/KeyboardMovment.hpp
     include/MouseMovment.hpp
     include/TeapotController.hpp
+    include/TimedDestruction.hpp
 )
 
 

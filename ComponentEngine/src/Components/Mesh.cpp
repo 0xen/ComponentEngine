@@ -125,7 +125,7 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, RenderStatus&
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEnter<Transformation>& message)
 {
 	if (!m_loaded)return;
-	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_file_path.data.longForm].model_position_array[m_mesh_index]);
+	message.GetComponent().MemoryPointTo(&m_mesh_instance[m_file_path.data.longForm].model_position_array, m_mesh_index);
 }
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentExit<Transformation>& message)
@@ -150,7 +150,9 @@ void ComponentEngine::Mesh::Display()
 	{
 		if (tempFilePath.data.extension == ".obj" && m_file_path.data.longForm != tempFilePath.data.longForm)
 		{
-			Engine::Singlton()->GetRendererMutex().lock();
+			Engine& engine = *Engine::Singlton();
+			engine.GetLogicMutex().lock();
+			engine.GetRendererMutex().lock();
 			tempFilePath.SetMessage(tempFilePath.data.shortForm);
 			if (m_loaded)UnloadModel();
 
@@ -158,7 +160,8 @@ void ComponentEngine::Mesh::Display()
 			//m_file_path = tempFilePath;
 			//std::cout << m_file_path.data.longForm << std::endl;
 			LoadModel();
-			Engine::Singlton()->GetRendererMutex().unlock();
+			engine.GetRendererMutex().unlock();
+			engine.GetLogicMutex().unlock();
 		}
 	}
 
@@ -356,14 +359,17 @@ void ComponentEngine::Mesh::LoadModel()
 				glm::mat4* newMat = new glm::mat4[newBufferSize];
 				memcpy(newMat, mesh_instance.model_position_array, sizeof(glm::mat4) * mesh_instance.model_position_buffer->GetElementCount(BufferSlot::Primary));
 
+				delete mesh_instance.model_position_array;
+
 				mesh_instance.model_position_array = newMat;
 				//mesh_instance.model_position_array.resize(m_buffer_size_step);
 				mesh_instance.model_position_buffer->Resize(BufferSlot::Primary, newMat, newBufferSize);
 				mesh_instance.model_position_buffer->Resize(BufferSlot::Secondery, newMat, newBufferSize);
+
+
+
+				
 			}
-
-
-			
 
 			IModel* model = material_meshe.model_pool->CreateModel();
 
@@ -376,8 +382,14 @@ void ComponentEngine::Mesh::LoadModel()
 			m_sub_meshes[i++] = model;
 		}
 	}
+	mesh_instance.model_position_array[m_mesh_index] = glm::mat4(1.0f);
+	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array, m_mesh_index));
 
-	Send(m_entity, TransformationPtrRedirect(&mesh_instance.model_position_array[m_mesh_index]));
+	// Transfer over the buffer index data to the GPU so that a invalid matrix is not there
+	GetModelPositionTransferLock().lock();
+	mesh_instance.model_position_buffer->SetData(BufferSlot::Primary, m_mesh_index, 1);
+	GetModelPositionTransferLock().unlock();
+
 
 	m_mesh_instance[m_file_path.data.longForm].used_instances++;
 

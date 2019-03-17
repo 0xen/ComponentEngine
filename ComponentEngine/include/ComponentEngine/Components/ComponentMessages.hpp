@@ -52,8 +52,9 @@ namespace ComponentEngine
 
 	struct TransformationPtrRedirect
 	{
-		TransformationPtrRedirect(glm::mat4* mat_ptr) : mat_ptr(mat_ptr) {}
-		glm::mat4* mat_ptr;
+		TransformationPtrRedirect(glm::mat4** mat_ptr, int offset) : mat_ptr(mat_ptr) ,offset(offset) {}
+		glm::mat4** mat_ptr;
+		int offset;
 	};
 
 	template<class T>

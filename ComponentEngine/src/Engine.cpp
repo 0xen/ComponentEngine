@@ -558,11 +558,11 @@ std::string ComponentEngine::Engine::GetCurrentSceneDirectory()
 {
 	return m_currentSceneDirectory;
 }
-/*
+
 ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 {
-	return m_logic_thread->ThreadLock();
-}*/
+	return m_logic_lock;
+}
 
 ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 {

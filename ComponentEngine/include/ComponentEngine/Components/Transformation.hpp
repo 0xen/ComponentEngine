@@ -89,13 +89,14 @@ namespace ComponentEngine
 		void Rotate(glm::vec3 angles);
 		void SetParent(enteez::Entity* parent);
 		// We are not responsible for the new memory. Needs 3rd part memory managment
-		void MemoryPointTo(glm::mat4* new_mat4, bool transfer_old_data = false);
+		void MemoryPointTo(glm::mat4** new_mat4, int index, bool transfer_old_data = false);
 		glm::mat4& Get();
 		enteez::Entity* GetParent();
 		std::vector<Transformation*> GetChildren();
 		bool HasChildren();
 
 		enteez::Entity* GetEntity();
+		static void EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		friend class Mesh;
@@ -104,7 +105,11 @@ namespace ComponentEngine
 		void RemoveChild(Transformation* trans);
 		void PushToPositionArray(bool updatePhysics = true);
 		enteez::Entity* m_entity;
-		glm::mat4* m_mat4;
+		int m_index;
+		union {
+			glm::mat4** m_global_position_array;
+			glm::mat4* m_mat4;
+		};
 		glm::mat4 m_local_mat4;
 		enteez::Entity* m_parent = nullptr;
 		std::vector<Transformation*> m_children;

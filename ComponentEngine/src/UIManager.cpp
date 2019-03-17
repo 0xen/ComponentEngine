@@ -86,18 +86,22 @@ void ComponentEngine::UIManager::RenderMainMenu()
 
 			if (ImGui::MenuItem("Reload Scene"))
 			{
-				m_engine->m_logic_lock.lock();
-				m_engine->GetRendererMutex().lock();
 
-				m_engine->GetEntityManager().Clear();
-				
+				// spawn a new task to load in the new entitys
 				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
-					m_engine->LoadScene(m_engine->GetCurrentScene().c_str());
-					m_engine->UpdateScene();
-				});
 
-				m_engine->GetRendererMutex().unlock();
-				m_engine->m_logic_lock.unlock();
+					m_engine->m_logic_lock.lock();
+					m_engine->GetRendererMutex().lock();
+
+					m_engine->GetEntityManager().Clear();
+					// Load in the scene
+					m_engine->LoadScene(m_engine->GetCurrentScene().c_str(), false);
+					m_engine->UpdateScene();
+
+					m_engine->GetRendererMutex().unlock();
+					m_engine->m_logic_lock.unlock();
+
+				});
 			}
 
 			ImGui::Separator();
@@ -297,10 +301,6 @@ void ComponentEngine::UIManager::RendererExplorer()
 			sceneFolder.path.longForm = Engine::Singlton()->GetCurrentSceneDirectory();
 			sceneFolder.path.shortForm = "/";
 			LoadFolder(sceneFolder);
-
-
-
-
 		}
 		RendererFolder(sceneFolder);
 	}
@@ -328,15 +328,16 @@ void ComponentEngine::UIManager::RendererFolder(Folder & folder)
 
 		for (auto& childFiles : folder.files)
 		{
-			ImGui::PushID(&childFiles);
+			ImGui::PushID(childFiles.longForm.c_str());
 			ImGui::TreeNodeEx("File", ImGuiTreeNodeFlags_Leaf, "%s", childFiles.shortForm.c_str());
+
 
 			{ // File drag
 				DropPayload("File", childFiles.shortForm.c_str(), &childFiles, sizeof(FileForms));
 			}
-
 			ImGui::TreePop();
 			ImGui::PopID();
+
 		}
 
 
@@ -702,9 +703,9 @@ void ComponentEngine::UIManager::DestroyEntity(Entity * entity)
 }
 
 
-bool ComponentEngine::UIManager::ElementClicked()
+bool ComponentEngine::UIManager::ElementClicked(bool repeated)
 {
-	return ImGui::IsItemHovered() && ImGui::IsMouseClicked(0);
+	return ImGui::IsItemHovered() && (ImGui::IsMouseClicked(0) && !repeated) || (ImGui::IsMouseDoubleClicked(0) && repeated);
 }
 
 void ComponentEngine::UIManager::KeyboardButtonInput(const char* lable, bool & focused, unsigned int & key)
@@ -980,6 +981,4 @@ void ComponentEngine::UIManager::LoadFolder(Folder & folder)
 			folder.files.push_back(file);
 		}
 	}
-
-
 }

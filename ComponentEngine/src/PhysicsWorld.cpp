@@ -2,6 +2,7 @@
 #include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <EnteeZ\Entity.hpp>
+#include <ComponentEngine/Engine.hpp>
 #include <iostream>
 
 using namespace ComponentEngine;
@@ -46,19 +47,18 @@ ComponentEngine::PhysicsWorld::~PhysicsWorld()
 
 void ComponentEngine::PhysicsWorld::Update(float update_time)
 {
+	m_engine->GetLogicMutex().lock();
 	m_physics_lock.lock();
 
 	m_dynamicsWorld->stepSimulation(update_time, 10);
 
 
 	btCollisionObjectArray& collisionObjects = m_dynamicsWorld->getCollisionObjectArray();
-
 	for (int i = 0; i < collisionObjects.size(); i++)
 	{
 		enteez::Entity* entity = static_cast<enteez::Entity*>(collisionObjects[i]->getCollisionShape()->getUserPointer());
 		Send(entity, CollisionRecording{ Begin });
 	}
-
 
 	int numManifolds = m_dynamicsWorld->getDispatcher()->getNumManifolds();
 	for (int i = 0; i < numManifolds; i++)
@@ -82,6 +82,7 @@ void ComponentEngine::PhysicsWorld::Update(float update_time)
 	}
 
 	m_physics_lock.unlock();
+	m_engine->GetLogicMutex().unlock();
 }
 
 void ComponentEngine::PhysicsWorld::SetGravity(btVector3 vec3)

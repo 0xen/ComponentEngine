@@ -107,9 +107,9 @@ namespace ComponentEngine
 		static void SetBufferData();
 		static void TransferToPrimaryBuffers();
 		static ordered_lock& GetModelPositionTransferLock();
+		void LoadModel();
 		friend class Engine;
 	private:
-		void LoadModel();
 		void UnloadModel();
 		static void CleanUp();
 		DropBoxInstance<FileForms> m_file_path;
