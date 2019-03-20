@@ -399,21 +399,7 @@
 			</GameObject>
 			<GameObject name="BlockPile" prefab="BlockStairs">
 				<Component name="Transformation">
-					<Position x="15.5f" y="-4.0f" z="-11.0f" />
-					<Rotation x="0.0f" y="0.0f" z="0.0f" />
-					<Scale x="1.0f" y="1.0f" z="1.0f" />
-				</Component>
-			</GameObject>
-			<GameObject name="BlockPile" prefab="BlockStairs">
-				<Component name="Transformation">
 					<Position x="15.5f" y="-4.0f" z="-10.0f" />
-					<Rotation x="0.0f" y="0.0f" z="0.0f" />
-					<Scale x="1.0f" y="1.0f" z="1.0f" />
-				</Component>
-			</GameObject>
-			<GameObject name="BlockPile" prefab="BlockStairs">
-				<Component name="Transformation">
-					<Position x="15.5f" y="-4.0f" z="-9.0f" />
 					<Rotation x="0.0f" y="0.0f" z="0.0f" />
 					<Scale x="1.0f" y="1.0f" z="1.0f" />
 				</Component>
