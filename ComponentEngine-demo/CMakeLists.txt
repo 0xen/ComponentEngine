@@ -41,7 +41,7 @@ set(headers
 
 include_directories(include)
 include_directories(../ComponentEngine/include)
-include_directories(../../Renderer/renderer/include)
+include_directories(../../VK-EZ/renderer/include)
 include_directories(../../EnteeZ/EnteeZ/include)
 
 
@@ -52,8 +52,8 @@ set_property(TARGET ${project_name} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 
 target_link_libraries(${project_name} ComponentEngine)
 
-target_link_libraries( ${project_name} debug ../../../Renderer/build/renderer/Debug/Renderer)
-target_link_libraries( ${project_name} optimized ../../../Renderer/build/renderer/Release/Renderer)
+target_link_libraries( ${project_name} debug ../../../VK-EZ/build/renderer/Debug/Renderer)
+target_link_libraries( ${project_name} optimized ../../../VK-EZ/build/renderer/Release/Renderer)
 
 target_link_libraries( ${project_name} debug ../../../EnteeZ/build/EnteeZ/Debug/EnteeZ)
 target_link_libraries( ${project_name} optimized ../../../EnteeZ/build/EnteeZ/Release/EnteeZ)
