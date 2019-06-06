@@ -2,7 +2,7 @@
 
 #include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
-#include <ComponentEngine\UIManager.hpp>
+#include <ComponentEngine\UI\UIManager.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 #include <SDL.h>

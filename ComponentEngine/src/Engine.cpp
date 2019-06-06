@@ -8,7 +8,15 @@
 #include <ComponentEngine\Components\ICollisionShape.hpp>
 #include <ComponentEngine\Components\BoxCollision.hpp>
 #include <ComponentEngine\Components\SphereCollision.hpp>
-#include <ComponentEngine\UIManager.hpp>
+
+
+#include <ComponentEngine\UI\UIManager.hpp>
+#include <ComponentEngine\UI\Console.hpp>
+#include <ComponentEngine\UI\Threading.hpp>
+#include <ComponentEngine\UI\ComponentHierarchy.hpp>
+#include <ComponentEngine\UI\Explorer.hpp>
+#include <ComponentEngine\UI\SceneHierarchy.hpp>
+#include <ComponentEngine\UI\MenuElement.hpp>
 
 #include <lodepng.h>
 
@@ -19,17 +27,11 @@ using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
 
-const unsigned int Engine::IS_RUNNING_LOCK = 0;
-const unsigned int Engine::TOGGLE_FRAME_LIMITING = 1;
-const unsigned int Engine::READ_KEY_PRESS = 2;
-const unsigned int Engine::READ_MOUSE_DATA = 3;
-const unsigned int Engine::CONSOLE_LOCK = 4;
-
 Engine* Engine::m_engine = nullptr;
 
 bool ComponentEngine::Engine::IsRunning()
 {
-	std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+	std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
 	return m_running == EngineStates::Running;
 }
 
@@ -75,7 +77,7 @@ void ComponentEngine::Engine::Start()
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
 	m_running = EngineStates::Running;
-	m_play_state = PlayState::Paused;
+	m_play_state = PlayState::Editor;
 
 	m_threadManager = new ThreadManager(ThreadMode::Threading);
 
@@ -101,7 +103,7 @@ void ComponentEngine::Engine::Start()
 	m_threadManager->AddTask([&](float frameTime) {
 
 		m_logic_lock.lock();
-		bool playing = m_play_state == PlayState::Playing;
+		bool playing = m_play_state == PlayState::Play;
 		m_logic_lock.unlock();
 		if (playing)
 		{
@@ -114,7 +116,7 @@ void ComponentEngine::Engine::Start()
 		EntityManager& em = GetEntityManager();
 
 		m_logic_lock.lock();
-		if (m_play_state == PlayState::Playing)
+		if (m_play_state == PlayState::Play)
 		{
 			for (auto e : em.GetEntitys())
 			{
@@ -149,7 +151,7 @@ void ComponentEngine::Engine::Stop()
 	}
 	m_threadManager->ChangeMode(ThreadMode::Joined);
 	{
-		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
 		m_running = EngineStates::Stopped;
 	}
 
@@ -203,7 +205,7 @@ bool ComponentEngine::Engine::Running()
 			m_request_toggle_threading = false;
 			ToggleThreading();
 		}
-		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
 		bool result = m_renderer != nullptr && m_renderer->IsRunning();
 
 		//GetRendererMutex().lock();
@@ -212,7 +214,7 @@ bool ComponentEngine::Engine::Running()
 	}
 	else
 	{
-		std::lock_guard<std::mutex> guard(m_locks[IS_RUNNING_LOCK]);
+		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
 		return m_running == EngineStates::Stopped;;
 	}
 }
@@ -282,7 +284,7 @@ void ComponentEngine::Engine::Log(std::string data, ConsoleState state)
 	std::stringstream ss;
 	ss << "(%i) " << data;
 
-	std::lock_guard<std::mutex> guard(m_locks[CONSOLE_LOCK]);
+	std::lock_guard<std::mutex> guard(GetLock(CONSOLE));
 
 	if (m_console.size() > 0 && m_console[m_console.size() - 1].message == ss.str() && m_console[m_console.size() - 1].state == state)
 	{
@@ -316,42 +318,6 @@ glm::vec2 ComponentEngine::Engine::GetLastMouseMovment()
 	std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
 	return m_mousePosDelta;
 }
-
-/*
-float ComponentEngine::Engine::Sync(int ups)
-{
-	std::thread::id id = std::this_thread::get_id();
-	auto it = m_thread_linker.find(id);
-	if (it == m_thread_linker.end())return 0.0f;
-	ThreadData*& data = m_thread_linker[id];
-	data->data_lock.lock();
-	data->requested_ups = ups;
-
-	
-		//std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
-		if (!data->frame_limited)
-		{
-			data->data_lock.unlock();
-			return data->loop_time;
-		}
-	
-
-	float stop_time = GetThreadDeltaTime();
-	data->delta_process_time += stop_time;
-	data->delta_loop_time += stop_time;
-
-	int pause_time = (int)(1000 / ups);
-	pause_time -= (int)(data->process_time * 1000.0f);
-	data->data_lock.unlock();
-	std::this_thread::sleep_for(std::chrono::milliseconds(pause_time));
-	data->data_lock.lock();
-	float start_time = GetThreadDeltaTime();
-	data->delta_loop_time += start_time;
-
-	float loop_time = data->loop_time;
-	data->data_lock.unlock();
-	return loop_time;
-}*/
 
 bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 {
@@ -632,6 +598,26 @@ PlayState ComponentEngine::Engine::GetPlayState()
 PhysicsWorld * ComponentEngine::Engine::GetPhysicsWorld()
 {
 	return m_physicsWorld;
+}
+
+std::mutex & ComponentEngine::Engine::GetLock(EngineLock lock)
+{
+	return m_locks[(int)lock];
+}
+
+std::vector<ConsoleMessage>& ComponentEngine::Engine::GetConsoleMessages()
+{
+	return m_console;
+}
+
+std::map<std::string, ComponentEngine::Engine::ComponentTemplate> ComponentEngine::Engine::GetComponentRegister()
+{
+	return m_component_register;
+}
+
+UIManager * ComponentEngine::Engine::GetUIManager()
+{
+	return m_ui;
 }
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
@@ -982,6 +968,44 @@ void ComponentEngine::Engine::InitImGUI()
 {
 
 	m_ui = new UIManager(this);
+	m_ui->AddElement(new Console("Console", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+	m_ui->AddElement(new ThreadingWindow("Threading", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+	m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+	m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+	m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+
+	m_ui->AddMenuElement(new MenuElement("File", {
+		new MenuElement("Add",[&] {
+			EntityManager& em = GetEntityManager();
+			enteez::Entity* entity = em.CreateEntity("New Entity");
+			Transformation& transformation = entity->AddComponent<Transformation>(entity)->Get();
+			transformation.SetParent(m_ui->GetCurrentSceneFocus().entity);
+		}),
+		new MenuElement("Reload Scene",[&] {
+			m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+
+				m_logic_lock.lock();
+				GetRendererMutex().lock();
+
+				GetEntityManager().Clear();
+				// Load in the scene
+				LoadScene(m_engine->GetCurrentScene().c_str(), false);
+				UpdateScene();
+
+				GetRendererMutex().unlock();
+				m_logic_lock.unlock();
+
+			});
+		}),
+		new MenuElement("Exit",[&] {
+			GetRendererMutex().lock();
+			RequestStop();
+			GetRendererMutex().unlock();
+		})
+	}
+	));
+
+	
 
 	// Init ImGUI
 	ImGui::CreateContext();
@@ -1095,7 +1119,11 @@ void ComponentEngine::Engine::InitImGUI()
 void ComponentEngine::Engine::UpdateImGUI()
 {
 	m_logic_lock.lock();
+
+
 	m_ui->Render();
+
+
 	m_logic_lock.unlock();
 	ImDrawData* imDrawData = ImGui::GetDrawData();
 

@@ -8,7 +8,7 @@
 #include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\UI.hpp>
-#include <ComponentEngine\UIManager.hpp>
+#include <ComponentEngine\UI\UIManager.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
 #include <glm/glm.hpp>

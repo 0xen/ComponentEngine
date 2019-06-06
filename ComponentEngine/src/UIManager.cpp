@@ -3,16 +3,16 @@
 
 
 #include <imgui.h>
+/*
+const unsigned int ComponentEngine::UIManagerOld::SCENE_HIERARCHY = 0;
+const unsigned int ComponentEngine::UIManagerOld::COMPONENT_HIERARCHY = 1;
+const unsigned int ComponentEngine::UIManagerOld::EXPLORER = 2;
+const unsigned int ComponentEngine::UIManagerOld::THREADING_MANAGER = 3;
+const unsigned int ComponentEngine::UIManagerOld::CONSOLE = 4;
+const unsigned int ComponentEngine::UIManagerOld::PLAY_PAUSE = 5;
+const unsigned int ComponentEngine::UIManagerOld::ABOUT = 6;
 
-const unsigned int ComponentEngine::UIManager::SCENE_HIERARCHY = 0;
-const unsigned int ComponentEngine::UIManager::COMPONENT_HIERARCHY = 1;
-const unsigned int ComponentEngine::UIManager::EXPLORER = 2;
-const unsigned int ComponentEngine::UIManager::THREADING_MANAGER = 3;
-const unsigned int ComponentEngine::UIManager::CONSOLE = 4;
-const unsigned int ComponentEngine::UIManager::PLAY_PAUSE = 5;
-const unsigned int ComponentEngine::UIManager::ABOUT = 6;
-
-ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
+ComponentEngine::UIManagerOld::UIManagerOld(Engine* engine) : m_engine(engine)
 {
 	m_indestructable_component_id = engine->GetEntityManager().GetComponentIndex<Indestructable>();
 	m_open[SCENE_HIERARCHY] = true;
@@ -26,7 +26,7 @@ ComponentEngine::UIManager::UIManager(Engine* engine) : m_engine(engine)
 	m_thread_time_update_delay = 0.0f;
 }
 
-void ComponentEngine::UIManager::Render()
+void ComponentEngine::UIManagerOld::Render()
 {
 	if (!Engine::Singlton()->GetEntityManager().ValidEntity(m_current_scene_focus.entity))
 	{
@@ -44,7 +44,7 @@ void ComponentEngine::UIManager::Render()
 	
 	RenderMainMenu();
 
-	if (Engine::Singlton()->GetPlayState() != PlayState::Playing || !m_fullscreenOnPlay)
+	if (Engine::Singlton()->GetPlayState() != PlayState::Play || !m_fullscreenOnPlay)
 	{
 
 
@@ -60,14 +60,14 @@ void ComponentEngine::UIManager::Render()
 	ImGui::Render();
 }
 
-bool ComponentEngine::UIManager::IsWindowFocused()
+bool ComponentEngine::UIManagerOld::IsWindowFocused()
 {
 	return ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow);
 }
 
-void ComponentEngine::UIManager::RenderMainMenu()
+void ComponentEngine::UIManagerOld::RenderMainMenu()
 {
-	bool dissableInPlay = Engine::Singlton()->GetPlayState() != PlayState::Playing || !m_fullscreenOnPlay;
+	bool dissableInPlay = Engine::Singlton()->GetPlayState() != PlayState::Play || !m_fullscreenOnPlay;
 
 
 
@@ -145,16 +145,12 @@ void ComponentEngine::UIManager::RenderMainMenu()
 		}
 
 		ImGui::MenuItem("About", NULL, &m_open[ABOUT], dissableInPlay);
-		/*if (ImGui::BeginMenu("About", dissableInPlay))
-		{
-			ImGui::EndMenu();
-		}*/
 
 		ImGui::EndMainMenuBar();
 	}
 }
 
-void ComponentEngine::UIManager::DockSpace()
+void ComponentEngine::UIManagerOld::DockSpace()
 {
 	static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_PassthruDockspace;
 
@@ -199,7 +195,7 @@ void ComponentEngine::UIManager::DockSpace()
 
 }
 #include <imgui_internal.h>
-void ComponentEngine::UIManager::PlayPause()
+void ComponentEngine::UIManagerOld::PlayPause()
 {
 	//static int window_height = 370;
 	//ImGui::SetNextWindowSize(ImVec2(420, window_height));
@@ -210,18 +206,18 @@ void ComponentEngine::UIManager::PlayPause()
 	ImGui::SetNextWindowPos(ImVec2((ImGui::GetIO().DisplaySize.x / 2)- windowWidth, titlebarHeight));
 	if (ImGui::Begin("Play Pause", &m_open[PLAY_PAUSE], ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking))
 	{
-		if(Engine::Singlton()->GetPlayState() == PlayState::Playing)
+		if(Engine::Singlton()->GetPlayState() == PlayState::Play)
 		{
 			if (ImGui::Button("||"))
 			{
-				Engine::Singlton()->SetPlayState(PlayState::Paused);
+				Engine::Singlton()->SetPlayState(PlayState::Editor);
 			}
 		}
 		else
 		{
 			if (ImGui::ArrowButton("##left", ImGuiDir_Right))
 			{
-				Engine::Singlton()->SetPlayState(PlayState::Playing);
+				Engine::Singlton()->SetPlayState(PlayState::Play);
 			}
 			ImGui::SameLine();
 			ImGui::Checkbox("Fullscreen on play", &m_fullscreenOnPlay);
@@ -230,7 +226,7 @@ void ComponentEngine::UIManager::PlayPause()
 	ImGui::End();
 }
 
-void ComponentEngine::UIManager::AboutPage()
+void ComponentEngine::UIManagerOld::AboutPage()
 {
 	//static int window_height = 370;
 	//ImGui::SetNextWindowSize(ImVec2(420, window_height));
@@ -295,7 +291,7 @@ void ComponentEngine::UIManager::AboutPage()
 }
 
 
-void ComponentEngine::UIManager::RendererExplorer()
+void ComponentEngine::UIManagerOld::RendererExplorer()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
@@ -313,7 +309,7 @@ void ComponentEngine::UIManager::RendererExplorer()
 	ImGui::End();
 }
 
-void ComponentEngine::UIManager::RendererFolder(Folder & folder)
+void ComponentEngine::UIManagerOld::RendererFolder(Folder & folder)
 {
 	LoadFolder(folder);
 
@@ -352,7 +348,7 @@ void ComponentEngine::UIManager::RendererFolder(Folder & folder)
 	ImGui::PopID();
 }
 
-void ComponentEngine::UIManager::RenderSceneHierarchy()
+void ComponentEngine::UIManagerOld::RenderSceneHierarchy()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
@@ -411,7 +407,7 @@ void ComponentEngine::UIManager::RenderSceneHierarchy()
 	ImGui::End();
 }
 
-void ComponentEngine::UIManager::RenderComponentHierarchy()
+void ComponentEngine::UIManagerOld::RenderComponentHierarchy()
 {
 
 	static int window_height = 370;
@@ -530,7 +526,7 @@ void ComponentEngine::UIManager::RenderComponentHierarchy()
 
 }
 
-void ComponentEngine::UIManager::ThreadingWindow()
+void ComponentEngine::UIManagerOld::ThreadingWindow()
 {
 
 
@@ -613,7 +609,7 @@ void ComponentEngine::UIManager::ThreadingWindow()
 }
 
 
-void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
+void ComponentEngine::UIManagerOld::RenderEntityTreeNode(Entity * entity)
 {
 	ImGui::PushID(entity);
 	Transformation& entityTeansformation = entity->GetComponent<Transformation>();
@@ -687,7 +683,7 @@ void ComponentEngine::UIManager::RenderEntityTreeNode(Entity * entity)
 	ImGui::PopID();
 }
 
-void ComponentEngine::UIManager::RenderEntity(Entity * entity)
+void ComponentEngine::UIManagerOld::RenderEntity(Entity * entity)
 {
 	bool hasIndestructable = m_current_scene_focus.entity->HasComponent<Indestructable>();
 
@@ -695,7 +691,7 @@ void ComponentEngine::UIManager::RenderEntity(Entity * entity)
 	AddComponentDialougeMenu();
 }
 
-void ComponentEngine::UIManager::DestroyEntity(Entity * entity)
+void ComponentEngine::UIManagerOld::DestroyEntity(Entity * entity)
 {
 	Transformation& transformation = entity->GetComponent<Transformation>();
 	if (transformation.HasChildren())
@@ -709,12 +705,12 @@ void ComponentEngine::UIManager::DestroyEntity(Entity * entity)
 }
 
 
-bool ComponentEngine::UIManager::ElementClicked(bool repeated)
+bool ComponentEngine::UIManagerOld::ElementClicked(bool repeated)
 {
 	return ImGui::IsItemHovered() && (ImGui::IsMouseClicked(0) && !repeated) || (ImGui::IsMouseDoubleClicked(0) && repeated);
 }
 
-void ComponentEngine::UIManager::KeyboardButtonInput(const char* lable, bool & focused, unsigned int & key)
+void ComponentEngine::UIManagerOld::KeyboardButtonInput(const char* lable, bool & focused, unsigned int & key)
 {
 	if (focused)
 	{
@@ -736,14 +732,14 @@ void ComponentEngine::UIManager::KeyboardButtonInput(const char* lable, bool & f
 	{
 		const char* keyName = SDL_GetScancodeName(static_cast<SDL_Scancode>(key));
 		ImGui::InputText(lable, (char*)keyName, strlen(keyName), ImGuiInputTextFlags_ReadOnly);
-		if (UIManager::ElementClicked())
+		if (UIManagerOld::ElementClicked())
 		{
 			focused = true;
 		}
 	}
 }
 
-bool ComponentEngine::UIManager::EdiableText(std::string & text, char *& temp_data, int max_size, bool editable)
+bool ComponentEngine::UIManagerOld::EdiableText(std::string & text, char *& temp_data, int max_size, bool editable)
 {
 	if (temp_data == nullptr || !editable)
 	{
@@ -782,7 +778,7 @@ bool ComponentEngine::UIManager::EdiableText(std::string & text, char *& temp_da
 	return false;
 }
 
-void ComponentEngine::UIManager::ResetSceneFocusEntity()
+void ComponentEngine::UIManagerOld::ResetSceneFocusEntity()
 {
 	m_current_scene_focus.entity = nullptr;
 
@@ -794,7 +790,7 @@ void ComponentEngine::UIManager::ResetSceneFocusEntity()
 }
 
 // Use this after creating a component to add a right click menu to it
-void ComponentEngine::UIManager::AddEntityDialougeMenu(Entity * parent)
+void ComponentEngine::UIManagerOld::AddEntityDialougeMenu(Entity * parent)
 {
 	if (ImGui::BeginPopupContextItem("Add Entity Menu"))
 	{
@@ -806,7 +802,7 @@ void ComponentEngine::UIManager::AddEntityDialougeMenu(Entity * parent)
 	}
 }
 
-void ComponentEngine::UIManager::AddEntity(Entity* parent)
+void ComponentEngine::UIManagerOld::AddEntity(Entity* parent)
 {
 	EntityManager& em = m_engine->GetEntityManager();
 	enteez::Entity* entity = em.CreateEntity("New Entity");
@@ -814,7 +810,7 @@ void ComponentEngine::UIManager::AddEntity(Entity* parent)
 	a.SetParent(parent);
 }
 
-void ComponentEngine::UIManager::AddComponentDialougeMenu()
+void ComponentEngine::UIManagerOld::AddComponentDialougeMenu()
 {
 	if (ImGui::Button("Add Component"))
 		ImGui::OpenPopup("AddComponentPopup");
@@ -866,7 +862,7 @@ void ComponentEngine::UIManager::AddComponentDialougeMenu()
 	}
 }
 
-void ComponentEngine::UIManager::AddConsole()
+void ComponentEngine::UIManagerOld::AddConsole()
 {
 	static int window_height = 370;
 	ImGui::SetNextWindowSize(ImVec2(420, window_height));
@@ -874,7 +870,7 @@ void ComponentEngine::UIManager::AddConsole()
 	{
 
 
-		std::lock_guard<std::mutex> guard(m_engine->m_locks[m_engine->CONSOLE_LOCK]);
+		std::lock_guard<std::mutex> guard(m_engine->GetLock(EngineLock::CONSOLE));
 		for (int i = 0; i < m_engine->m_console.size(); i++)
 		{
 			ImGui::PushID(i);
@@ -904,7 +900,7 @@ void ComponentEngine::UIManager::AddConsole()
 	ImGui::End();
 }
 
-void ComponentEngine::UIManager::Tooltip(const char * text)
+void ComponentEngine::UIManagerOld::Tooltip(const char * text)
 {
 	if (ImGui::IsItemHovered())
 	{
@@ -916,7 +912,7 @@ void ComponentEngine::UIManager::Tooltip(const char * text)
 	}
 }
 
-bool ComponentEngine::UIManager::DropTarget(const char * type,const ImGuiPayload *& payload)
+bool ComponentEngine::UIManagerOld::DropTarget(const char * type,const ImGuiPayload *& payload)
 {
 	bool dropped = false;
 	if (ImGui::BeginDragDropTarget())
@@ -932,7 +928,7 @@ bool ComponentEngine::UIManager::DropTarget(const char * type,const ImGuiPayload
 	return dropped;
 }
 
-void ComponentEngine::UIManager::DropPayload(const char * type, const char* message, void * payload, unsigned int size)
+void ComponentEngine::UIManagerOld::DropPayload(const char * type, const char* message, void * payload, unsigned int size)
 {
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 	{
@@ -942,7 +938,7 @@ void ComponentEngine::UIManager::DropPayload(const char * type, const char* mess
 	}
 }
 
-bool ComponentEngine::UIManager::StringDropBox(const char * lable, const char* payloadType, StringDropInstance& inst)
+bool ComponentEngine::UIManagerOld::StringDropBox(const char * lable, const char* payloadType, StringDropInstance& inst)
 {
 	ImGui::Text(lable);
 	ImGui::SameLine();
@@ -967,7 +963,7 @@ bool ComponentEngine::UIManager::StringDropBox(const char * lable, const char* p
 	return false;
 }
 
-void ComponentEngine::UIManager::LoadFolder(Folder & folder)
+void ComponentEngine::UIManagerOld::LoadFolder(Folder & folder)
 {
 	if (folder.readFolder) return;
 	folder.readFolder = true;
@@ -988,3 +984,4 @@ void ComponentEngine::UIManager::LoadFolder(Folder & folder)
 		}
 	}
 }
+*/

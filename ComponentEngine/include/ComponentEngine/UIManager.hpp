@@ -7,7 +7,7 @@
 
 namespace ComponentEngine
 {
-
+	/*
 	struct CurrentSceneFocus
 	{
 		enteez::Entity* entity = nullptr;
@@ -101,11 +101,11 @@ namespace ComponentEngine
 		}
 	};
 
-	class UIManager
+	class UIManagerOld
 	{
 	public:
 
-		UIManager(Engine* engine);
+		UIManagerOld(Engine* engine);
 		void Render();
 
 		// Extra functionality to UI components
@@ -181,7 +181,7 @@ namespace ComponentEngine
 		bool m_open[7];
 	};
 	template<typename T>
-	inline bool UIManager::ComponentDropBox(const char* lable, ComponentDropInstance<T>& inst)
+	inline bool UIManagerOld::ComponentDropBox(const char* lable, ComponentDropInstance<T>& inst)
 	{
 		ImGui::Text(lable);
 		ImGui::SameLine();
@@ -205,7 +205,7 @@ namespace ComponentEngine
 		return false;
 	}
 	template<typename T>
-	inline bool UIManager::DropBox(const char * lable, const char * payloadType, DropBoxInstance<T> & inst)
+	inline bool UIManagerOld::DropBox(const char * lable, const char * payloadType, DropBoxInstance<T> & inst)
 	{
 		ImGui::Text(lable);
 		ImGui::SameLine();
@@ -220,5 +220,5 @@ namespace ComponentEngine
 			return true;
 		}
 		return false;
-	}
+	}*/
 }

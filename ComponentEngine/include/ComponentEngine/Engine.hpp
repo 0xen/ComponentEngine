@@ -50,8 +50,20 @@ namespace ComponentEngine
 
 	enum PlayState
 	{
-		Playing,
-		Paused
+		Editor = 0x01,
+		Play = 0x02,
+		Release = 0x04
+	};
+
+	enum EngineLock
+	{
+		IS_RUNNING,
+		TOGGLE_FRAME_LIMITING,
+		READ_KEY_PRESS,
+		READ_MOUSE_DATA,
+		CONSOLE,
+
+		MAX
 	};
 
 	struct TextureStorage
@@ -74,12 +86,15 @@ namespace ComponentEngine
 	class UIManager;
 	class Engine : public EnteeZ
 	{
+	public:
 		struct ComponentTemplate
 		{
 			void(*default_initilizer)(enteez::Entity& entity) = nullptr;
 			void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data) = nullptr;
 		};
-	public:
+
+
+
 		static Engine* Singlton();
 		~Engine();
 		void Start();
@@ -147,6 +162,16 @@ namespace ComponentEngine
 		PlayState GetPlayState();
 
 		PhysicsWorld* GetPhysicsWorld();
+
+		std::mutex& GetLock(EngineLock lock);
+
+
+		std::vector<ConsoleMessage>& GetConsoleMessages();
+
+
+		std::map<std::string, ComponentTemplate> GetComponentRegister();
+
+		UIManager* GetUIManager();
 
 		friend class UIManager;
 	private:
@@ -295,14 +320,8 @@ namespace ComponentEngine
 
 		ThreadManager* m_threadManager;
 
-		static const unsigned int IS_RUNNING_LOCK;
-		static const unsigned int TOGGLE_FRAME_LIMITING;
-		static const unsigned int READ_KEY_PRESS;
-		static const unsigned int READ_MOUSE_DATA;
-		static const unsigned int CONSOLE_LOCK;
-
 		// Store the various locks that will be needed
-		std::mutex m_locks[5];
+		std::mutex m_locks[EngineLock::MAX];
 
 		bool m_keys[256];
 		glm::vec2 m_mousePosDelta;

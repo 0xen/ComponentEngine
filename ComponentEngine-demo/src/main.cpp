@@ -1,6 +1,7 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
+#include <ComponentEngine\UI\MenuElement.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <ItemHover.hpp>
 #include <KeyboardMovment.hpp>
@@ -120,7 +121,7 @@ void SetupShaders()
 
 int main(int argc, char **argv)
 {
-engine = Engine::Singlton();
+	engine = Engine::Singlton();
 	engine->Start();
 	SetupShaders();
 	RegisterCustomComponents();
@@ -130,6 +131,13 @@ engine = Engine::Singlton();
 		engine->LoadScene("../GameInstance.xml");
 		engine->UpdateScene();
 	});
+
+	engine->GetUIManager()->AddMenuElement(new MenuElement("Test", [&] {
+		std::cout << "test" << std::endl;
+	}));
+
+
+
 	while (engine->Running())
 	{
 		engine->Update();

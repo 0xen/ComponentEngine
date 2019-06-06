@@ -22,6 +22,7 @@ set(common_headers
     include/ComponentEngine/Type.hpp
     include/ComponentEngine/TemplateType.hpp
     include/ComponentEngine/PhysicsWorld.hpp
+
 )
 
 set(common_source
@@ -83,6 +84,38 @@ list(APPEND common_headers ${component_headers})
 
 source_group("Source Files\\ComponentEngine\\Components" FILES ${component_source})
 source_group("Header Files\\ComponentEngine\\Components" FILES ${component_headers})
+
+set(ui_headers
+    include/ComponentEngine/UI/MenuElement.hpp
+
+    include/ComponentEngine/UI/UIBase.hpp
+    include/ComponentEngine/UI/UIManager.hpp
+    include/ComponentEngine/UI/Threading.hpp
+    include/ComponentEngine/UI/Console.hpp
+    include/ComponentEngine/UI/SceneHierarchy.hpp
+    include/ComponentEngine/UI/ComponentHierarchy.hpp
+    include/ComponentEngine/UI/Explorer.hpp
+)
+
+set(ui_source
+    src/UI/MenuElement.cpp
+
+    src/UI/UIBase.cpp
+    src/UI/UIManager.cpp
+    src/UI/Threading.cpp
+    src/UI/Console.cpp
+    src/UI/SceneHierarchy.cpp
+    src/UI/ComponentHierarchy.cpp
+    src/UI/Explorer.cpp
+)
+
+
+list(APPEND common_source ${ui_source})
+list(APPEND common_headers ${ui_headers})
+
+
+source_group("Source Files\\ComponentEngine\\UI" FILES ${ui_source})
+source_group("Header Files\\ComponentEngine\\UI" FILES ${ui_headers})
 
 
 
