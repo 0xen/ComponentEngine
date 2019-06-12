@@ -95,6 +95,7 @@ set(ui_headers
     include/ComponentEngine/UI/SceneHierarchy.hpp
     include/ComponentEngine/UI/ComponentHierarchy.hpp
     include/ComponentEngine/UI/Explorer.hpp
+    include/ComponentEngine/UI/EditorState.hpp
 )
 
 set(ui_source
@@ -107,6 +108,7 @@ set(ui_source
     src/UI/SceneHierarchy.cpp
     src/UI/ComponentHierarchy.cpp
     src/UI/Explorer.cpp
+    src/UI/EditorState.cpp
 )
 
 

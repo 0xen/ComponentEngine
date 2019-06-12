@@ -10,11 +10,16 @@ ComponentEngine::UIBase::UIBase(const char * title, ImGuiWindowFlags flags, UIDi
 
 void ComponentEngine::UIBase::Render()
 {
+	PreDraw();
 	if (ImGui::Begin(m_title, &m_open, m_flags))
 	{
 		Contents();
 	}
 	ImGui::End();
+}
+
+void ComponentEngine::UIBase::PreDraw()
+{
 }
 
 UIDisplayFlags ComponentEngine::UIBase::GetDisplayFlags()

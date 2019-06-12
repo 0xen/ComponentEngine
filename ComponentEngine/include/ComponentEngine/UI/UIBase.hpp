@@ -12,6 +12,7 @@ namespace ComponentEngine
 		UIBase(const char* title, ImGuiWindowFlags flags, UIDisplayFlags displayFlags, bool open = true);
 
 		void Render();
+		virtual void PreDraw();
 		virtual void Contents() = 0;
 		UIDisplayFlags GetDisplayFlags();
 		friend class UIManager;

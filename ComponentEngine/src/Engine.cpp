@@ -17,6 +17,7 @@
 #include <ComponentEngine\UI\Explorer.hpp>
 #include <ComponentEngine\UI\SceneHierarchy.hpp>
 #include <ComponentEngine\UI\MenuElement.hpp>
+#include <ComponentEngine\UI\EditorState.hpp>
 
 #include <lodepng.h>
 
@@ -973,6 +974,7 @@ void ComponentEngine::Engine::InitImGUI()
 	m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 	m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 	m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+	m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
 
 	m_ui->AddMenuElement(new MenuElement("File", {
 		new MenuElement("Add",[&] {
