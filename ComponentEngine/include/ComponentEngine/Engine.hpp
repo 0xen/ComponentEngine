@@ -1,7 +1,7 @@
 #pragma once
 
 #include <EnteeZ\EnteeZ.hpp>
-#include <renderer\IRenderer.hpp>
+#include <renderer\vulkan\VulkanRenderer.hpp>
 
 #include <ComponentEngine\Components\Transformation.hpp>
 #include <ComponentEngine\Components\Indestructable.hpp>
@@ -29,7 +29,7 @@
 #include <imgui.h>
 
 using namespace enteez;
-using namespace Renderer;
+using namespace Renderer::Vulkan;
 
 namespace ComponentEngine
 {
@@ -214,7 +214,6 @@ namespace ComponentEngine
 		// Windowing data
 		SDL_Window* m_window;
 		NativeWindowHandle* m_window_handle;
-		RenderingAPI m_api;
 		const char* m_title; 
 		int m_width;
 		int m_height;
@@ -231,7 +230,7 @@ namespace ComponentEngine
 		UIManager* m_ui;
 
 		// Rendering Data
-		IRenderer* m_renderer = nullptr;
+		VulkanRenderer* m_renderer = nullptr;
 
 		std::map<std::string, PipelinePack> m_pipelines;
 

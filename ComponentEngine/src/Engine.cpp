@@ -59,10 +59,6 @@ ComponentEngine::Engine::~Engine()
 {
 	Stop();
 	delete m_threadManager;
-	/*for (auto i : m_thread_data)
-	{
-		delete i->thread_instance;
-	}*/
 }
 
 void ComponentEngine::Engine::Start()
@@ -70,7 +66,6 @@ void ComponentEngine::Engine::Start()
 	m_title = "Component Engine";
 	m_width = 1080;
 	m_height = 720;
-	m_api = RenderingAPI::VulkanAPI;
 	InitWindow();
 	InitEnteeZ();
 	InitRenderer();
@@ -274,7 +269,7 @@ void ComponentEngine::Engine::RenderFrame()
 	if (m_main_camera == nullptr)return;
 	GetRendererMutex().lock();
 	// Update all renderer's via there Update function
-	IRenderer::UpdateAll();
+	m_renderer->Update();
 	GetRendererMutex().unlock();
 }
 
@@ -638,7 +633,7 @@ void ComponentEngine::Engine::InitWindow()
 		m_title,
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		m_width, m_height,
-		GetWindowFlags(m_api) | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+		GetWindowFlags(VulkanAPI) | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
 	);
 	//SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	SDL_ShowWindow(m_window);
@@ -774,7 +769,7 @@ void ComponentEngine::Engine::DeInitEnteeZ()
 void ComponentEngine::Engine::InitRenderer()
 {
 	// Create a instance of the renderer
-	m_renderer = IRenderer::CreateRenderer(m_api);
+	m_renderer = new VulkanRenderer();
 	m_renderer->Start(m_window_handle);
 
 	// If the rendering was not fully created, error out
