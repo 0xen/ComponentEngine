@@ -122,6 +122,9 @@ void SetupShaders()
 int main(int argc, char **argv)
 {
 	engine = Engine::Singlton();
+	
+	//engine->SetFlag(EngineFlags::ReleaseBuild);
+
 	engine->Start();
 	SetupShaders();
 	RegisterCustomComponents();
@@ -129,7 +132,6 @@ int main(int argc, char **argv)
 	// Load the scene
 	engine->GetThreadManager()->AddTask([&](float frameTime) {
 		engine->LoadScene("../GameInstance.xml");
-		engine->UpdateScene();
 	});
 
 	engine->GetUIManager()->AddMenuElement(new MenuElement("Test", [&] {

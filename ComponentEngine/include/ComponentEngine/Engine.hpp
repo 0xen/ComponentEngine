@@ -33,6 +33,11 @@ using namespace Renderer::Vulkan;
 
 namespace ComponentEngine
 {
+	enum EngineFlags
+	{
+		ReleaseBuild = 0x01
+	};
+
 	enum ConsoleState
 	{
 		Default,
@@ -165,11 +170,11 @@ namespace ComponentEngine
 
 		std::mutex& GetLock(EngineLock lock);
 
-
 		std::vector<ConsoleMessage>& GetConsoleMessages();
 
-
 		std::map<std::string, ComponentTemplate> GetComponentRegister();
+
+		void SetFlag(int flags);
 
 		UIManager* GetUIManager();
 
@@ -318,6 +323,8 @@ namespace ComponentEngine
 		PhysicsWorld* m_physicsWorld;
 
 		ThreadManager* m_threadManager;
+
+		int m_flags;
 
 		// Store the various locks that will be needed
 		std::mutex m_locks[EngineLock::MAX];

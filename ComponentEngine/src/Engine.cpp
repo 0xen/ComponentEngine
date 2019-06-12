@@ -44,6 +44,7 @@ ComponentEngine::Engine::Engine()
 		m_keys[i] = false;
 	}
 
+	m_flags = 0;
 }
 
 Engine* ComponentEngine::Engine::Singlton()
@@ -69,21 +70,88 @@ void ComponentEngine::Engine::Start()
 	InitWindow();
 	InitEnteeZ();
 	InitRenderer();
+	InitImGUI();
 	InitPhysicsWorld();
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
 	m_running = EngineStates::Running;
-	m_play_state = PlayState::Editor;
 
 	m_threadManager = new ThreadManager(ThreadMode::Threading);
 
 	// Render a frame so you know it has not crashed xD
 	RenderFrame();
 
-	// Add UI task
-	m_threadManager->AddTask([&](float frameTime) {
-		UpdateUI(frameTime);
-	}, 30, "UI");
+	bool editor = !(m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild;
+	if (editor)
+	{
+		m_play_state = PlayState::Editor;
+		// Add UI task
+		m_threadManager->AddTask([&](float frameTime) {
+			UpdateUI(frameTime);
+		}, 30, "UI");
+
+		// Add Update Scene task
+		m_threadManager->AddTask([&, this](float frameTime) {
+			EntityManager& em = GetEntityManager();
+			m_logic_lock.lock();
+			if (m_play_state == PlayState::Play)
+			{
+				for (auto e : em.GetEntitys())
+				{
+					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
+					{
+						logic.Update(frameTime);
+					});
+				}
+			}
+			else
+			{
+				for (auto e : em.GetEntitys())
+				{
+					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
+					{
+						logic.EditorUpdate(frameTime);
+					});
+				}
+			}
+
+			m_logic_lock.unlock();
+		}, 60, "Scene Update");
+
+		// Update physics world
+		m_threadManager->AddTask([&](float frameTime) {
+
+			m_logic_lock.lock();
+			bool playing = m_play_state == PlayState::Play;
+			m_logic_lock.unlock();
+			if (playing)
+			{
+				m_physicsWorld->Update(frameTime);
+			}
+		}, 60, "PhysicsWorld");
+	}
+	else
+	{
+		m_play_state = PlayState::Play;
+		// Add Update Scene task
+		m_threadManager->AddTask([&, this](float frameTime) {
+			EntityManager& em = GetEntityManager();
+			m_logic_lock.lock();
+			for (auto e : em.GetEntitys())
+			{
+				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
+				{
+					logic.Update(frameTime);
+				});
+			}
+			m_logic_lock.unlock();
+		}, 60, "Scene Update");
+
+		// Update physics world
+		m_threadManager->AddTask([&](float frameTime) {
+			m_physicsWorld->Update(frameTime);
+		}, 60, "PhysicsWorld");
+	}
 
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime) {
@@ -95,46 +163,8 @@ void ComponentEngine::Engine::Start()
 		UpdateScene();
 	}, 60, "Scene Buffer Swapping");
 
-	// Update physics world
-	m_threadManager->AddTask([&](float frameTime) {
 
-		m_logic_lock.lock();
-		bool playing = m_play_state == PlayState::Play;
-		m_logic_lock.unlock();
-		if (playing)
-		{
-			m_physicsWorld->Update(frameTime);
-		}
-	}, 60, "PhysicsWorld");
-
-	// Add Update Scene task
-	m_threadManager->AddTask([&,this](float frameTime) {
-		EntityManager& em = GetEntityManager();
-
-		m_logic_lock.lock();
-		if (m_play_state == PlayState::Play)
-		{
-			for (auto e : em.GetEntitys())
-			{
-				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
-				{
-					logic.Update(frameTime);
-				});
-			}
-		}
-		else
-		{
-			for (auto e : em.GetEntitys())
-			{
-				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
-				{
-					logic.EditorUpdate(frameTime);
-				});
-			}
-		}
-		
-		m_logic_lock.unlock();
-	}, 60, "Scene Update");
+	
 
 	Log("Starting Engine", Info);
 }
@@ -354,6 +384,9 @@ bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
 	{
 		LoadXMLGameObject(node, prefabs_node);
 	}
+
+
+	UpdateScene();
 
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();
@@ -611,6 +644,11 @@ std::map<std::string, ComponentEngine::Engine::ComponentTemplate> ComponentEngin
 	return m_component_register;
 }
 
+void ComponentEngine::Engine::SetFlag(int flags)
+{
+	m_flags |= flags;
+}
+
 UIManager * ComponentEngine::Engine::GetUIManager()
 {
 	return m_ui;
@@ -821,7 +859,6 @@ void ComponentEngine::Engine::InitRenderer()
 	m_pipelines["Default"] = PipelinePack{ m_default_pipeline };
 	// Build and check default pipeline
 	assert(sucsess && "Unable to build default pipeline");
-	InitImGUI();
 	SetCamera(m_default_camera);
 
 }
@@ -898,15 +935,7 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi
 	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity->AddComponent<Transformation>(entity);
 	trans_wrapper->SetName("Transformation");
 
-
-
 	LoadGameObjectPrefab(entity, prefab_node, prefab_name);
-
-	
-
-
-
-
 
 	for (pugi::xml_node node : xml_entity.children("GameObject"))
 	{
@@ -917,6 +946,7 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi
 	{
 		AttachXMLComponent(node, entity);
 	}
+
 	// If this object has a parent, add it to the object
 	if (parent != nullptr)
 	{
@@ -928,7 +958,6 @@ void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi
 void ComponentEngine::Engine::LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name)
 {
 	if (prefab_name.size() == 0)return;
-
 
 	pugi::xml_node prefab = prefab_node.find_child_by_attribute("name", prefab_name.c_str());
 	for (pugi::xml_node node : prefab.children("Component"))
@@ -964,21 +993,26 @@ void ComponentEngine::Engine::InitImGUI()
 {
 
 	m_ui = new UIManager(this);
-	m_ui->AddElement(new Console("Console", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-	m_ui->AddElement(new ThreadingWindow("Threading", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-	m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-	m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-	m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-	m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
 
-	m_ui->AddMenuElement(new MenuElement("File", {
-		new MenuElement("Add",[&] {
+
+	bool editor = !(m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild;
+	if (editor)
+	{
+		m_ui->AddElement(new Console("Console", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+		m_ui->AddElement(new ThreadingWindow("Threading", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+		m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+		m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+		m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
+
+		m_ui->AddMenuElement(new MenuElement("File", {
+			new MenuElement("Add",[&] {
 			EntityManager& em = GetEntityManager();
 			enteez::Entity* entity = em.CreateEntity("New Entity");
 			Transformation& transformation = entity->AddComponent<Transformation>(entity)->Get();
 			transformation.SetParent(m_ui->GetCurrentSceneFocus().entity);
 		}),
-		new MenuElement("Reload Scene",[&] {
+			new MenuElement("Reload Scene",[&] {
 			m_engine->GetThreadManager()->AddTask([&](float frameTime) {
 
 				m_logic_lock.lock();
@@ -994,19 +1028,29 @@ void ComponentEngine::Engine::InitImGUI()
 
 			});
 		}),
-		new MenuElement("Exit",[&] {
+			new MenuElement("Exit",[&] {
 			GetRendererMutex().lock();
 			RequestStop();
 			GetRendererMutex().unlock();
 		})
+			}
+		));
 	}
-	));
-
 	
 
+	
 	// Init ImGUI
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
+
+	if (editor)
+	{
+		io.IniFilename = "EditorUI.ini";
+	}
+	else
+	{
+		io.IniFilename = "UI.ini";
+	}
 	io.DisplaySize = ImVec2(m_window_handle->width, m_window_handle->height);
 	io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable | ImGuiBackendFlags_HasMouseHoveredViewport;
