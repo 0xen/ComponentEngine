@@ -91,7 +91,7 @@ void ComponentEngine::Mesh::EntityHookXML(enteez::Entity & entity, pugi::xml_nod
 	}
 }
 
-void ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
+enteez::BaseComponentWrapper* ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
 {
 
 	if (!entity.HasComponent<Mesh>())
@@ -99,8 +99,9 @@ void ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
 		enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity);
 		mesh->SetName("Mesh");
 		Send(mesh->Get().m_entity, mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
+		return mesh;
 	}
-
+	return nullptr;///This is a bit shit and needs to be resolved. Need to dynamicly return the base component type
 }
 
 std::string ComponentEngine::Mesh::GetPath()

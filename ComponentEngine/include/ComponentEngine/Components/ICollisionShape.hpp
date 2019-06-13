@@ -7,6 +7,7 @@
 namespace enteez
 {
 	class Entity;
+	class BaseComponentWrapper;
 }
 
 namespace ComponentEngine

@@ -14,10 +14,12 @@
 #include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\UI.hpp>
+#include <ComponentEngine\Components\IO.hpp>
 
 namespace enteez
 {
 	class Entity;
+	class BaseComponentWrapper;
 }
 
 namespace pugi
@@ -27,8 +29,11 @@ namespace pugi
 
 namespace ComponentEngine
 {
-	class Transformation : public UI, public MsgRecive<TransformationPtrRedirect>
+	class Transformation : public UI, public IO, public MsgRecive<TransformationPtrRedirect>
 	{
+
+		glm::mat4 m_local_mat4;
+
 	public:
 		Transformation(enteez::Entity* entity)
 		{
@@ -50,6 +55,11 @@ namespace ComponentEngine
 		~Transformation();
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
+
+		virtual void Load(std::ifstream& in) ;
+		virtual void Save(std::ofstream& out) ;
+
+
 		void Translate(glm::vec3 translation);
 		void SetWorldX(float x);
 		void SetWorldY(float y);
@@ -92,7 +102,7 @@ namespace ComponentEngine
 		bool HasChildren();
 
 		enteez::Entity* GetEntity();
-		static void EntityHookDefault(enteez::Entity& entity);
+		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		friend class Mesh;
@@ -106,7 +116,6 @@ namespace ComponentEngine
 			glm::mat4** m_global_position_array;
 			glm::mat4* m_mat4;
 		};
-		glm::mat4 m_local_mat4;
 		enteez::Entity* m_parent = nullptr;
 		std::vector<Transformation*> m_children;
 		bool m_origional;

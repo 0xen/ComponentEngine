@@ -33,10 +33,11 @@ void ComponentEngine::Flamable::Display()
 	}
 }
 
-void ComponentEngine::Flamable::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::Flamable::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<Flamable>* wrapper = entity.AddComponent<Flamable>(&entity);
 	wrapper->SetName("Flamable");
+	return wrapper;
 }
 
 void ComponentEngine::Flamable::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

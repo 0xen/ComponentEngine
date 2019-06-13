@@ -305,6 +305,17 @@ void ComponentEngine::Transformation::Display()
 	}
 }
 
+void ComponentEngine::Transformation::Load(std::ifstream & in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), SizeOfOffsetRange(Transformation, m_local_mat4, m_local_mat4));
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::Save(std::ofstream & out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), SizeOfOffsetRange(Transformation, m_local_mat4, m_local_mat4));
+}
+
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)
 {
 	Rotate(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(angles.x));
@@ -340,7 +351,7 @@ enteez::Entity * ComponentEngine::Transformation::GetEntity()
 	return m_entity;
 }
 
-void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity& entity)
+enteez::BaseComponentWrapper* ComponentEngine::Transformation::EntityHookDefault(enteez::Entity& entity)
 {
 	std::vector<Transformation*> children;
 	if (entity.HasComponent<Transformation>())
@@ -362,6 +373,7 @@ void ComponentEngine::Transformation::EntityHookDefault(enteez::Entity& entity)
 	}
 	// Update parent and children transformations
 	trans.PushToPositionArray();
+	return trans_wrapper;
 }
 
 void ComponentEngine::Transformation::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)

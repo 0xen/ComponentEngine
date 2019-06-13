@@ -35,10 +35,11 @@ void ComponentEngine::SphereCollision::Display()
 
 }
 
-void ComponentEngine::SphereCollision::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::SphereCollision::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<SphereCollision>* mesh = entity.AddComponent<SphereCollision>(&entity);
 	mesh->SetName("Sphere Collision");
+	return mesh;
 }
 
 void ComponentEngine::SphereCollision::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

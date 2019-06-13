@@ -160,11 +160,11 @@ void ComponentEngine::Rigidbody::SetMass(float mass)
 	AddRigidbody(shape);
 }
 
-void ComponentEngine::Rigidbody::EntityHookDefault(enteez::Entity& entity)
+enteez::BaseComponentWrapper* ComponentEngine::Rigidbody::EntityHookDefault(enteez::Entity& entity)
 {
 	enteez::ComponentWrapper<Rigidbody>* mesh = entity.AddComponent<Rigidbody>(&entity);
 	mesh->SetName("Rigidbody");
-
+	return mesh;
 }
 
 void ComponentEngine::Rigidbody::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)

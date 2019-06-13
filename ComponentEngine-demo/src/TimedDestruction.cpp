@@ -48,10 +48,11 @@ void ComponentEngine::TimedDestruction::Update(float frame_time)
 	}
 }
 
-void ComponentEngine::TimedDestruction::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::TimedDestruction::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<TimedDestruction>* wrapper = entity.AddComponent<TimedDestruction>(&entity);
 	wrapper->SetName("TimedDestruction");
+	return wrapper;
 }
 
 void ComponentEngine::TimedDestruction::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

@@ -64,10 +64,11 @@ void ComponentEngine::MouseMovment::Display()
 	}
 }
 
-void ComponentEngine::MouseMovment::EntityHookDefault(enteez::Entity& entity)
+enteez::BaseComponentWrapper* ComponentEngine::MouseMovment::EntityHookDefault(enteez::Entity& entity)
 {
 	enteez::ComponentWrapper<MouseMovment>* wrapper = entity.AddComponent<MouseMovment>(&entity);
 	wrapper->SetName("Mouse Movment");
+	return wrapper;
 }
 
 void ComponentEngine::MouseMovment::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)

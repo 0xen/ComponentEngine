@@ -5,6 +5,7 @@
 namespace enteez
 {
 	class Entity;
+	class BaseComponentWrapper;
 }
 namespace pugi
 {

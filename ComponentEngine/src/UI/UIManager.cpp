@@ -260,7 +260,6 @@ void ComponentEngine::UIManager::RenderMainMenu()
 
 	if (ImGui::BeginMainMenuBar())
 	{
-
 		for (auto& e : m_menu_elements)
 		{
 			RenderMenuElement(e);
@@ -274,7 +273,18 @@ void ComponentEngine::UIManager::RenderMainMenu()
 void ComponentEngine::UIManager::RenderMenuElement(MenuElement * element)
 {
 	ImGui::PushID(element);
-	if (element->GetChildren().size() > 0)
+
+	switch (element->GetFlags())
+	{
+
+	case MenuElementFlags::Spacer:
+	{
+		ImGui::Separator();
+	}
+	break;
+
+		// Internal
+	case MenuElementFlags::DropDown:
 	{
 		if (ImGui::BeginMenu(element->GetText()))
 		{
@@ -285,13 +295,15 @@ void ComponentEngine::UIManager::RenderMenuElement(MenuElement * element)
 			ImGui::EndMenu();
 		}
 	}
-	else
+	break;
+	case MenuElementFlags::Button:
 	{
-
-		if (ImGui::MenuItem(element->GetText(), NULL, false))
+		if (ImGui::MenuItem(element->GetText(), NULL,false, element->Enabled()))
 		{
 			element->OnClick()();
 		}
+	}
+	break;
 	}
 	ImGui::PopID();
 }

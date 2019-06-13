@@ -17,10 +17,11 @@ void ComponentEngine::TeapotController::Display()
 
 }
 
-void ComponentEngine::TeapotController::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::TeapotController::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<TeapotController>* wrapper = entity.AddComponent<TeapotController>(&entity);
 	wrapper->SetName("Teapot Controller");
+	return wrapper;
 }
 
 void ComponentEngine::TeapotController::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

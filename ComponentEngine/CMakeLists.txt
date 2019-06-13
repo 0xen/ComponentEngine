@@ -44,6 +44,7 @@ source_group("Header Files\\ComponentEngine" FILES ${common_headers})
 
 set(component_headers
     include/ComponentEngine/Components/UI.hpp
+    include/ComponentEngine/Components/IO.hpp
     include/ComponentEngine/Components/TransferBuffers.hpp
     include/ComponentEngine/Components/ComponentMessages.hpp
     include/ComponentEngine/Components/MsgRecive.hpp

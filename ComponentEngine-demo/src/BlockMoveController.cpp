@@ -31,10 +31,11 @@ void ComponentEngine::BlockMoveController::Display()
 }
 
 
-void ComponentEngine::BlockMoveController::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::BlockMoveController::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<BlockMoveController>* wrapper = entity.AddComponent<BlockMoveController>(&entity);
 	wrapper->SetName("Block Move Controller");
+	return wrapper;
 }
 
 void ComponentEngine::BlockMoveController::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

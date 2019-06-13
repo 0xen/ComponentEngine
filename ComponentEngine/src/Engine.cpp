@@ -162,8 +162,6 @@ void ComponentEngine::Engine::Start()
 	m_threadManager->AddTask([&](float frameTime) {
 		UpdateScene();
 	}, 60, "Scene Buffer Swapping");
-
-
 	
 
 	Log("Starting Engine", Info);
@@ -473,33 +471,6 @@ VertexBase ComponentEngine::Engine::GetDefaultVertexModelPositionBinding()
 	};
 }
  
-/*float ComponentEngine::Engine::GetThreadDeltaTime()
-{
-	std::thread::id id = std::this_thread::get_id();
-	Uint64 now = SDL_GetPerformanceCounter();
-	auto it = m_thread_linker.find(id);
-	if (it == m_thread_linker.end())return 0.0f;
-	ThreadData*& data = m_thread_linker[id];
-	data->data_lock.lock();
-	Uint64 last = data->delta_time;
-	data->delta_time = now;
-	float temp = static_cast<float>((float)(now - last) / SDL_GetPerformanceFrequency());
-	data->data_lock.unlock();
-	return temp;
-}
-
-float ComponentEngine::Engine::GetLastThreadTime()
-{
-	std::thread::id id = std::this_thread::get_id();
-	auto it = m_thread_linker.find(id);
-	if (it == m_thread_linker.end())return 0.0f;
-	ThreadData*& data = m_thread_linker[id];
-	data->data_lock.lock();
-	float loop_time = data->loop_time;
-	data->data_lock.unlock();
-	return loop_time;
-}*/
-
 TextureStorage& ComponentEngine::Engine::GetTexture(std::string path)
 {
 	if (m_texture_storage.find(path) == m_texture_storage.end())
@@ -527,12 +498,6 @@ TextureStorage& ComponentEngine::Engine::GetTexture(std::string path)
 		texture_maps_descriptor_set->UpdateSet();
 
 		m_texture_storage[path].texture_descriptor_set = texture_maps_descriptor_set;
-
-
-
-
-
-
 
 
 		{
@@ -600,7 +565,7 @@ NativeWindowHandle* ComponentEngine::Engine::GetWindowHandle()
 	return m_window_handle;
 }
 
-void ComponentEngine::Engine::RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity &entity), void(*xml_initilizer)(enteez::Entity &entity, pugi::xml_node &component_data))
+void ComponentEngine::Engine::RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity &entity), void(*xml_initilizer)(enteez::Entity &entity, pugi::xml_node &component_data))
 {
 	m_component_register[name].default_initilizer = default_initilizer;
 	m_component_register[name].xml_initilizer = xml_initilizer;
@@ -784,10 +749,10 @@ void ComponentEngine::Engine::DeInitWindow()
 void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
-	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI>();
+	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI, IO>();
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
-	RegisterBase<ParticleSystem, Logic, UI, MsgRecive<ParticleSystemVisibility>>();
+	RegisterBase<ParticleSystem, Logic, UI, MsgRecive<ParticleSystemVisibility>, IO>();
 	RegisterBase<Camera, Logic, UI, TransferBuffers>(); 
 	RegisterBase<Rigidbody,
 		MsgRecive<TransformationChange>, MsgRecive<OnComponentEnter<ICollisionShape>>,
@@ -900,14 +865,14 @@ void ComponentEngine::Engine::DeInitRenderer()
 void ComponentEngine::Engine::InitComponentHooks()
 {
 	
-	RegisterComponentBase("Transformation", nullptr, Transformation::EntityHookXML);
+	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
 	RegisterComponentBase("Mesh", Mesh::EntityHookDefault, Mesh::EntityHookXML);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
-	RegisterComponentBase("ParticleSystem", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
+	RegisterComponentBase("Particle System", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
 	RegisterComponentBase("Camera", Camera::EntityHookDefault, Camera::EntityHookXML);
 	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault, Rigidbody::EntityHookXML);
-	RegisterComponentBase("BoxCollision", BoxCollision::EntityHookDefault, BoxCollision::EntityHookXML);
-	RegisterComponentBase("SphereCollision", SphereCollision::EntityHookDefault, SphereCollision::EntityHookXML);
+	RegisterComponentBase("Box Collision", BoxCollision::EntityHookDefault, BoxCollision::EntityHookXML);
+	RegisterComponentBase("Sphere Collision", SphereCollision::EntityHookDefault, SphereCollision::EntityHookXML);
 	
 
 	RegisterComponentBase("Indestructable", nullptr, nullptr);
@@ -1005,34 +970,152 @@ void ComponentEngine::Engine::InitImGUI()
 		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
 
-		m_ui->AddMenuElement(new MenuElement("File", {
+		m_ui->AddMenuElement(new MenuElement("File", 
+		{
 			new MenuElement("Add",[&] {
-			EntityManager& em = GetEntityManager();
-			enteez::Entity* entity = em.CreateEntity("New Entity");
-			Transformation& transformation = entity->AddComponent<Transformation>(entity)->Get();
-			transformation.SetParent(m_ui->GetCurrentSceneFocus().entity);
-		}),
+				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+					EntityManager& em = GetEntityManager();
+					enteez::Entity* entity = em.CreateEntity("New Entity");
+
+					Transformation::EntityHookDefault(*entity);
+
+					Transformation& transformation = entity->GetComponent<Transformation>();
+					transformation.SetParent(m_ui->GetCurrentSceneFocus().entity);
+				});
+			}),
 			new MenuElement("Reload Scene",[&] {
-			m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
 
-				m_logic_lock.lock();
-				GetRendererMutex().lock();
+					m_logic_lock.lock();
+					GetRendererMutex().lock();
 
-				GetEntityManager().Clear();
-				// Load in the scene
-				LoadScene(m_engine->GetCurrentScene().c_str(), false);
-				UpdateScene();
+					GetEntityManager().Clear();
+					// Load in the scene
+					LoadScene(m_engine->GetCurrentScene().c_str(), false);
+					UpdateScene();
 
-				GetRendererMutex().unlock();
-				m_logic_lock.unlock();
+					GetRendererMutex().unlock();
+					m_logic_lock.unlock();
 
-			});
-		}),
+				});
+			}),
+
+			new MenuElement(MenuElementFlags::Spacer),
+
+			new MenuElement("Save",[&] {
+				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+
+
+					std::ofstream out("output.bin");
+					EntityManager& em = GetEntityManager();
+
+					unsigned int entityCount = em.GetEntitys().size();
+					Common::Write(out, &entityCount, sizeof(unsigned int));
+
+					for (Entity* entity : em.GetEntitys())
+					{
+						// Output entitys name
+						Common::Write(out, entity->GetName());
+
+						// Output the amount of components the entity has
+						unsigned int componentCount = entity->GetComponentCount();
+						Common::Write(out, &componentCount, sizeof(unsigned int));
+
+
+						entity->ForEach([&](BaseComponentWrapper& wrapper) {
+							// Output Components name 
+							Common::Write(out, wrapper.GetName());
+
+							IO* io = nullptr;
+							if (em.BaseClassInstance(wrapper, io))
+							{
+								io->Save(out);
+							}
+						});
+					}
+					out.flush();
+					out.close();
+
+
+				});
+			}),
+
+			new MenuElement("Load",[&] {
+				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+
+					// clear scene
+					{
+						m_logic_lock.lock();
+						GetRendererMutex().lock();
+
+						GetEntityManager().Clear();
+						//UpdateScene();
+
+						GetRendererMutex().unlock();
+						m_logic_lock.unlock();
+					}
+
+					std::ifstream in("output.bin");
+
+					EntityManager& em = GetEntityManager();
+
+					m_logic_lock.lock();
+					GetRendererMutex().lock();
+
+					unsigned int entityCount;
+
+					Common::Read(in, &entityCount, sizeof(unsigned int));
+
+					for(int i = 0 ; i < entityCount; i++)
+					{
+						std::string entityName = Common::ReadString(in);
+
+						Entity* entity = em.CreateEntity(entityName);
+
+						unsigned int componentCount;
+
+						Common::Read(in, &componentCount, sizeof(unsigned int));
+
+						for (int j = 0; j < componentCount; j++)
+						{
+
+							std::string componentName = Common::ReadString(in);
+
+
+							auto it = m_component_register.find(componentName);
+							if (it != m_component_register.end())
+							{
+								BaseComponentWrapper* wrapper = it->second.default_initilizer(*entity);
+								IO* io = nullptr;
+								if (em.BaseClassInstance(*wrapper, io))
+								{
+									io->Load(in);
+								}
+							}
+							else
+							{
+								std::stringstream ss;
+								ss << "Unable to find component '" << componentName << "' for entity '" << entityName << "'";
+								Log(ss.str(), ComponentEngine::Warning);
+							}
+							
+						}
+
+
+					}
+					GetRendererMutex().unlock();
+					m_logic_lock.unlock();
+
+				});
+			}),
+
+			new MenuElement(MenuElementFlags::Spacer),
+
 			new MenuElement("Exit",[&] {
-			GetRendererMutex().lock();
-			RequestStop();
-			GetRendererMutex().unlock();
-		})
+				GetRendererMutex().lock();
+				RequestStop();
+				GetRendererMutex().unlock();
+			})
 			}
 		));
 	}

@@ -8,6 +8,7 @@
 namespace enteez
 {
 	class Entity;
+	class BaseComponentWrapper;
 }
 
 namespace pugi
@@ -25,7 +26,7 @@ namespace ComponentEngine
 		WaterSourceController(enteez::Entity* entity);
 
 		virtual void Display();
-		static void EntityHookDefault(enteez::Entity& entity);
+		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		virtual void ReciveMessage(enteez::Entity* sender, OnCollisionEnter& message);

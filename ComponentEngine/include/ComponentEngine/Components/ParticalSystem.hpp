@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ComponentEngine\Components\UI.hpp>
+#include <ComponentEngine\Components\IO.hpp>
 #include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine/Components/ComponentMessages.hpp>
 #include <ComponentEngine\ThreadHandler.hpp>
@@ -13,6 +14,7 @@
 namespace enteez
 {
 	class Entity;
+	class BaseComponentWrapper;
 }
 namespace Renderer
 {
@@ -93,7 +95,7 @@ namespace ComponentEngine
 		glm::vec4 color;
 	};
 
-	class ParticleSystem : public Logic, public UI, public MsgRecive<ParticleSystemVisibility>
+	class ParticleSystem : public Logic, public UI, public IO, public MsgRecive<ParticleSystemVisibility>
 	{
 	public:
 		ParticleSystem(enteez::Entity * entity);
@@ -103,7 +105,11 @@ namespace ComponentEngine
 
 		virtual void Update(float frame_time);
 		virtual void Display();
-		static void EntityHookDefault(enteez::Entity& entity);
+
+		virtual void Load(std::ifstream& in);
+		virtual void Save(std::ofstream& out);
+
+		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		virtual void ReciveMessage(enteez::Entity* sender, ParticleSystemVisibility& message);
@@ -144,12 +150,13 @@ namespace ComponentEngine
 		Renderer::IModel * m_model = nullptr;
 
 
+		/****** Start of IO payload *****/
 		ParticleSystemConfig m_config;
-
 		int m_particleCount;
-
 		bool m_running = true;
 		bool m_visible = true;
+		/****** End of IO Payload ******/
+		
 
 		bool m_ran_initial_build = false;
 	};

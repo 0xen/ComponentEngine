@@ -539,11 +539,23 @@ void ComponentEngine::ParticleSystem::Display()
 	m_particle_lock.unlock();
 }
 
-void ComponentEngine::ParticleSystem::EntityHookDefault(enteez::Entity & entity)
+void ComponentEngine::ParticleSystem::Load(std::ifstream & in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(ParticleSystem, m_config), SizeOfOffsetRange(ParticleSystem, m_config, m_visible));
+	RebuildAll();
+}
+
+void ComponentEngine::ParticleSystem::Save(std::ofstream & out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(ParticleSystem, m_config), SizeOfOffsetRange(ParticleSystem, m_config, m_visible));
+}
+
+enteez::BaseComponentWrapper* ComponentEngine::ParticleSystem::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<ParticleSystem>* wrapper = entity.AddComponent<ParticleSystem>(&entity);
 	wrapper->SetName("Particle System");
 	ParticleSystem& particel_system = wrapper->Get();
+	return wrapper;
 }
 
 void ComponentEngine::ParticleSystem::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

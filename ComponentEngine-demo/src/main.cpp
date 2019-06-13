@@ -26,21 +26,21 @@ void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
 	engine->RegisterBase<ItemHover, Logic, UI>();
-	engine->RegisterComponentBase("KeyboardMovment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
+	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
 	engine->RegisterBase<KeyboardMovment, Logic, UI>();
-	engine->RegisterComponentBase("MouseMovment", MouseMovment::EntityHookDefault, MouseMovment::EntityHookXML);
+	engine->RegisterComponentBase("Mouse Movment", MouseMovment::EntityHookDefault, MouseMovment::EntityHookXML);
 	engine->RegisterBase<MouseMovment, Logic, UI>();
 	engine->RegisterComponentBase("Flamable", Flamable::EntityHookDefault, Flamable::EntityHookXML);
 	engine->RegisterBase<Flamable, UI, MsgRecive<OnCollisionEnter>>();
-	engine->RegisterComponentBase("BlockMoveController", BlockMoveController::EntityHookDefault, BlockMoveController::EntityHookXML);
+	engine->RegisterComponentBase("Block Move Controller", BlockMoveController::EntityHookDefault, BlockMoveController::EntityHookXML);
 	engine->RegisterBase<BlockMoveController, Logic, UI>();
-	engine->RegisterComponentBase("WaterSourceController", WaterSourceController::EntityHookDefault, WaterSourceController::EntityHookXML);
+	engine->RegisterComponentBase("Water Source Controller", WaterSourceController::EntityHookDefault, WaterSourceController::EntityHookXML);
 	engine->RegisterBase<WaterSourceController, UI, MsgRecive<OnCollisionEnter>>();
-	engine->RegisterComponentBase("TeapotController", TeapotController::EntityHookDefault, TeapotController::EntityHookXML);
+	engine->RegisterComponentBase("Teapot Controller", TeapotController::EntityHookDefault, TeapotController::EntityHookXML);
 	engine->RegisterBase<TeapotController, UI, MsgRecive<OnCollisionEnter>, MsgRecive<OnCollisionExit>>();
-	engine->RegisterComponentBase("BlockSpawner", BlockSpawner::EntityHookDefault, BlockSpawner::EntityHookXML);
+	engine->RegisterComponentBase("Block Spawner", BlockSpawner::EntityHookDefault, BlockSpawner::EntityHookXML);
 	engine->RegisterBase<BlockSpawner, Logic>();
-	engine->RegisterComponentBase("TimedDestruction", TimedDestruction::EntityHookDefault, TimedDestruction::EntityHookXML);
+	engine->RegisterComponentBase("Timed Destruction", TimedDestruction::EntityHookDefault, TimedDestruction::EntityHookXML);
 	engine->RegisterBase<TimedDestruction, Logic>();
 }
 
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
 	// Load the scene
 	engine->GetThreadManager()->AddTask([&](float frameTime) {
-		engine->LoadScene("../GameInstance.xml");
+		//engine->LoadScene("../GameInstance.xml");
 	});
 
 	engine->GetUIManager()->AddMenuElement(new MenuElement("Test", [&] {

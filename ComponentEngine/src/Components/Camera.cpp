@@ -112,11 +112,11 @@ void ComponentEngine::Camera::Display()
 
 }
 
-void ComponentEngine::Camera::EntityHookDefault(enteez::Entity& entity)
+enteez::BaseComponentWrapper* ComponentEngine::Camera::EntityHookDefault(enteez::Entity& entity)
 {
 	enteez::ComponentWrapper<Camera>* mesh = entity.AddComponent<Camera>(&entity);
 	mesh->SetName("Camera");
-
+	return mesh;
 }
 
 void ComponentEngine::Camera::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)

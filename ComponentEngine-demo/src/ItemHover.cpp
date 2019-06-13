@@ -80,10 +80,11 @@ void ComponentEngine::ItemHover::Display()
 	}
 }
 
-void ComponentEngine::ItemHover::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::ItemHover::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<ItemHover>* wrapper = entity.AddComponent<ItemHover>(&entity);
 	wrapper->SetName("ItemHover");
+	return wrapper;
 }
 
 void ComponentEngine::ItemHover::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

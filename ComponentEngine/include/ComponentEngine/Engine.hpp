@@ -94,7 +94,7 @@ namespace ComponentEngine
 	public:
 		struct ComponentTemplate
 		{
-			void(*default_initilizer)(enteez::Entity& entity) = nullptr;
+			BaseComponentWrapper*(*default_initilizer)(enteez::Entity& entity) = nullptr;
 			void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data) = nullptr;
 		};
 
@@ -158,7 +158,7 @@ namespace ComponentEngine
 
 		NativeWindowHandle* GetWindowHandle();
 
-		void RegisterComponentBase(std::string name, void(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
+		void RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
 
 		void GrabMouse(bool grab);
 

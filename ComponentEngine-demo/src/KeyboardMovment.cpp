@@ -65,10 +65,11 @@ void ComponentEngine::KeyboardMovment::Display()
 	}
 }
 
-void ComponentEngine::KeyboardMovment::EntityHookDefault(enteez::Entity& entity)
+enteez::BaseComponentWrapper* ComponentEngine::KeyboardMovment::EntityHookDefault(enteez::Entity& entity)
 {
 	enteez::ComponentWrapper<KeyboardMovment>* wrapper = entity.AddComponent<KeyboardMovment>(&entity);
 	wrapper->SetName("Keyboard Movment");
+	return wrapper;
 }
 
 void ComponentEngine::KeyboardMovment::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)

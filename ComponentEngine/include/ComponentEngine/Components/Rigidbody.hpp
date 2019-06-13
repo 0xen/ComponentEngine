@@ -15,6 +15,7 @@
 namespace enteez
 {
 	class Entity;
+	class BaseComponentWrapper;
 }
 
 namespace pugi
@@ -50,7 +51,7 @@ namespace ComponentEngine
 
 		void SetMass(float mass);
 
-		static void EntityHookDefault(enteez::Entity& entity);
+		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationChange& message);

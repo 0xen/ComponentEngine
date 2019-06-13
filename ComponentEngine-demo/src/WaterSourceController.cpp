@@ -19,10 +19,11 @@ void ComponentEngine::WaterSourceController::Display()
 
 }
 
-void ComponentEngine::WaterSourceController::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::WaterSourceController::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<WaterSourceController>* wrapper = entity.AddComponent<WaterSourceController>(&entity);
 	wrapper->SetName("Water Source Controller");
+	return wrapper;
 }
 
 void ComponentEngine::WaterSourceController::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)

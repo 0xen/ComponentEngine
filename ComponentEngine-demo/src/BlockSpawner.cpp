@@ -86,10 +86,11 @@ void ComponentEngine::BlockSpawner::Update(float frame_time)
 	}
 }
 
-void ComponentEngine::BlockSpawner::EntityHookDefault(enteez::Entity & entity)
+enteez::BaseComponentWrapper* ComponentEngine::BlockSpawner::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<BlockSpawner>* wrapper = entity.AddComponent<BlockSpawner>(&entity);
 	wrapper->SetName("BlockSpawner");
+	return wrapper;
 }
 
 void ComponentEngine::BlockSpawner::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
