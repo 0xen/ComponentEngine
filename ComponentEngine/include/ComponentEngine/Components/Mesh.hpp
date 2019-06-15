@@ -20,10 +20,7 @@ namespace enteez
 	class Entity;
 	class BaseComponentWrapper;
 }
-namespace pugi
-{
-	class xml_node;
-}
+
 namespace Renderer
 {
 	class IVertexBuffer;
@@ -97,7 +94,6 @@ namespace ComponentEngine
 		Mesh(enteez::Entity* entity, std::string path);
 		~Mesh();
 		void ChangePath(std::string path);
-		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 		std::string GetPath();
 		bool Loaded();

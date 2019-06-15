@@ -13,10 +13,6 @@ namespace enteez
 	class BaseComponentWrapper;
 }
 
-namespace pugi
-{
-	class xml_node;
-}
 namespace Renderer
 {
 	class IUniformBuffer;
@@ -43,7 +39,6 @@ namespace ComponentEngine
 		virtual void Display();
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
-		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		void SetMainCamera();
 		IUniformBuffer* GetCameraBuffer();

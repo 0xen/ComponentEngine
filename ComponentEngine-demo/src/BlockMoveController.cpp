@@ -1,8 +1,5 @@
 #include <BlockMoveController.hpp>
 
-
-
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -36,11 +33,4 @@ enteez::BaseComponentWrapper* ComponentEngine::BlockMoveController::EntityHookDe
 	enteez::ComponentWrapper<BlockMoveController>* wrapper = entity.AddComponent<BlockMoveController>(&entity);
 	wrapper->SetName("Block Move Controller");
 	return wrapper;
-}
-
-void ComponentEngine::BlockMoveController::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<BlockMoveController>* wrapper = entity.AddComponent<BlockMoveController>(&entity);
-	wrapper->SetName("Block Move Controller");
-
 }

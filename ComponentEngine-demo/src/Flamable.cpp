@@ -2,7 +2,6 @@
 
 
 #include <ComponentEngine/Engine.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -38,16 +37,6 @@ enteez::BaseComponentWrapper* ComponentEngine::Flamable::EntityHookDefault(entee
 	enteez::ComponentWrapper<Flamable>* wrapper = entity.AddComponent<Flamable>(&entity);
 	wrapper->SetName("Flamable");
 	return wrapper;
-}
-
-void ComponentEngine::Flamable::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<Flamable>* wrapper = entity.AddComponent<Flamable>(&entity);
-	wrapper->SetName("Flamable");
-
-	Flamable& flamale = wrapper->Get();
-
-	flamale.SetOnFire(component_data.attribute("onFire").as_bool(false));
 }
 
 void ComponentEngine::Flamable::ReciveMessage(enteez::Entity * sender, OnCollisionEnter & message)

@@ -2,7 +2,6 @@
 
 #include <ComponentEngine\Components\Transformation.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 
@@ -85,10 +84,4 @@ enteez::BaseComponentWrapper* ComponentEngine::ItemHover::EntityHookDefault(ente
 	enteez::ComponentWrapper<ItemHover>* wrapper = entity.AddComponent<ItemHover>(&entity);
 	wrapper->SetName("ItemHover");
 	return wrapper;
-}
-
-void ComponentEngine::ItemHover::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<ItemHover>* wrapper = entity.AddComponent<ItemHover>(&entity);
-	wrapper->SetName("ItemHover");
 }

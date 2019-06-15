@@ -1,5 +1,4 @@
 #include <ComponentEngine\Components\Camera.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\Transformation.hpp>
 
@@ -117,17 +116,6 @@ enteez::BaseComponentWrapper* ComponentEngine::Camera::EntityHookDefault(enteez:
 	enteez::ComponentWrapper<Camera>* mesh = entity.AddComponent<Camera>(&entity);
 	mesh->SetName("Camera");
 	return mesh;
-}
-
-void ComponentEngine::Camera::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
-{
-	enteez::ComponentWrapper<Camera>* cameraWrapper = entity.AddComponent<Camera>(&entity);
-	cameraWrapper->SetName("Camera");
-
-	Camera& camera = cameraWrapper->Get();
-	camera.m_near_clip = component_data.child("NearClip").attribute("value").as_float(0.1f);
-	camera.m_far_clip = component_data.child("FarClip").attribute("value").as_float(200.0f);
-	camera.UpdateProjection();
 }
 
 void ComponentEngine::Camera::SetMainCamera()

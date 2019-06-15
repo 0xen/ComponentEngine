@@ -2,7 +2,6 @@
 
 
 #include <ComponentEngine/Engine.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 
 #include <ComponentEngine/Components/Renderer.hpp>
@@ -91,13 +90,4 @@ enteez::BaseComponentWrapper* ComponentEngine::BlockSpawner::EntityHookDefault(e
 	enteez::ComponentWrapper<BlockSpawner>* wrapper = entity.AddComponent<BlockSpawner>(&entity);
 	wrapper->SetName("BlockSpawner");
 	return wrapper;
-}
-
-void ComponentEngine::BlockSpawner::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
-{
-	enteez::ComponentWrapper<BlockSpawner>* wrapper = entity.AddComponent<BlockSpawner>(&entity);
-	wrapper->SetName("BlockSpawner");
-
-	BlockSpawner& spawner = wrapper->Get();
-
 }

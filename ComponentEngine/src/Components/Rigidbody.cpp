@@ -1,5 +1,4 @@
 #include <ComponentEngine\Components\Rigidbody.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\PhysicsWorld.hpp>
 #include <ComponentEngine\Components\BoxCollision.hpp>
@@ -165,39 +164,6 @@ enteez::BaseComponentWrapper* ComponentEngine::Rigidbody::EntityHookDefault(ente
 	enteez::ComponentWrapper<Rigidbody>* mesh = entity.AddComponent<Rigidbody>(&entity);
 	mesh->SetName("Rigidbody");
 	return mesh;
-}
-
-void ComponentEngine::Rigidbody::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
-{
-	enteez::ComponentWrapper<Rigidbody>* mesh = entity.AddComponent<Rigidbody>(&entity);
-	mesh->SetName("Rigidbody");
-
-	Rigidbody& rigidbody = mesh->Get();
-
-
-
-	rigidbody.m_useGravity = component_data.child("UseGravity").attribute("value").as_bool(true);
-	rigidbody.m_useCollision = component_data.child("UseCollision").attribute("value").as_bool(true);
-
-	rigidbody.m_mass = component_data.child("Mass").attribute("value").as_float(1.0f);
-
-	rigidbody.m_friction = component_data.child("Friction").attribute("value").as_float(0.0f);
-	rigidbody.m_RollingFriction = component_data.child("RollingFriction").attribute("value").as_float(0.0f);
-	rigidbody.m_SpinningFriction = component_data.child("SpinningFriction").attribute("value").as_float(0.0f);
-	rigidbody.m_AnisotropicFriction = btVector3(
-		component_data.child("AnisotropicFriction").attribute("x").as_float(0.0f),
-		component_data.child("AnisotropicFriction").attribute("y").as_float(0.0f),
-		component_data.child("AnisotropicFriction").attribute("z").as_float(0.0f)
-	);
-
-	rigidbody.Rebuild();
-
-
-
-	pugi::xml_node position_node = component_data.child("Position");
-
-
-
 }
 
 void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, TransformationChange & message)

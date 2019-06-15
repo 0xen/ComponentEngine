@@ -4,13 +4,10 @@
 #include <renderer\vulkan\VulkanRenderer.hpp>
 
 #include <ComponentEngine\Components\Transformation.hpp>
-#include <ComponentEngine\Components\Indestructable.hpp>
 #include <ComponentEngine\Components\Camera.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <ComponentEngine\ThreadHandler.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\ThreadManager.hpp>
-#include <ComponentEngine/pugixml.hpp>
 #include <ComponentEngine/PhysicsWorld.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -93,12 +90,6 @@ namespace ComponentEngine
 	class Engine : public EnteeZ
 	{
 	public:
-		struct ComponentTemplate
-		{
-			BaseComponentWrapper*(*default_initilizer)(enteez::Entity& entity) = nullptr;
-			void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data) = nullptr;
-		};
-
 
 
 		static Engine* Singlton();
@@ -160,7 +151,7 @@ namespace ComponentEngine
 
 		NativeWindowHandle* GetWindowHandle();
 
-		void RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity& entity), void(*xml_initilizer)(enteez::Entity& entity, pugi::xml_node& component_data));
+		void RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity& entity));
 
 		void GrabMouse(bool grab);
 
@@ -174,7 +165,7 @@ namespace ComponentEngine
 
 		std::vector<ConsoleMessage>& GetConsoleMessages();
 
-		std::map<std::string, ComponentTemplate> GetComponentRegister();
+		std::map<std::string, BaseComponentWrapper*(*)(enteez::Entity& entity)> GetComponentRegister();
 
 		void SetFlag(int flags);
 
@@ -198,10 +189,6 @@ namespace ComponentEngine
 
 		void InitPhysicsWorld();
 		void DeInitPhysicsWorld();
-
-		void LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent = nullptr);
-		void LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name);
-		void AttachXMLComponent(pugi::xml_node& xml_component, enteez::Entity* entity);
 
 		void InitImGUI();
 		void UpdateImGUI();
@@ -315,7 +302,7 @@ namespace ComponentEngine
 		//std::vector<ThreadData*> m_thread_data;
 		//std::map<std::thread::id, ThreadData*> m_thread_linker;
 
-		std::map<std::string, ComponentTemplate> m_component_register;
+		std::map<std::string, BaseComponentWrapper*(*)(enteez::Entity& entity)> m_component_register;
 
 		std::map<std::string, void(*)(enteez::Entity& entity)> m_component_gui;
 
@@ -323,7 +310,6 @@ namespace ComponentEngine
 
 		std::string m_currentScene;
 		std::string m_currentSceneDirectory;
-		pugi::xml_document m_xml_scene;
 
 		PhysicsWorld* m_physicsWorld;
 

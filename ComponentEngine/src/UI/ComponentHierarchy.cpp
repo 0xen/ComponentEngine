@@ -78,7 +78,7 @@ void ComponentEngine::ComponentHierarchy::Contents()
 								ImGui::Separator();
 								ImGui::PushID(wrapper.GetComponentPtr());
 
-								bool hasIndestructable = m_manager->GetCurrentSceneFocus().entity->HasComponent<Indestructable>() || wrapper.GetName() == "Transformation";
+								bool hasIndestructable = wrapper.GetName() == "Transformation";
 
 								componentBeenDestroyed = !hasIndestructable && ImGui::SmallButton("X");
 
@@ -144,13 +144,13 @@ void ComponentEngine::ComponentHierarchy::RenderComponentList(Entity * entity)
 		{
 			static std::string item_current = "Renderer";
 
-			std::map<std::string, ComponentEngine::Engine::ComponentTemplate> componentRegister = m_engine->GetComponentRegister();
+			auto componentRegister = m_engine->GetComponentRegister();
 
 			if (ImGui::BeginCombo("Component", item_current.c_str()))
 			{
 				for (auto it : componentRegister)
 				{
-					if (it.second.default_initilizer != nullptr)
+					if (it.second != nullptr)
 					{
 						bool is_selected = (item_current == it.first);
 						if (ImGui::Selectable(it.first.c_str(), is_selected))
@@ -169,10 +169,10 @@ void ComponentEngine::ComponentHierarchy::RenderComponentList(Entity * entity)
 				auto it = componentRegister.find(item_current);
 				if (it != componentRegister.end())
 				{
-					if (it->second.default_initilizer != nullptr)
+					if (it->second != nullptr)
 					{
 						// In-case we replace the current component with a new one, we want to forget the old one now
-						it->second.default_initilizer(*m_manager->GetCurrentSceneFocus().entity);
+						it->second(*m_manager->GetCurrentSceneFocus().entity);
 					}
 				}
 				ImGui::CloseCurrentPopup();

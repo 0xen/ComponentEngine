@@ -30,10 +30,6 @@ namespace Renderer
 }
 
 
-namespace pugi
-{
-	class xml_node;
-}
 namespace ComponentEngine
 {
 	struct ParticleSystemBufferConfig
@@ -110,7 +106,6 @@ namespace ComponentEngine
 		virtual void Save(std::ofstream& out);
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
-		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		virtual void ReciveMessage(enteez::Entity* sender, ParticleSystemVisibility& message);
 		void ResetTimer();

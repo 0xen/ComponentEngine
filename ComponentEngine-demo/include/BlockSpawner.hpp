@@ -8,11 +8,6 @@ namespace enteez
 	class BaseComponentWrapper;
 }
 
-namespace pugi
-{
-	class xml_node;
-}
-
 namespace ComponentEngine
 {
 
@@ -27,6 +22,5 @@ namespace ComponentEngine
 		void Update(float frame_time);
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
-		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 	};
 }

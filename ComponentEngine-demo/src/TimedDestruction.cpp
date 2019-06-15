@@ -2,7 +2,6 @@
 
 
 #include <ComponentEngine/Engine.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -53,13 +52,4 @@ enteez::BaseComponentWrapper* ComponentEngine::TimedDestruction::EntityHookDefau
 	enteez::ComponentWrapper<TimedDestruction>* wrapper = entity.AddComponent<TimedDestruction>(&entity);
 	wrapper->SetName("TimedDestruction");
 	return wrapper;
-}
-
-void ComponentEngine::TimedDestruction::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<TimedDestruction>* wrapper = entity.AddComponent<TimedDestruction>(&entity);
-	wrapper->SetName("TimedDestruction");
-
-	TimedDestruction& flamale = wrapper->Get();
-
 }

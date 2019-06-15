@@ -1,6 +1,5 @@
 #include <MouseMovment.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\UI\UIManager.hpp>
 #include <EnteeZ\EnteeZ.hpp>
@@ -69,10 +68,4 @@ enteez::BaseComponentWrapper* ComponentEngine::MouseMovment::EntityHookDefault(e
 	enteez::ComponentWrapper<MouseMovment>* wrapper = entity.AddComponent<MouseMovment>(&entity);
 	wrapper->SetName("Mouse Movment");
 	return wrapper;
-}
-
-void ComponentEngine::MouseMovment::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
-{
-	enteez::ComponentWrapper<MouseMovment>* wrapper = entity.AddComponent<MouseMovment>(&entity);
-	wrapper->SetName("Mouse Movment");
 }

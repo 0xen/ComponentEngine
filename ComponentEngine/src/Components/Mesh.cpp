@@ -4,7 +4,6 @@
 #include <ComponentEngine\Common.hpp>
 
 #include <ComponentEngine\ThreadHandler.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 
@@ -50,45 +49,6 @@ void ComponentEngine::Mesh::ChangePath(std::string path)
 	m_file_path.data.GenerateFileForm(path);
 	m_file_path.SetMessage(m_file_path.data.shortForm);
 	m_dir = Common::GetDir(m_file_path.data.longForm);
-}
-
-void ComponentEngine::Mesh::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	pugi::xml_node mesh_node = component_data.child("Path");
-	if (mesh_node)
-	{
-		std::stringstream ss;
-		ss << Engine::Singlton()->GetCurrentSceneDirectory(); // Working path
-		ss << mesh_node.attribute("value").as_string(); // File path
-		std::string path = ss.str();
-
-		if (entity.HasComponent<Mesh>())
-		{
-			Mesh& mesh = entity.GetComponent<Mesh>();
-
-			Engine::Singlton()->GetRendererMutex().lock();
-			mesh.UnloadModel();
-			mesh.ChangePath(path);
-			mesh.LoadModel();
-			Engine::Singlton()->GetRendererMutex().unlock();
-		}
-		else
-		{
-			enteez::ComponentWrapper<Mesh>* mesh = entity.AddComponent<Mesh>(&entity, path);
-			mesh->SetName("Mesh");
-			if (!mesh->Get().Loaded())
-			{
-				std::cout << "Mesh: Unable to find mesh (" << path.c_str() << ")" << std::endl;
-				entity.RemoveComponent<Mesh>();
-			}
-			else
-			{
-				Send(mesh->Get().m_entity, mesh->Get().m_entity, OnComponentEnter<Mesh>(&mesh->Get()));
-			}
-		}
-
-		
-	}
 }
 
 enteez::BaseComponentWrapper* ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)

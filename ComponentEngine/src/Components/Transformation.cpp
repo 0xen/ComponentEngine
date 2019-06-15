@@ -1,6 +1,5 @@
 #include <ComponentEngine\Components\Transformation.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <ComponentEngine/Engine.hpp>
@@ -374,56 +373,6 @@ enteez::BaseComponentWrapper* ComponentEngine::Transformation::EntityHookDefault
 	// Update parent and children transformations
 	trans.PushToPositionArray();
 	return trans_wrapper;
-}
-
-void ComponentEngine::Transformation::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
-{
-
-	std::vector<Transformation*> children;
-	if(entity.HasComponent<Transformation>())
-	{
-		Transformation& trans = entity.GetComponent<Transformation>();
-		children = trans.GetChildren();
-	}
-
-	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity.AddComponent<Transformation>(&entity);
-	trans_wrapper->SetName("Transformation");
-	Transformation& trans = trans_wrapper->Get();
-	pugi::xml_node position_node = component_data.child("Position");
-	if (position_node)
-	{
-		trans.Translate(glm::vec3(
-			position_node.attribute("x").as_float(),
-			position_node.attribute("y").as_float(),
-			position_node.attribute("z").as_float()
-		));
-	}
-	pugi::xml_node rotation_node = component_data.child("Rotation");
-	if (rotation_node)
-	{
-		trans.Rotate(glm::vec3(
-			rotation_node.attribute("x").as_float(),
-			rotation_node.attribute("y").as_float(),
-			rotation_node.attribute("z").as_float()
-		));
-	}
-	pugi::xml_node scale_node = component_data.child("Scale");
-	if (scale_node)
-	{
-		trans.Scale(glm::vec3(
-			scale_node.attribute("x").as_float(),
-			scale_node.attribute("y").as_float(),
-			scale_node.attribute("z").as_float()
-		));
-	}
-
-	// Add children if it has a transformation previously
-	for (Transformation* child : children)
-	{
-		trans.AddChild(child);
-	}
-	// Update parent and children transformations
-	trans.PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::AddChild(Transformation * trans)

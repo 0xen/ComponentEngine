@@ -1,8 +1,5 @@
 #include <WaterSourceController.hpp>
 
-
-
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -24,12 +21,6 @@ enteez::BaseComponentWrapper* ComponentEngine::WaterSourceController::EntityHook
 	enteez::ComponentWrapper<WaterSourceController>* wrapper = entity.AddComponent<WaterSourceController>(&entity);
 	wrapper->SetName("Water Source Controller");
 	return wrapper;
-}
-
-void ComponentEngine::WaterSourceController::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<WaterSourceController>* wrapper = entity.AddComponent<WaterSourceController>(&entity);
-	wrapper->SetName("WaterSourceController");
 }
 
 void ComponentEngine::WaterSourceController::ReciveMessage(enteez::Entity * sender, OnCollisionEnter & message)

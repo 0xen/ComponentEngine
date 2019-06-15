@@ -1,5 +1,4 @@
 #include <ComponentEngine\Engine.hpp>
-#include <ComponentEngine/pugixml.hpp>
 
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
@@ -182,20 +181,6 @@ void ComponentEngine::Engine::Stop()
 
 
 	GetRendererMutex().lock();
-
-
-
-
-
-
-
-	std::stringstream ss;
-	ss << m_currentSceneDirectory;
-	ss << "/test.xml";
-	m_xml_scene.save_file(ss.str().c_str());
-
-
-
 
 
 	GetEntityManager().Clear();
@@ -430,7 +415,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 			auto it = m_component_register.find(componentName);
 			if (it != m_component_register.end())
 			{
-				BaseComponentWrapper* wrapper = it->second.default_initilizer(*entity);
+				BaseComponentWrapper* wrapper = it->second(*entity);
 				IO* io = nullptr;
 				if (em.BaseClassInstance(*wrapper, io))
 				{
@@ -663,10 +648,9 @@ NativeWindowHandle* ComponentEngine::Engine::GetWindowHandle()
 	return m_window_handle;
 }
 
-void ComponentEngine::Engine::RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity &entity), void(*xml_initilizer)(enteez::Entity &entity, pugi::xml_node &component_data))
+void ComponentEngine::Engine::RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity &entity))
 {
-	m_component_register[name].default_initilizer = default_initilizer;
-	m_component_register[name].xml_initilizer = xml_initilizer;
+	m_component_register[name] = default_initilizer;
 }
 
 void ComponentEngine::Engine::GrabMouse(bool grab)
@@ -702,7 +686,7 @@ std::vector<ConsoleMessage>& ComponentEngine::Engine::GetConsoleMessages()
 	return m_console;
 }
 
-std::map<std::string, ComponentEngine::Engine::ComponentTemplate> ComponentEngine::Engine::GetComponentRegister()
+std::map<std::string, BaseComponentWrapper*(*)(enteez::Entity& entity)> ComponentEngine::Engine::GetComponentRegister()
 {
 	return m_component_register;
 }
@@ -963,17 +947,14 @@ void ComponentEngine::Engine::DeInitRenderer()
 void ComponentEngine::Engine::InitComponentHooks()
 {
 	
-	RegisterComponentBase("Transformation", Transformation::EntityHookDefault, Transformation::EntityHookXML);
-	RegisterComponentBase("Mesh", Mesh::EntityHookDefault, Mesh::EntityHookXML);
-	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault, RendererComponent::EntityHookXML);
-	RegisterComponentBase("Particle System", ParticleSystem::EntityHookDefault, ParticleSystem::EntityHookXML);
-	RegisterComponentBase("Camera", Camera::EntityHookDefault, Camera::EntityHookXML);
-	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault, Rigidbody::EntityHookXML);
-	RegisterComponentBase("Box Collision", BoxCollision::EntityHookDefault, BoxCollision::EntityHookXML);
-	RegisterComponentBase("Sphere Collision", SphereCollision::EntityHookDefault, SphereCollision::EntityHookXML);
-	
-
-	RegisterComponentBase("Indestructable", nullptr, nullptr);
+	RegisterComponentBase("Transformation", Transformation::EntityHookDefault);
+	RegisterComponentBase("Mesh", Mesh::EntityHookDefault);
+	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault);
+	RegisterComponentBase("Particle System", ParticleSystem::EntityHookDefault);
+	RegisterComponentBase("Camera", Camera::EntityHookDefault);
+	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault);
+	RegisterComponentBase("Box Collision", BoxCollision::EntityHookDefault);
+	RegisterComponentBase("Sphere Collision", SphereCollision::EntityHookDefault);
 }
 
 void ComponentEngine::Engine::InitPhysicsWorld()
@@ -984,72 +965,6 @@ void ComponentEngine::Engine::InitPhysicsWorld()
 void ComponentEngine::Engine::DeInitPhysicsWorld()
 {
 	delete m_physicsWorld;
-}
-
-
-void ComponentEngine::Engine::LoadXMLGameObject(pugi::xml_node& xml_entity, pugi::xml_node& prefab_node, Entity* parent)
-{
-	std::string name = xml_entity.attribute("name").as_string();
-	std::string prefab_name = xml_entity.attribute("prefab").as_string();
-
-
-	enteez::Entity* entity = GetEntityManager().CreateEntity(name.size() > 0 ? name : "Entity");
-
-	enteez::ComponentWrapper<Transformation>* trans_wrapper = entity->AddComponent<Transformation>(entity);
-	trans_wrapper->SetName("Transformation");
-
-	LoadGameObjectPrefab(entity, prefab_node, prefab_name);
-
-	for (pugi::xml_node node : xml_entity.children("GameObject"))
-	{
-		LoadXMLGameObject(node, prefab_node, entity);
-	}
-
-	for (pugi::xml_node node : xml_entity.children("Component"))
-	{
-		AttachXMLComponent(node, entity);
-	}
-
-	// If this object has a parent, add it to the object
-	if (parent != nullptr)
-	{
-		entity->GetComponent<Transformation>().SetParent(parent);
-	}
-}
-
-
-void ComponentEngine::Engine::LoadGameObjectPrefab(Entity* entity, pugi::xml_node& prefab_node, std::string prefab_name)
-{
-	if (prefab_name.size() == 0)return;
-
-	pugi::xml_node prefab = prefab_node.find_child_by_attribute("name", prefab_name.c_str());
-	for (pugi::xml_node node : prefab.children("Component"))
-	{
-		AttachXMLComponent(node, entity);
-	}
-	for (pugi::xml_node node : prefab.children("GameObject"))
-	{
-		LoadXMLGameObject(node, prefab_node, entity);
-	}
-
-	// Load the prefabs prefab
-	std::string prefabs_prefab_name = prefab.attribute("prefab").as_string();
-	LoadGameObjectPrefab(entity, prefab_node, prefabs_prefab_name);
-
-}
-
-void ComponentEngine::Engine::AttachXMLComponent(pugi::xml_node & xml_component, enteez::Entity * entity)
-{
-	std::string name = xml_component.attribute("name").as_string();
-	auto& it = m_component_register.find(name);
-	if (it != m_component_register.end())
-	{
-		m_component_register[name].xml_initilizer(*entity, xml_component);
-	}
-	else
-	{
-		std::cout << "Warning! Could not find component (" << name.c_str() << ") Initializer!" << std::endl;
-	}
 }
 
 void ComponentEngine::Engine::InitImGUI()

@@ -22,11 +22,6 @@ namespace enteez
 	class BaseComponentWrapper;
 }
 
-namespace pugi
-{
-	class xml_node;
-}
-
 namespace ComponentEngine
 {
 	class Transformation : public UI, public IO, public MsgRecive<TransformationPtrRedirect>
@@ -103,7 +98,6 @@ namespace ComponentEngine
 
 		enteez::Entity* GetEntity();
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
-		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		friend class Mesh;
 	private:

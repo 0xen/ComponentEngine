@@ -1,6 +1,5 @@
 #include <ComponentEngine\Components\Renderer.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 
@@ -24,11 +23,6 @@ enteez::BaseComponentWrapper* ComponentEngine::RendererComponent::EntityHookDefa
 	enteez::ComponentWrapper<RendererComponent>* renderer = entity.AddComponent<RendererComponent>(&entity);
 	renderer->SetName("Renderer");
 	return renderer;
-}
-
-void ComponentEngine::RendererComponent::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	EntityHookDefault(entity);
 }
 
 void ComponentEngine::RendererComponent::Display()

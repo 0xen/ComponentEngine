@@ -7,8 +7,6 @@ set(HAVE_LIBC TRUE)
 
 set(common_headers
     # External
-    include/ComponentEngine/pugixml.hpp
-    include/ComponentEngine/pugiconfig.hpp
     include/ComponentEngine/tiny_obj_loader.h
     ../../lodepng/lodepng.h
 
@@ -27,7 +25,6 @@ set(common_headers
 
 set(common_source
     # External
-    src/pugixml.cpp
     ../../lodepng/lodepng.cpp
 
     src/Engine.cpp
@@ -55,7 +52,6 @@ set(component_headers
     include/ComponentEngine/Components/ParticalSystem.hpp
     include/ComponentEngine/Components/Renderer.hpp
     include/ComponentEngine/Components/Logic.hpp
-    include/ComponentEngine/Components/Indestructable.hpp
     include/ComponentEngine/Components/Rigidbody.hpp
     include/ComponentEngine/Components/ICollisionShape.hpp
     include/ComponentEngine/Components/BoxCollision.hpp
@@ -71,7 +67,6 @@ set(component_source
     src/Components/Transformation.cpp
     src/Components/ParticalSystem.cpp
     src/Components/Renderer.cpp
-    src/Components/Indestructable.cpp
     src/Components/Rigidbody.cpp
     src/Components/ICollisionShape.cpp
     src/Components/BoxCollision.cpp

@@ -1,7 +1,6 @@
 #include <TeapotController.hpp>
 
 #include <Flamable.hpp>
-#include <ComponentEngine\pugixml.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 #include <imgui.h>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -22,12 +21,6 @@ enteez::BaseComponentWrapper* ComponentEngine::TeapotController::EntityHookDefau
 	enteez::ComponentWrapper<TeapotController>* wrapper = entity.AddComponent<TeapotController>(&entity);
 	wrapper->SetName("Teapot Controller");
 	return wrapper;
-}
-
-void ComponentEngine::TeapotController::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<TeapotController>* wrapper = entity.AddComponent<TeapotController>(&entity);
-	wrapper->SetName("Teapot Controller");
 }
 
 void ComponentEngine::TeapotController::ReciveMessage(enteez::Entity * sender, OnCollisionEnter & message)

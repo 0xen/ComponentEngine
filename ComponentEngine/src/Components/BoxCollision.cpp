@@ -1,6 +1,5 @@
 #include <ComponentEngine\Components\BoxCollision.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\PhysicsWorld.hpp>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -40,22 +39,6 @@ enteez::BaseComponentWrapper* ComponentEngine::BoxCollision::EntityHookDefault(e
 	enteez::ComponentWrapper<BoxCollision>* mesh = entity.AddComponent<BoxCollision>(&entity);
 	mesh->SetName("Box Collision");
 	return mesh;
-}
-
-void ComponentEngine::BoxCollision::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<BoxCollision>* mesh = entity.AddComponent<BoxCollision>(&entity);
-	mesh->SetName("Box Collision");
-
-	BoxCollision& boxCollision = mesh->Get();
-
-	boxCollision.m_shape = glm::vec3(
-		component_data.child("Dimentions").attribute("x").as_float(0.5f),
-		component_data.child("Dimentions").attribute("y").as_float(0.5f),
-		component_data.child("Dimentions").attribute("z").as_float(0.5f)
-	);
-
-	boxCollision.Rebuild();
 }
 
 void ComponentEngine::BoxCollision::Rebuild()

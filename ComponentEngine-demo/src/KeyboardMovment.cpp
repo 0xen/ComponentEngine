@@ -1,6 +1,5 @@
 #include <KeyboardMovment.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\UI\UIManager.hpp>
 #include <EnteeZ\EnteeZ.hpp>
@@ -70,10 +69,4 @@ enteez::BaseComponentWrapper* ComponentEngine::KeyboardMovment::EntityHookDefaul
 	enteez::ComponentWrapper<KeyboardMovment>* wrapper = entity.AddComponent<KeyboardMovment>(&entity);
 	wrapper->SetName("Keyboard Movment");
 	return wrapper;
-}
-
-void ComponentEngine::KeyboardMovment::EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data)
-{
-	enteez::ComponentWrapper<KeyboardMovment>* wrapper = entity.AddComponent<KeyboardMovment>(&entity);
-	wrapper->SetName("Keyboard Movment");
 }

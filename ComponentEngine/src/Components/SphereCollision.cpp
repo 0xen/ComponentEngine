@@ -1,6 +1,5 @@
 #include <ComponentEngine\Components\SphereCollision.hpp>
 
-#include <ComponentEngine\pugixml.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\PhysicsWorld.hpp>
 #include <ComponentEngine\Components\MsgSend.hpp>
@@ -40,17 +39,6 @@ enteez::BaseComponentWrapper* ComponentEngine::SphereCollision::EntityHookDefaul
 	enteez::ComponentWrapper<SphereCollision>* mesh = entity.AddComponent<SphereCollision>(&entity);
 	mesh->SetName("Sphere Collision");
 	return mesh;
-}
-
-void ComponentEngine::SphereCollision::EntityHookXML(enteez::Entity & entity, pugi::xml_node & component_data)
-{
-	enteez::ComponentWrapper<SphereCollision>* mesh = entity.AddComponent<SphereCollision>(&entity);
-	mesh->SetName("Sphere Collision");
-	SphereCollision& sphereCollision = mesh->Get();
-
-	sphereCollision.m_rad = component_data.child("Radius").attribute("value").as_float(0.5f);
-
-	sphereCollision.Rebuild();
 }
 
 void ComponentEngine::SphereCollision::Rebuild()

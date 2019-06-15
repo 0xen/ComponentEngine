@@ -24,23 +24,25 @@ IGraphicsPipeline* textured_pipeline = nullptr;
 
 void RegisterCustomComponents()
 {
-	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault, ItemHover::EntityHookXML);
+	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault);
+	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault);
+	engine->RegisterComponentBase("Mouse Movment", MouseMovment::EntityHookDefault);
+	engine->RegisterComponentBase("Flamable", Flamable::EntityHookDefault);
+	engine->RegisterComponentBase("Block Move Controller", BlockMoveController::EntityHookDefault);
+	engine->RegisterComponentBase("Water Source Controller", WaterSourceController::EntityHookDefault);
+	engine->RegisterComponentBase("Teapot Controller", TeapotController::EntityHookDefault);
+	engine->RegisterComponentBase("Block Spawner", BlockSpawner::EntityHookDefault);
+	engine->RegisterComponentBase("Timed Destruction", TimedDestruction::EntityHookDefault);
+
+
 	engine->RegisterBase<ItemHover, Logic, UI>();
-	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault, KeyboardMovment::EntityHookXML);
 	engine->RegisterBase<KeyboardMovment, Logic, UI>();
-	engine->RegisterComponentBase("Mouse Movment", MouseMovment::EntityHookDefault, MouseMovment::EntityHookXML);
 	engine->RegisterBase<MouseMovment, Logic, UI>();
-	engine->RegisterComponentBase("Flamable", Flamable::EntityHookDefault, Flamable::EntityHookXML);
 	engine->RegisterBase<Flamable, UI, MsgRecive<OnCollisionEnter>>();
-	engine->RegisterComponentBase("Block Move Controller", BlockMoveController::EntityHookDefault, BlockMoveController::EntityHookXML);
 	engine->RegisterBase<BlockMoveController, Logic, UI>();
-	engine->RegisterComponentBase("Water Source Controller", WaterSourceController::EntityHookDefault, WaterSourceController::EntityHookXML);
 	engine->RegisterBase<WaterSourceController, UI, MsgRecive<OnCollisionEnter>>();
-	engine->RegisterComponentBase("Teapot Controller", TeapotController::EntityHookDefault, TeapotController::EntityHookXML);
 	engine->RegisterBase<TeapotController, UI, MsgRecive<OnCollisionEnter>, MsgRecive<OnCollisionExit>>();
-	engine->RegisterComponentBase("Block Spawner", BlockSpawner::EntityHookDefault, BlockSpawner::EntityHookXML);
 	engine->RegisterBase<BlockSpawner, Logic>();
-	engine->RegisterComponentBase("Timed Destruction", TimedDestruction::EntityHookDefault, TimedDestruction::EntityHookXML);
 	engine->RegisterBase<TimedDestruction, Logic>();
 }
 
@@ -123,7 +125,7 @@ int main(int argc, char **argv)
 {
 	engine = Engine::Singlton();
 	
-	int flags =  EngineFlags::ReleaseBuild;
+	int flags = 0;// EngineFlags::ReleaseBuild;
 	engine->SetFlag(flags);
 
 	engine->Start();

@@ -18,10 +18,6 @@ namespace enteez
 	class BaseComponentWrapper;
 }
 
-namespace pugi
-{
-	class xml_node;
-}
 namespace Renderer
 {
 	class IUniformBuffer;
@@ -52,7 +48,6 @@ namespace ComponentEngine
 		void SetMass(float mass);
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
-		static void EntityHookXML(enteez::Entity& entity, pugi::xml_node& component_data);
 
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationChange& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<ICollisionShape>& message);
