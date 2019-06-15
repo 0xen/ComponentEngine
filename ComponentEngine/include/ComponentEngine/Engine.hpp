@@ -89,6 +89,7 @@ namespace ComponentEngine
 		ConsoleState state;
 	};
 	class UIManager;
+	static const std::string EngineName = "Component Engine";
 	class Engine : public EnteeZ
 	{
 	public:
@@ -119,8 +120,9 @@ namespace ComponentEngine
 		glm::vec2 GetLastMouseMovment();
 
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
-		bool LoadScene(const char* path, bool merge_scenes = false);
+		bool LoadScene(const char* path);
 
+		void SaveScene();
 
 		void AddPipeline(std::string name, PipelinePack pipeline);
 
@@ -212,6 +214,9 @@ namespace ComponentEngine
 		//void ToggleFrameLimiting();
 		bool Threading();
 		void ToggleThreading();
+
+
+		void SetScenePath(const char* path);
 
 		// Singlton instance of engine
 		static Engine* m_engine;
@@ -334,6 +339,7 @@ namespace ComponentEngine
 		glm::vec2 m_lastMousePos;
 		int m_lockedPosX;
 		int m_lockedPosY;
+
 	};
 	
 }

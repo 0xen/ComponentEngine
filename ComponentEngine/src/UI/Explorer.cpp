@@ -42,10 +42,8 @@ void ComponentEngine::Explorer::RendererFolder(Folder & folder)
 
 	bool open = ImGui::TreeNodeEx("Folder", flags, "%s", folder.path.shortForm.c_str());
 
-
 	if (open)
 	{
-
 		for (auto& childFolder : folder.folders)
 		{
 			RendererFolder(childFolder);
@@ -60,6 +58,43 @@ void ComponentEngine::Explorer::RendererFolder(Folder & folder)
 			{ // File drag
 				UIManager::DropPayload("File", childFiles.shortForm.c_str(), &childFiles, sizeof(FileForms));
 			}
+			ImGui::TreePop();
+			ImGui::PopID();
+
+		}
+
+
+		ImGui::TreePop();
+	}
+	ImGui::PopID();
+}
+
+void ComponentEngine::Explorer::RendererFolder(Folder & folder, std::function<void(const char* path)> doubleClickCallBack)
+{
+	LoadFolder(folder);
+
+	ImGui::PushID(&folder);
+
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+
+	bool open = ImGui::TreeNodeEx("Folder", flags, "%s", folder.path.shortForm.c_str());
+
+	if (open)
+	{
+		for (auto& childFolder : folder.folders)
+		{
+			RendererFolder(childFolder, doubleClickCallBack);
+		}
+
+		for (auto& childFiles : folder.files)
+		{
+			ImGui::PushID(childFiles.longForm.c_str());
+			ImGui::TreeNodeEx("File", ImGuiTreeNodeFlags_Leaf, "%s", childFiles.shortForm.c_str());
+			if (UIManager::ElementClicked(false))
+			{
+				doubleClickCallBack(childFiles.longForm.c_str());
+			}
+
 			ImGui::TreePop();
 			ImGui::PopID();
 

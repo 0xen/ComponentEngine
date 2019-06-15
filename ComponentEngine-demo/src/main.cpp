@@ -123,22 +123,24 @@ int main(int argc, char **argv)
 {
 	engine = Engine::Singlton();
 	
-	//engine->SetFlag(EngineFlags::ReleaseBuild);
+	int flags =  EngineFlags::ReleaseBuild;
+	engine->SetFlag(flags);
 
 	engine->Start();
 	SetupShaders();
 	RegisterCustomComponents();
 
-	// Load the scene
-	engine->GetThreadManager()->AddTask([&](float frameTime) {
-		//engine->LoadScene("../GameInstance.xml");
-	});
-
 	engine->GetUIManager()->AddMenuElement(new MenuElement("Test", [&] {
 		std::cout << "test" << std::endl;
 	}));
 
-
+	if ((flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild)
+	{
+		// Load the scene
+		engine->GetThreadManager()->AddTask([&](float frameTime) {
+			engine->LoadScene("../Scene.bin");
+		});
+	}
 
 	while (engine->Running())
 	{

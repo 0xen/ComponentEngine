@@ -343,52 +343,150 @@ glm::vec2 ComponentEngine::Engine::GetLastMouseMovment()
 	return m_mousePosDelta;
 }
 
-bool ComponentEngine::Engine::LoadScene(const char * path, bool merge_scenes)
+bool ComponentEngine::Engine::LoadScene(const char * path)
 {
+
+	// clear scene
+	{
+		m_logic_lock.lock();
+		GetRendererMutex().lock();
+
+		GetEntityManager().Clear();
+		//UpdateScene();
+
+		GetRendererMutex().unlock();
+		m_logic_lock.unlock();
+	}
+
+	std::ifstream in(path);
+
+	EntityManager& em = GetEntityManager();
+
 	m_logic_lock.lock();
 	GetRendererMutex().lock();
-	m_currentScene = path;
 
-	{ // Get directory
+	
+	if (!in.is_open()) 
+	{
+		Log("Uable to load scene: Could not open", ConsoleState::Error);
+		// Return locks as we do not need them anymore
+		GetRendererMutex().unlock();
+		m_logic_lock.unlock();
+		return false;
+	}
 
-		const size_t lastBackSlash = m_currentScene.rfind('\\');
-		if (std::string::npos != lastBackSlash)
+	{ // Validation check
+
+		// Load String
+		unsigned int stringLength;
+		Common::Read(in, &stringLength, sizeof(unsigned int));
+
+		// -1 for \0
+		if (stringLength - 1 != EngineName.size())
 		{
-			m_currentSceneDirectory = m_currentScene.substr(0, lastBackSlash);
+			Log("Uable to load scene: Invalid Header", ConsoleState::Error);
+			// Return locks as we do not need them anymore
+			GetRendererMutex().unlock();
+			m_logic_lock.unlock();
+			return false;
 		}
-		else
+
+		// Load string content
+		char* data = new char[stringLength];
+		Common::Read(in, data, sizeof(char) * stringLength);
+		std::string str;
+		str.assign(data);
+
+		if (str != EngineName)
 		{
-			const size_t lastForwardSlash = m_currentScene.rfind('/');
-			if (std::string::npos != lastForwardSlash)
+			Log("Uable to load scene: Invalid Header", ConsoleState::Error);
+			// Return locks as we do not need them anymore
+			GetRendererMutex().unlock();
+			m_logic_lock.unlock();
+			return false;
+		}
+	}
+
+	SetScenePath(path);
+
+	
+	unsigned int entityCount;
+
+	Common::Read(in, &entityCount, sizeof(unsigned int));
+
+	for (int i = 0; i < entityCount; i++)
+	{
+		std::string entityName = Common::ReadString(in);
+
+		Entity* entity = em.CreateEntity(entityName);
+		unsigned int componentCount;
+
+		Common::Read(in, &componentCount, sizeof(unsigned int));
+
+		for (int j = 0; j < componentCount; j++)
+		{
+			std::string componentName = Common::ReadString(in);
+
+			auto it = m_component_register.find(componentName);
+			if (it != m_component_register.end())
 			{
-				m_currentSceneDirectory = m_currentScene.substr(0, lastForwardSlash);
+				BaseComponentWrapper* wrapper = it->second.default_initilizer(*entity);
+				IO* io = nullptr;
+				if (em.BaseClassInstance(*wrapper, io))
+				{
+					io->Load(in);
+				}
+			}
+			else
+			{
+				std::stringstream ss;
+				ss << "Unable to find component '" << componentName << "' for entity '" << entityName << "'";
+				Log(ss.str(), ComponentEngine::Warning);
 			}
 		}
 	}
-
-
-	pugi::xml_parse_result result = m_xml_scene.load_file(path);
-
-	pugi::xml_node game_node = m_xml_scene.child("Game");
-	if (!game_node)return false;
-	pugi::xml_node scenes_node = game_node.child("Scenes");
-	if (!scenes_node)return false;
-	pugi::xml_node scene_node = scenes_node.child("Scene");
-	if (!scene_node)return false;
-
-	pugi::xml_node prefabs_node = game_node.child("Prefabs");
-
-	for (pugi::xml_node node : scene_node.children("GameObject"))
-	{
-		LoadXMLGameObject(node, prefabs_node);
-	}
-
-
-	UpdateScene();
-
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();
+
 	return true;
+}
+
+void ComponentEngine::Engine::SaveScene()
+{
+
+	std::ofstream out(m_currentScene);
+	EntityManager& em = GetEntityManager();
+
+	{ // Add validation to file
+		Common::Write(out, EngineName);
+	}
+
+	unsigned int entityCount = em.GetEntitys().size();
+	Common::Write(out, &entityCount, sizeof(unsigned int));
+
+	for (Entity* entity : em.GetEntitys())
+	{
+		// Output entitys name
+		Common::Write(out, entity->GetName());
+
+		// Output the amount of components the entity has
+		unsigned int componentCount = entity->GetComponentCount();
+		Common::Write(out, &componentCount, sizeof(unsigned int));
+
+
+		entity->ForEach([&](BaseComponentWrapper& wrapper) {
+			// Output Components name 
+			Common::Write(out, wrapper.GetName());
+
+			IO* io = nullptr;
+			if (em.BaseClassInstance(wrapper, io))
+			{
+				io->Save(out);
+			}
+		});
+	}
+	out.flush();
+	out.close();
 }
 
 void ComponentEngine::Engine::AddPipeline(std::string name, PipelinePack pipeline)
@@ -970,6 +1068,11 @@ void ComponentEngine::Engine::InitImGUI()
 		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
 
+		static std::string filenameAutofill = "Scene.bin";
+		static std::string defaultSavePath = "../Scene.bin";
+		static unsigned int maxFileLength = 200;
+		static char* saveAsStream = new char[maxFileLength + 1];
+
 		m_ui->AddMenuElement(new MenuElement("File", 
 		{
 			new MenuElement("Add",[&] {
@@ -991,7 +1094,7 @@ void ComponentEngine::Engine::InitImGUI()
 
 					GetEntityManager().Clear();
 					// Load in the scene
-					LoadScene(m_engine->GetCurrentScene().c_str(), false);
+					LoadScene(m_engine->GetCurrentScene().c_str());
 					UpdateScene();
 
 					GetRendererMutex().unlock();
@@ -1003,110 +1106,204 @@ void ComponentEngine::Engine::InitImGUI()
 			new MenuElement(MenuElementFlags::Spacer),
 
 			new MenuElement("Save",[&] {
-				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+				m_logic_lock.lock();
+				GetRendererMutex().lock();
 
 
-					std::ofstream out("output.bin");
-					EntityManager& em = GetEntityManager();
+				if (m_currentScene.size() == 0)
+				{
+					ImGui::OpenPopup("Save As##SaveAsFilePopup");
 
-					unsigned int entityCount = em.GetEntitys().size();
-					Common::Write(out, &entityCount, sizeof(unsigned int));
 
-					for (Entity* entity : em.GetEntitys())
+					for (int i = 0; i < filenameAutofill.size(); i++)
 					{
-						// Output entitys name
-						Common::Write(out, entity->GetName());
-
-						// Output the amount of components the entity has
-						unsigned int componentCount = entity->GetComponentCount();
-						Common::Write(out, &componentCount, sizeof(unsigned int));
-
-
-						entity->ForEach([&](BaseComponentWrapper& wrapper) {
-							// Output Components name 
-							Common::Write(out, wrapper.GetName());
-
-							IO* io = nullptr;
-							if (em.BaseClassInstance(wrapper, io))
-							{
-								io->Save(out);
-							}
-						});
+						saveAsStream[i] = filenameAutofill.at(i);
 					}
-					out.flush();
-					out.close();
 
+					for (int i = filenameAutofill.size(); i <= maxFileLength; i++)
+					{
+						saveAsStream[i] = '\0';
+					}
+				}
+				else
+				{
+					m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+						SaveScene();
+					});
+				}
 
-				});
+				GetRendererMutex().unlock();
+				m_logic_lock.unlock();
+
 			}),
+			new MenuElement("Save As",[&] {
 
-			new MenuElement("Load",[&] {
-				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+				ImGui::OpenPopup("Save As##SaveAsFilePopup");
 
-					// clear scene
+
+
+
+				for (int i = 0; i < filenameAutofill.size(); i++)
+				{
+					saveAsStream[i] = filenameAutofill.at(i);
+				}
+
+				for (int i = filenameAutofill.size(); i <= maxFileLength; i++)
+				{
+					saveAsStream[i] = '\0';
+				}
+
+			},[&] {
+
+				ImVec2 windowSize = ImVec2(400, 300);
+				ImGui::SetNextWindowSize(windowSize);
+				if (ImGui::BeginPopupModal("Save As##SaveAsFilePopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar))
+				{
+					static FileForms saveFileForm;
+					static Folder loadFolder;
+					static std::string savePath = defaultSavePath;
+
+					if (loadFolder.path.longForm != "../")
 					{
-						m_logic_lock.lock();
-						GetRendererMutex().lock();
+						loadFolder = Folder();
+						loadFolder.path.longForm = "../";
+						loadFolder.path.shortForm = "/";
+						Explorer::LoadFolder(loadFolder);
+					}
+					
 
-						GetEntityManager().Clear();
-						//UpdateScene();
+					ImGui::Text("Path: %s", savePath.c_str());
 
-						GetRendererMutex().unlock();
-						m_logic_lock.unlock();
+					{ // Scroll Window
+						ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
+						ImGui::BeginChild("Child1", ImVec2(windowSize.x, windowSize.y - 95), false, window_flags);
+
+						Explorer::RendererFolder(loadFolder, [&](const char* path)
+						{
+							saveFileForm.GenerateFileForm(path);
+							savePath = saveFileForm.longForm;
+						});
+
+						ImGui::EndChild();
 					}
 
-					std::ifstream in("output.bin");
-
-					EntityManager& em = GetEntityManager();
-
-					m_logic_lock.lock();
-					GetRendererMutex().lock();
-
-					unsigned int entityCount;
-
-					Common::Read(in, &entityCount, sizeof(unsigned int));
-
-					for(int i = 0 ; i < entityCount; i++)
+					ImGuiInputTextFlags flags = ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_AlwaysInsertMode;
+					bool keyPress = ImGui::InputText("##data", saveAsStream, maxFileLength, flags);
+					
+					if (keyPress)
 					{
-						std::string entityName = Common::ReadString(in);
+						Log(saveAsStream);
 
-						Entity* entity = em.CreateEntity(entityName);
-
-						unsigned int componentCount;
-
-						Common::Read(in, &componentCount, sizeof(unsigned int));
-
-						for (int j = 0; j < componentCount; j++)
+						std::stringstream ss;
+						if (saveFileForm.folder.size() > 0)
 						{
-
-							std::string componentName = Common::ReadString(in);
-
-
-							auto it = m_component_register.find(componentName);
-							if (it != m_component_register.end())
-							{
-								BaseComponentWrapper* wrapper = it->second.default_initilizer(*entity);
-								IO* io = nullptr;
-								if (em.BaseClassInstance(*wrapper, io))
-								{
-									io->Load(in);
-								}
-							}
-							else
-							{
-								std::stringstream ss;
-								ss << "Unable to find component '" << componentName << "' for entity '" << entityName << "'";
-								Log(ss.str(), ComponentEngine::Warning);
-							}
-							
+							ss << saveFileForm.folder << "/" << saveAsStream;
+						}
+						else
+						{
+							ss << "../" << saveAsStream;
 						}
 
-
+						savePath = ss.str();
 					}
-					GetRendererMutex().unlock();
-					m_logic_lock.unlock();
 
-				});
+
+					{ // OK Buton
+
+						if (savePath.size() == 0)
+						{
+							ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.40f, 0.61f, 0.3f));
+							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.40f, 0.48f, 0.71f, 0.3f));
+							ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.46f, 0.54f, 0.80f, 0.3f));
+							ImGui::Button("OK", ImVec2(windowSize.x / 2 - 15, 0));
+							ImGui::PopStyleColor(3);
+						}
+						else
+						{
+							if (ImGui::Button("OK", ImVec2(windowSize.x / 2 - 15, 0)))
+							{
+								m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+									SetScenePath(savePath.c_str());
+									SaveScene();
+								});
+								ImGui::CloseCurrentPopup();
+							}
+						}
+					}
+
+					ImGui::SetItemDefaultFocus();
+					ImGui::SameLine();
+
+					{ // Close
+						if (ImGui::Button("Cancel", ImVec2(windowSize.x / 2 - 15, 0))) { ImGui::CloseCurrentPopup(); }
+					}
+					ImGui::EndPopup();
+				}
+
+			}),
+
+			new MenuElement("Load",[&] { // On click
+
+				ImGui::OpenPopup("Load##LoadFilePopup");
+
+			},[&] { // Post Render
+				ImVec2 windowSize = ImVec2(400,300);
+				ImGui::SetNextWindowSize(windowSize);
+				if (ImGui::BeginPopupModal("Load##LoadFilePopup", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar))
+				{
+					static Folder loadFolder;
+					static std::string loadPath = "";
+
+					if (loadFolder.path.longForm != "../")
+					{
+						loadFolder = Folder();
+						loadFolder.path.longForm = "../";
+						loadFolder.path.shortForm = "/";
+						Explorer::LoadFolder(loadFolder);
+					}
+
+
+					ImGui::Text("Path: %s", loadPath.c_str());
+
+					{ // Scroll Window
+						ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
+						ImGui::BeginChild("Child1", ImVec2(windowSize.x, windowSize.y - 75), false, window_flags);
+
+						Explorer::RendererFolder(loadFolder, [&](const char* path)
+						{
+							loadPath = path;
+						});
+
+						ImGui::EndChild();
+					}
+
+					
+					if (loadPath.size() == 0)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.35f, 0.40f, 0.61f, 0.3f));
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.40f, 0.48f, 0.71f, 0.3f));
+						ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.46f, 0.54f, 0.80f, 0.3f));
+						ImGui::Button("OK", ImVec2(windowSize.x/2 - 15, 0));
+						ImGui::PopStyleColor(3);
+					}
+					else
+					{
+						if (ImGui::Button("OK", ImVec2(windowSize.x / 2 - 15, 0)))
+						{ 
+							m_engine->GetThreadManager()->AddTask([&](float frameTime) {
+
+								LoadScene(loadPath.c_str());
+
+							});
+							ImGui::CloseCurrentPopup();
+						}
+					}
+					ImGui::SetItemDefaultFocus();
+					ImGui::SameLine();
+					if (ImGui::Button("Cancel", ImVec2(windowSize.x / 2 - 15, 0))) { ImGui::CloseCurrentPopup(); }
+					ImGui::EndPopup();
+				}
+
 			}),
 
 			new MenuElement(MenuElementFlags::Spacer),
@@ -1385,6 +1582,31 @@ void ComponentEngine::Engine::ToggleThreading()
 
 	m_threadManager->ChangeMode(m_threading ? ThreadMode::Threading : ThreadMode::Joined);
 
+}
+
+void ComponentEngine::Engine::SetScenePath(const char * path)
+{
+	m_currentScene = path;
+
+	{ // Get directory
+		const size_t lastBackSlash = m_currentScene.rfind('\\');
+		if (std::string::npos != lastBackSlash)
+		{
+			m_currentSceneDirectory = m_currentScene.substr(0, lastBackSlash);
+		}
+		else
+		{
+			const size_t lastForwardSlash = m_currentScene.rfind('/');
+			if (std::string::npos != lastForwardSlash)
+			{
+				m_currentSceneDirectory = m_currentScene.substr(0, lastForwardSlash);
+			}
+			else
+			{
+				m_currentSceneDirectory = "../";
+			}
+		}
+	}
 }
 
 void ComponentEngine::Engine::ThreadData::ResetTimers()

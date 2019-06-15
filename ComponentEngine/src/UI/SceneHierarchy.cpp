@@ -84,8 +84,9 @@ void ComponentEngine::SceneHierarchy::AddEntity(Entity * parent)
 {
 	EntityManager& em = m_engine->GetEntityManager();
 	enteez::Entity* entity = em.CreateEntity("New Entity");
-	Transformation& a = entity->AddComponent<Transformation>(entity)->Get();
-	a.SetParent(parent);
+	Transformation::EntityHookDefault(*entity);
+	Transformation& trans = entity->GetComponent<Transformation>();
+	trans.SetParent(parent);
 }
 
 void ComponentEngine::SceneHierarchy::RenderEntityTreeNode(Entity * entity)

@@ -3,6 +3,8 @@
 #include <ComponentEngine\UI\UIBase.hpp>
 #include <ComponentEngine\UI\UIManager.hpp>
 
+#include <functional>
+
 namespace ComponentEngine
 {
 	class Explorer : public UIBase
@@ -12,9 +14,10 @@ namespace ComponentEngine
 
 		virtual void Contents();
 
+		static void LoadFolder(Folder & folder);
+		static void RendererFolder(Folder & folder);
+		static void RendererFolder(Folder & folder, std::function<void(const char* path)> doubleClickCallBack);
 	private:
-		void LoadFolder(Folder & folder);
-		void RendererFolder(Folder & folder);
 		Folder m_sceneFolder;
 	};
 }

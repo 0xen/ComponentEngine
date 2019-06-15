@@ -17,7 +17,7 @@ namespace ComponentEngine
 
 
 		void Write(std::ofstream& out, void* ptr, unsigned long long size);
-		void Write(std::ofstream& out, std::string& str);
+		void Write(std::ofstream& out, const std::string& str);
 
 	}
 }

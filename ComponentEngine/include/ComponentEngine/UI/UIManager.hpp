@@ -22,8 +22,29 @@ namespace ComponentEngine
 			longForm = path;
 			Common::Replace(longForm, "\\", "/");
 			shortForm = std::experimental::filesystem::path(path).filename().string();
+
+			{ // Get directory
+				const size_t lastBackSlash = longForm.rfind('\\');
+				if (std::string::npos != lastBackSlash)
+				{
+					folder = longForm.substr(0, lastBackSlash);
+				}
+				else
+				{
+					const size_t lastForwardSlash = longForm.rfind('/');
+					if (std::string::npos != lastForwardSlash)
+					{
+						folder = longForm.substr(0, lastForwardSlash);
+					}
+					else
+					{
+						folder = "../";
+					}
+				}
+			}
 			extension = std::experimental::filesystem::path(path).extension().string();
 		}
+		std::string folder; // Full file path
 		std::string longForm; // Full file path
 		std::string shortForm; // File name
 		std::string extension; // File extention

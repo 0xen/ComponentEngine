@@ -49,7 +49,7 @@ void ComponentEngine::Common::Write(std::ofstream & out, void * ptr, unsigned lo
 	out.write((char *)ptr, size);
 }
 
-void ComponentEngine::Common::Write(std::ofstream & out, std::string & str)
+void ComponentEngine::Common::Write(std::ofstream & out, const std::string & str)
 {
 	unsigned int size = str.size() + 1; // +1 for \0 at the end of the string to define where it ends
 	// Strings size

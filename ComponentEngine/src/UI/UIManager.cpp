@@ -182,6 +182,7 @@ void ComponentEngine::UIManager::AddMenuElement(MenuElement * element)
 void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
+	ImGui::ShowDemoWindow();
 	PlayState state = m_engine->GetPlayState();
 	DockSpace();
 	RenderMainMenu();
@@ -266,6 +267,33 @@ void ComponentEngine::UIManager::RenderMainMenu()
 		}
 
 		ImGui::EndMainMenuBar();
+
+
+		const std::function<void(MenuElement * element)> postRenderCall = [&](MenuElement * element)
+		{
+
+			if (element->GetFlags() == MenuElementFlags::Button)
+			{
+				if (element->Triggered()) element->OnClick()();
+				if (element->PostRender() != nullptr) element->PostRender()();
+			}
+			for (auto& e : element->GetChildren())
+			{
+				// If we are in a menu, but the menu has closed, update all triggers
+				if (!element->Triggered())e->Triggered(false);
+				postRenderCall(e);
+			}
+		};
+
+
+		for (auto& e : m_menu_elements)
+		{
+			postRenderCall(e);
+		}
+
+
+
+
 	}
 
 }
@@ -288,11 +316,16 @@ void ComponentEngine::UIManager::RenderMenuElement(MenuElement * element)
 	{
 		if (ImGui::BeginMenu(element->GetText()))
 		{
+			element->Triggered(true);
 			for (auto& c : element->GetChildren())
 			{
 				RenderMenuElement(c);
 			}
 			ImGui::EndMenu();
+		}
+		else 
+		{
+			element->Triggered(false);
 		}
 	}
 	break;
@@ -300,7 +333,11 @@ void ComponentEngine::UIManager::RenderMenuElement(MenuElement * element)
 	{
 		if (ImGui::MenuItem(element->GetText(), NULL,false, element->Enabled()))
 		{
-			element->OnClick()();
+			element->Triggered(true);
+		}
+		else
+		{
+			element->Triggered(false);
 		}
 	}
 	break;
