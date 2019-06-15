@@ -67,8 +67,152 @@ void LoadTexturedShaderModel(IGraphicsPipeline* pipeline, IModelPool* modelPool,
 
 }
 
+
+#include <glslang/public/ShaderLang.h>
+#include <SPIRV/GlslangToSpv.h>
+#include <StandAlone/DirStackFileIncluder.h>
+
+std::string GetSuffix(const std::string& name)
+{
+	const size_t pos = name.rfind('.');
+	return (pos == std::string::npos) ? "" : name.substr(name.rfind('.') + 1);
+}
+
+EShLanguage GetShaderStage(const std::string& stage)
+{
+	if (stage == "vert")
+	{
+		return EShLangVertex;
+	}
+	else if (stage == "tesc")
+	{
+		return EShLangTessControl;
+	}
+	else if (stage == "tese")
+	{
+		return EShLangTessEvaluation;
+	}
+	else if (stage == "geom")
+	{
+		return EShLangGeometry;
+	}
+	else if (stage == "frag")
+	{
+		return EShLangFragment;
+	}
+	else if (stage == "comp")
+	{
+		return EShLangCompute;
+	}
+	else
+	{
+		assert(0 && "Unknown shader stage");
+		return EShLangCount;
+	}
+}
+
+std::string GetFilePath(const std::string& str)
+{
+	size_t found = str.find_last_of("/\\");
+	return str.substr(0, found);
+	//size_t FileName = str.substr(found+1);
+}
+
+bool glslangInitialized = false;
+
 void SetupShaders()
 {
+	if (!glslangInitialized)
+	{
+		glslang::InitializeProcess();
+		glslangInitialized = true;
+	}
+
+
+
+	std::string fileName = "../Shaders/Textured/shader.frag";
+	std::ifstream file(fileName);
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error("failed to open file: ");
+	}
+
+	std::string InputGLSL((std::istreambuf_iterator<char>(file)),
+		std::istreambuf_iterator<char>());
+
+	const char* InputCString = InputGLSL.c_str();
+
+	EShLanguage ShaderType = GetShaderStage(GetSuffix(fileName));
+	glslang::TShader Shader(ShaderType);
+
+
+	Shader.setStrings(&InputCString, 1);
+
+
+	int ClientInputSemanticsVersion = 450; // maps to, say, #define VULKAN 100
+	glslang::EShTargetClientVersion VulkanClientVersion = glslang::EShTargetVulkan_1_0;
+	glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_0;
+
+	Shader.setEnvInput(glslang::EShSourceGlsl, ShaderType, glslang::EShClientVulkan, ClientInputSemanticsVersion);
+	Shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
+	Shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+
+	const TBuiltInResource DefaultTBuiltInResource = {  };
+
+	TBuiltInResource Resources;
+	Resources = DefaultTBuiltInResource;
+	EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
+
+	const int DefaultVersion = 450;
+
+
+	DirStackFileIncluder Includer;
+
+	//Get Path of File
+	std::string Path = GetFilePath(fileName);
+	Includer.pushExternalLocalDirectory(Path);
+
+	std::string PreprocessedGLSL;
+
+	if (!Shader.preprocess(&Resources, DefaultVersion, ENoProfile, false, false, messages, &PreprocessedGLSL, Includer))
+	{
+		std::cout << "GLSL Preprocessing Failed for: " << std::endl;
+		std::cout << Shader.getInfoLog() << std::endl;
+		std::cout << Shader.getInfoDebugLog() << std::endl;
+	}
+
+
+
+
+	if (!Shader.parse(&Resources, 450, false, messages))
+	{
+		std::cout << "GLSL Parsing Failed for: " << std::endl;
+		std::cout << Shader.getInfoLog() << std::endl;
+		std::cout << Shader.getInfoDebugLog() << std::endl;
+	}
+
+	glslang::TProgram Program;
+	Program.addShader(&Shader);
+
+	if (!Program.link(messages))
+	{
+		std::cout << "GLSL Linking Failed for: " << std::endl;
+		std::cout << Shader.getInfoLog() << std::endl;
+		std::cout << Shader.getInfoDebugLog() << std::endl;
+	}
+
+
+	std::vector<unsigned int> SpirV;
+	spv::SpvBuildLogger logger;
+	glslang::SpvOptions spvOptions;
+	glslang::GlslangToSpv(*Program.getIntermediate(ShaderType), SpirV, &logger, &spvOptions);
+
+
+
+
+
+
 	{// Textured Pipeline
 		textured_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
 		{ ShaderStage::VERTEX_SHADER, "../Shaders/Textured/vert.spv" },

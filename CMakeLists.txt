@@ -35,11 +35,17 @@ endfunction()
 
 add_subdirectory_with_folder("Third Party/SDL2" third_party/SDL2)
 add_subdirectory_with_folder("Third Party/bullet3" third_party/bullet3)
+add_subdirectory_with_folder("Third Party/glslang" third_party/glslang)
+
+
+
 
 
 
 include_directories(third_party/SDL2/include)
 include_directories(third_party/bullet3/src)
+include_directories(third_party/glslang)
+
 include_directories(third_party/imgui)
 include_directories(../Renderer/renderer)
 include_directories(../EnteeZ/EnteeZ)
