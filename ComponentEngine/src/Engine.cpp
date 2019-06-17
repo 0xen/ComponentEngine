@@ -890,7 +890,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	// Define what base classes each one of these components have
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI, IO>();
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
-	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
+	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, IO, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 	RegisterBase<ParticleSystem, Logic, UI, MsgRecive<ParticleSystemVisibility>, IO>();
 	RegisterBase<Camera, Logic, UI, TransferBuffers>(); 
 	RegisterBase<Rigidbody,
@@ -1142,6 +1142,7 @@ void ComponentEngine::Engine::InitImGUI()
 						loadFolder.path.shortForm = "/";
 						Explorer::LoadFolder(loadFolder);
 					}
+					loadFolder.topLevel = true;
 					
 
 					ImGui::Text("Path: %s", savePath.c_str());
@@ -1164,8 +1165,6 @@ void ComponentEngine::Engine::InitImGUI()
 					
 					if (keyPress)
 					{
-						Log(saveAsStream);
-
 						std::stringstream ss;
 						if (saveFileForm.folder.size() > 0)
 						{
@@ -1197,6 +1196,7 @@ void ComponentEngine::Engine::InitImGUI()
 								m_engine->GetThreadManager()->AddTask([&](float frameTime) {
 									SetScenePath(savePath.c_str());
 									SaveScene();
+									Explorer::LoadFolder(loadFolder);
 								});
 								ImGui::CloseCurrentPopup();
 							}
@@ -1233,6 +1233,7 @@ void ComponentEngine::Engine::InitImGUI()
 						loadFolder.path.shortForm = "/";
 						Explorer::LoadFolder(loadFolder);
 					}
+					loadFolder.topLevel = true;
 
 
 					ImGui::Text("Path: %s", loadPath.c_str());

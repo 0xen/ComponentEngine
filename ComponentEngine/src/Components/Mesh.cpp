@@ -129,6 +129,21 @@ void ComponentEngine::Mesh::Display()
 
 }
 
+void ComponentEngine::Mesh::Load(std::ifstream & in)
+{
+	std::string path = Common::ReadString(in);
+	if (path.size()> 0)
+	{
+		ChangePath(path);
+		LoadModel();
+	}
+}
+
+void ComponentEngine::Mesh::Save(std::ofstream & out)
+{
+	Common::Write(out, m_file_path.data.longForm);
+}
+
 void ComponentEngine::Mesh::SetBufferData()
 {
 	GetModelPositionTransferLock().lock();

@@ -3,15 +3,7 @@
 #include <ComponentEngine\Components\Renderer.hpp>
 #include <ComponentEngine\UI\MenuElement.hpp>
 #include <EnteeZ\EnteeZ.hpp>
-#include <ItemHover.hpp>
 #include <KeyboardMovment.hpp>
-#include <MouseMovment.hpp>
-#include <Flamable.hpp>
-#include <BlockMoveController.hpp>
-#include <WaterSourceController.hpp>
-#include <TeapotController.hpp>
-#include <BlockSpawner.hpp>
-#include <TimedDestruction.hpp>
 #include <iostream>
 
 using namespace ComponentEngine;
@@ -24,26 +16,9 @@ IGraphicsPipeline* textured_pipeline = nullptr;
 
 void RegisterCustomComponents()
 {
-	engine->RegisterComponentBase("ItemHover", ItemHover::EntityHookDefault);
 	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault);
-	engine->RegisterComponentBase("Mouse Movment", MouseMovment::EntityHookDefault);
-	engine->RegisterComponentBase("Flamable", Flamable::EntityHookDefault);
-	engine->RegisterComponentBase("Block Move Controller", BlockMoveController::EntityHookDefault);
-	engine->RegisterComponentBase("Water Source Controller", WaterSourceController::EntityHookDefault);
-	engine->RegisterComponentBase("Teapot Controller", TeapotController::EntityHookDefault);
-	engine->RegisterComponentBase("Block Spawner", BlockSpawner::EntityHookDefault);
-	engine->RegisterComponentBase("Timed Destruction", TimedDestruction::EntityHookDefault);
 
-
-	engine->RegisterBase<ItemHover, Logic, UI>();
 	engine->RegisterBase<KeyboardMovment, Logic, UI>();
-	engine->RegisterBase<MouseMovment, Logic, UI>();
-	engine->RegisterBase<Flamable, UI, MsgRecive<OnCollisionEnter>>();
-	engine->RegisterBase<BlockMoveController, Logic, UI>();
-	engine->RegisterBase<WaterSourceController, UI, MsgRecive<OnCollisionEnter>>();
-	engine->RegisterBase<TeapotController, UI, MsgRecive<OnCollisionEnter>, MsgRecive<OnCollisionExit>>();
-	engine->RegisterBase<BlockSpawner, Logic>();
-	engine->RegisterBase<TimedDestruction, Logic>();
 }
 
 
@@ -212,7 +187,7 @@ void SetupShaders()
 
 	*/
 
-
+	/*
 	{// Textured Pipeline
 		textured_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
 		{ ShaderStage::VERTEX_SHADER, "../Shaders/Textured/vert.spv" },
@@ -262,7 +237,7 @@ void SetupShaders()
 
 		engine->AddPipeline("TexturedLighting_", { textured_lighting_pipeline ,LoadTexturedShaderModel });
 	}
-	
+	*/
 }
 
 int main(int argc, char **argv)
@@ -276,10 +251,29 @@ int main(int argc, char **argv)
 	SetupShaders();
 	RegisterCustomComponents();
 
-	engine->GetUIManager()->AddMenuElement(new MenuElement("Test", [&] {
-		std::cout << "test" << std::endl;
+	engine->GetUIManager()->AddMenuElement(new MenuElement("Debugging", {
+	new MenuElement("Add Mesh", [&] {
+		if (engine->GetUIManager()->GetCurrentSceneFocus().entity == nullptr)return;
+		engine->GetThreadManager()->AddTask([&](float frameTime) {
+			engine->GetLogicMutex().lock();
+			engine->GetRendererMutex().lock();
+
+			Mesh::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
+			RendererComponent::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
+
+			engine->GetRendererMutex().unlock();
+			engine->GetLogicMutex().unlock();
+		});
+
+	})
 	}));
 
+
+	/*
+	new MenuElement("Debugging", [&] {
+		std::cout << "test" << std::endl;
+	})
+	*/
 	if ((flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild)
 	{
 		// Load the scene

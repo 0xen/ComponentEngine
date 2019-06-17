@@ -8,6 +8,7 @@
 #include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\UI.hpp>
+#include <ComponentEngine\Components\IO.hpp>
 #include <ComponentEngine\UI\UIManager.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -86,7 +87,7 @@ namespace ComponentEngine
 
 	class Transformation;
 
-	class Mesh : public MsgRecive<RenderStatus>, public UI , 
+	class Mesh : public MsgRecive<RenderStatus>, public UI , public IO,
 		public MsgRecive<OnComponentEnter<Transformation>>, public MsgRecive<OnComponentExit<Transformation>>
 	{
 	public:
@@ -101,6 +102,10 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<Transformation>& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentExit<Transformation>& message);
 		virtual void Display();
+
+		virtual void Load(std::ifstream& in);
+		virtual void Save(std::ofstream& out);
+
 		static void SetBufferData();
 		static void TransferToPrimaryBuffers();
 		static ordered_lock& GetModelPositionTransferLock();

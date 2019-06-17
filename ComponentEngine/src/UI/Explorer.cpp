@@ -75,7 +75,7 @@ void ComponentEngine::Explorer::RendererFolder(Folder & folder, std::function<vo
 
 	ImGui::PushID(&folder);
 
-	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+	ImGuiTreeNodeFlags flags = folder.topLevel ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
 
 	bool open = ImGui::TreeNodeEx("Folder", flags, "%s", folder.path.shortForm.c_str());
 

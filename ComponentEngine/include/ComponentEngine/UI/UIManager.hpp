@@ -52,6 +52,7 @@ namespace ComponentEngine
 
 	struct Folder
 	{
+		bool topLevel = false;
 		bool readFolder = false;;
 		FileForms path;
 		std::vector<FileForms> files;
