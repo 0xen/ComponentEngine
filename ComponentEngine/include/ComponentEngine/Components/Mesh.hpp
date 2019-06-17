@@ -105,6 +105,8 @@ namespace ComponentEngine
 
 		virtual void Load(std::ifstream& in);
 		virtual void Save(std::ofstream& out);
+		virtual unsigned int PayloadSize();
+		virtual bool DynamiclySized();
 
 		static void SetBufferData();
 		static void TransferToPrimaryBuffers();

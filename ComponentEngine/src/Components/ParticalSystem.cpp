@@ -540,14 +540,25 @@ void ComponentEngine::ParticleSystem::Display()
 
 void ComponentEngine::ParticleSystem::Load(std::ifstream & in)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(ParticleSystem, m_config), SizeOfOffsetRange(ParticleSystem, m_config, m_visible));
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(ParticleSystem, m_config), PayloadSize());
 	RebuildAll();
 }
 
 void ComponentEngine::ParticleSystem::Save(std::ofstream & out)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(ParticleSystem, m_config), SizeOfOffsetRange(ParticleSystem, m_config, m_visible));
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(ParticleSystem, m_config), PayloadSize());
 }
+
+unsigned int ComponentEngine::ParticleSystem::PayloadSize()
+{
+	return SizeOfOffsetRange(ParticleSystem, m_config, m_visible);
+}
+
+bool ComponentEngine::ParticleSystem::DynamiclySized()
+{
+	return false;
+}
+
 
 enteez::BaseComponentWrapper* ComponentEngine::ParticleSystem::EntityHookDefault(enteez::Entity & entity)
 {

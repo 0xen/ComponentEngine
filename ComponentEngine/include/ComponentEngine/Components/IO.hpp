@@ -17,5 +17,7 @@ namespace ComponentEngine
 	public:
 		virtual void Load(std::ifstream& in) = 0;
 		virtual void Save(std::ofstream& out) = 0;
+		virtual unsigned int PayloadSize() = 0;
+		virtual bool DynamiclySized() = 0;
 	};
 }

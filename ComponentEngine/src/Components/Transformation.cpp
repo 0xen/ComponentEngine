@@ -306,13 +306,23 @@ void ComponentEngine::Transformation::Display()
 
 void ComponentEngine::Transformation::Load(std::ifstream & in)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), SizeOfOffsetRange(Transformation, m_local_mat4, m_local_mat4));
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), PayloadSize());
 	PushToPositionArray();
 }
 
 void ComponentEngine::Transformation::Save(std::ofstream & out)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), SizeOfOffsetRange(Transformation, m_local_mat4, m_local_mat4));
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), PayloadSize());
+}
+
+unsigned int ComponentEngine::Transformation::PayloadSize()
+{
+	return  SizeOfOffsetRange(Transformation, m_local_mat4, m_local_mat4);
+}
+
+bool ComponentEngine::Transformation::DynamiclySized()
+{
+	return false;
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)

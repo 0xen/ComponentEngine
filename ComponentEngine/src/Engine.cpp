@@ -404,22 +404,36 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		std::string entityName = Common::ReadString(in);
 
 		Entity* entity = em.CreateEntity(entityName);
-		unsigned int componentCount;
 
+		unsigned int componentCount;
 		Common::Read(in, &componentCount, sizeof(unsigned int));
 
 		for (int j = 0; j < componentCount; j++)
 		{
 			std::string componentName = Common::ReadString(in);
 
+			unsigned int payloadSize;
+			Common::Read(in, &payloadSize, sizeof(unsigned int));
+
 			auto it = m_component_register.find(componentName);
 			if (it != m_component_register.end())
 			{
+
 				BaseComponentWrapper* wrapper = it->second(*entity);
 				IO* io = nullptr;
 				if (em.BaseClassInstance(*wrapper, io))
 				{
-					io->Load(in);
+					if (io->DynamiclySized() || io->PayloadSize() == payloadSize)
+					{
+						io->Load(in);
+						payloadSize = 0;
+					}
+					else
+					{
+						std::stringstream ss;
+						ss << "Unable to load component's '" << componentName << "' payload, size miss match. Expecting " << io->PayloadSize() << " Bytes, but recived " << payloadSize << " Bytes";
+						Log(ss.str(), ComponentEngine::Warning);
+					}
 				}
 			}
 			else
@@ -428,6 +442,21 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 				ss << "Unable to find component '" << componentName << "' for entity '" << entityName << "'";
 				Log(ss.str(), ComponentEngine::Warning);
 			}
+
+			// Dump the invalid payload
+			if (payloadSize > 0)
+			{
+				std::stringstream ss;
+				ss << "Dumping " << payloadSize << " Bytes from input stream";
+				Log(ss.str(), ComponentEngine::Warning);
+
+				char* temp = new char[payloadSize];
+				Common::Read(in, temp, payloadSize);
+				delete temp;
+
+			}
+
+
 		}
 
 		if (!entity->HasComponent<Transformation>())
@@ -481,10 +510,19 @@ void ComponentEngine::Engine::SaveScene()
 			// Output Components name 
 			Common::Write(out, wrapper.GetName());
 
+
 			IO* io = nullptr;
 			if (em.BaseClassInstance(wrapper, io))
 			{
+				unsigned int payloadSize = io->PayloadSize();
+				Common::Write(out, &payloadSize, sizeof(unsigned int));
 				io->Save(out);
+			}
+			else
+			{
+				// Write nothing for payload size
+				unsigned int payloadSize = 0;
+				Common::Write(out, &payloadSize, sizeof(unsigned int));
 			}
 		});
 

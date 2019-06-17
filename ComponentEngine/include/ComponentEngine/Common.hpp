@@ -15,6 +15,8 @@ namespace ComponentEngine
 		void Read(std::ifstream& in, void* ptr, unsigned long long size);
 		std::string ReadString(std::ifstream& in);
 
+		unsigned int StreamStringSize(std::string& str);
+
 
 		void Write(std::ofstream& out, void* ptr, unsigned long long size);
 		void Write(std::ofstream& out, const std::string& str);

@@ -252,20 +252,20 @@ int main(int argc, char **argv)
 	RegisterCustomComponents();
 
 	engine->GetUIManager()->AddMenuElement(new MenuElement("Debugging", {
-	new MenuElement("Add Mesh", [&] {
-		if (engine->GetUIManager()->GetCurrentSceneFocus().entity == nullptr)return;
-		engine->GetThreadManager()->AddTask([&](float frameTime) {
-			engine->GetLogicMutex().lock();
-			engine->GetRendererMutex().lock();
+		new MenuElement("Add Mesh", [&] {
+			if (engine->GetUIManager()->GetCurrentSceneFocus().entity == nullptr)return;
+			engine->GetThreadManager()->AddTask([&](float frameTime) {
+				engine->GetLogicMutex().lock();
+				engine->GetRendererMutex().lock();
 
-			Mesh::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
-			RendererComponent::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
+				Mesh::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
+				RendererComponent::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
 
-			engine->GetRendererMutex().unlock();
-			engine->GetLogicMutex().unlock();
-		});
+				engine->GetRendererMutex().unlock();
+				engine->GetLogicMutex().unlock();
+			});
 
-	})
+		})
 	}));
 
 

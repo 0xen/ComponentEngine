@@ -44,6 +44,11 @@ std::string ComponentEngine::Common::ReadString(std::ifstream & in)
 	return str;
 }
 
+unsigned int ComponentEngine::Common::StreamStringSize(std::string & str)
+{
+	return sizeof(unsigned int) + (sizeof(char) * (str.size() + 1));
+}
+
 void ComponentEngine::Common::Write(std::ofstream & out, void * ptr, unsigned long long size)
 {
 	out.write((char *)ptr, size);

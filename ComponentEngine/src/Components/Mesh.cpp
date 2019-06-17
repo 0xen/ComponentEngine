@@ -144,6 +144,16 @@ void ComponentEngine::Mesh::Save(std::ofstream & out)
 	Common::Write(out, m_file_path.data.longForm);
 }
 
+unsigned int ComponentEngine::Mesh::PayloadSize()
+{
+	return Common::StreamStringSize(m_file_path.data.longForm);
+}
+
+bool ComponentEngine::Mesh::DynamiclySized()
+{
+	return true;
+}
+
 void ComponentEngine::Mesh::SetBufferData()
 {
 	GetModelPositionTransferLock().lock();
@@ -377,6 +387,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 void ComponentEngine::Mesh::UnloadModel()
 {
+	if (!m_loaded)return;
 	for (int i = 0; i < m_sub_mesh_count; i++)
 	{
 		m_sub_meshes[i]->Remove();
