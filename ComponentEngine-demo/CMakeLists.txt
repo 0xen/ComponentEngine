@@ -65,7 +65,7 @@ target_link_libraries(${project_name} BulletDynamics)
 target_link_libraries(${project_name} BulletCollision)
 target_link_libraries(${project_name} LinearMath)
 
-target_link_libraries(${project_name} glslang SPIRV)
+#target_link_libraries(${project_name} glslang SPIRV)
 
 
 

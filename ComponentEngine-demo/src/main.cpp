@@ -67,7 +67,7 @@ void LoadTexturedShaderModel(IGraphicsPipeline* pipeline, IModelPool* modelPool,
 
 }
 
-
+/*
 #include <glslang/public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
@@ -119,10 +119,10 @@ std::string GetFilePath(const std::string& str)
 }
 
 bool glslangInitialized = false;
-
+*/
 void SetupShaders()
 {
-	if (!glslangInitialized)
+	/*if (!glslangInitialized)
 	{
 		glslang::InitializeProcess();
 		glslangInitialized = true;
@@ -210,7 +210,7 @@ void SetupShaders()
 
 
 
-
+	*/
 
 
 	{// Textured Pipeline
@@ -293,7 +293,6 @@ int main(int argc, char **argv)
 		engine->Update();
 	}
 
-	//engine->Join();
 	engine->Stop();
 	delete engine;
 

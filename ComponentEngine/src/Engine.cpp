@@ -395,11 +395,11 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	SetScenePath(path);
 
 	
-	unsigned int entityCount;
+	unsigned int topLevelEntityCount;
+	Common::Read(in, &topLevelEntityCount, sizeof(unsigned int));
 
-	Common::Read(in, &entityCount, sizeof(unsigned int));
 
-	for (int i = 0; i < entityCount; i++)
+	std::function<void(Entity* parent)> createEntity = [&](Entity* parent)
 	{
 		std::string entityName = Common::ReadString(in);
 
@@ -429,6 +429,27 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 				Log(ss.str(), ComponentEngine::Warning);
 			}
 		}
+
+		if (!entity->HasComponent<Transformation>())
+		{
+			Transformation::EntityHookDefault(*entity);
+		}
+
+		entity->GetComponent<Transformation>().SetParent(parent);
+
+		unsigned int childrenCount;
+		Common::Read(in, &childrenCount, sizeof(unsigned int));
+
+		for (int i = 0; i < childrenCount; i++)
+		{
+			createEntity(entity);
+		}
+	};
+
+
+	for (int i = 0; i < topLevelEntityCount; i++)
+	{
+		createEntity(nullptr);
 	}
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();
@@ -446,10 +467,8 @@ void ComponentEngine::Engine::SaveScene()
 		Common::Write(out, EngineName);
 	}
 
-	unsigned int entityCount = em.GetEntitys().size();
-	Common::Write(out, &entityCount, sizeof(unsigned int));
 
-	for (Entity* entity : em.GetEntitys())
+	std::function<void(Entity*)> saveEntity = [&](Entity* entity)
 	{
 		// Output entitys name
 		Common::Write(out, entity->GetName());
@@ -457,7 +476,6 @@ void ComponentEngine::Engine::SaveScene()
 		// Output the amount of components the entity has
 		unsigned int componentCount = entity->GetComponentCount();
 		Common::Write(out, &componentCount, sizeof(unsigned int));
-
 
 		entity->ForEach([&](BaseComponentWrapper& wrapper) {
 			// Output Components name 
@@ -469,7 +487,46 @@ void ComponentEngine::Engine::SaveScene()
 				io->Save(out);
 			}
 		});
+
+		if (entity->HasComponent<Transformation>())
+		{
+			Transformation& trans = entity->GetComponent<Transformation>();
+
+			// Output the amount of children the entity has
+			unsigned int childrenCount = trans.GetChildren().size();
+			Common::Write(out, &childrenCount, sizeof(unsigned int));
+
+			for (Transformation* child : trans.GetChildren())
+			{
+				saveEntity(child->GetEntity());
+			}
+		}
+		else
+		{
+			// Output the amount of children the entity has
+			unsigned int childrenCount = 0;
+			Common::Write(out, &childrenCount, sizeof(unsigned int));
+		}
+
+	};
+
+	std::vector<Entity*> topLevelEntities;
+	for (auto entity : em.GetEntitys())
+	{
+		if (entity->GetComponent<Transformation>().GetParent() == nullptr)
+		{
+			topLevelEntities.push_back(entity);
+		}
 	}
+
+	unsigned int entityCount = topLevelEntities.size();
+	Common::Write(out, &entityCount, sizeof(unsigned int));
+
+	for (auto entity : topLevelEntities)
+	{
+		saveEntity(entity);
+	}
+
 	out.flush();
 	out.close();
 }
