@@ -38,53 +38,6 @@ namespace ComponentEngine
 	class MeshVertex;
 	struct FileForms;
 
-	struct MaterialStorage
-	{
-		~MaterialStorage();
-		Renderer::IDescriptorPool* m_texture_maps_pool;
-		Renderer::IDescriptorSet* m_texture_descriptor_set;
-	};
-
-	struct MaterialMeshBases
-	{
-		std::vector<MeshVertex> vertexData;
-		std::vector<uint16_t> indexData;
-	};
-
-	// This is a part of the sub-mesh of X Material
-	struct MaterialMesh
-	{
-		Renderer::IVertexBuffer* vertexBuffer;
-		Renderer::IIndexBuffer* indexBuffer;
-		Renderer::IModelPool* model_pool;
-	};
-
-	// a sub-mesh of the main mesh
-	struct SubMesh
-	{
-		//std::vector<MaterialMesh> material_meshes;
-		MaterialMesh* material_meshes;
-		unsigned int material_meshes_count = 0;
-	};
-
-	// Instance of the main mesh
-	struct MeshInstance
-	{
-		~MeshInstance();
-		//std::vector<SubMesh> sub_meshes;
-		SubMesh* sub_meshes;
-		unsigned int sub_meshes_count = 0;
-
-		unsigned int total_pool_allocation = 0;
-
-		glm::mat4* model_position_array;
-		//std::vector<glm::mat4> model_position_array;
-		Renderer::IUniformBuffer* model_position_buffer;
-
-		unsigned int used_instances = 0;
-
-	};
-
 	class Transformation;
 
 	class Mesh : public MsgRecive<RenderStatus>, public UI , public IO,
@@ -114,8 +67,6 @@ namespace ComponentEngine
 		void LoadModel();
 		friend class Engine;
 	private:
-		void UnloadModel();
-		static void CleanUp();
 		DropBoxInstance<FileForms> m_file_path;
 		std::string m_dir;
 		Renderer::IModel** m_sub_meshes;
@@ -124,13 +75,22 @@ namespace ComponentEngine
 		// Index for the current mesh in the position array
 		unsigned int m_mesh_index;
 		bool m_loaded;
-		static std::map<std::string, MeshInstance> m_mesh_instance;
-		static std::map<std::string, MaterialStorage> m_materials;
+
 		// How many slots we will reserve 
 		static const unsigned int m_buffer_size_step;
 
 		static ordered_lock m_transformation_lock;
 
 		enteez::Entity * m_entity;
+
+
+		static unsigned int m_used_vertex;
+		static unsigned int m_used_index;
+
+		static const unsigned int vertex_max = 1000000;
+		static const unsigned int index_max = 1000000;
+
+		static MeshVertex all_vertexs[vertex_max];
+		static uint32_t all_indexs[index_max];
 	};
 }

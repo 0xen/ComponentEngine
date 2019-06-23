@@ -1009,8 +1009,6 @@ void ComponentEngine::Engine::DeInitRenderer()
 {
 	DeInitImGUI();
 
-	Mesh::CleanUp();
-
 	for (auto it = m_texture_storage.begin(); it != m_texture_storage.end(); it++)
 	{
 		delete it->second.texture_maps_pool;
@@ -1441,7 +1439,7 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_index_buffer = m_renderer->CreateIndexBuffer(m_imgui.m_index_data, sizeof(ImDrawIdx), temp_in_max);
 
 	// Setup model instance
-	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, m_imgui.m_index_buffer);
+	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, temp_vert_max, m_imgui.m_index_buffer, 0, temp_in_max);
 	m_imgui.model = m_imgui.model_pool->CreateModel();
 	m_imgui.model_pool->SetVertexDrawCount(0);
 

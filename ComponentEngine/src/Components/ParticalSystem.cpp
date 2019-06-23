@@ -113,7 +113,7 @@ void ComponentEngine::ParticleSystem::Build()
 	m_compute_program->Build();
 
 
-	m_model_pool = renderer->CreateModelPool(m_vertex_buffer);
+	m_model_pool = renderer->CreateModelPool(m_vertex_buffer,0, m_vertex_data.size());
 
 	m_model = m_model_pool->CreateModel();
 
