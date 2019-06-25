@@ -256,7 +256,7 @@ namespace ComponentEngine
 			IDescriptorSet* m_texture_descriptor_set = nullptr;
 			// Local memory
 			ImDrawVert* m_vertex_data = nullptr;
-			ImDrawIdx* m_index_data = nullptr;
+			uint32_t* m_index_data = nullptr;
 			// GUI GPU Buffer
 			IVertexBuffer* m_vertex_buffer = nullptr;
 			IIndexBuffer* m_index_buffer = nullptr;

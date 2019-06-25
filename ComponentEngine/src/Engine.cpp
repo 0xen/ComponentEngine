@@ -18,6 +18,8 @@
 #include <ComponentEngine\UI\MenuElement.hpp>
 #include <ComponentEngine\UI\EditorState.hpp>
 
+#include <renderer\vulkan\VulkanFlags.hpp>
+
 #include <lodepng.h>
 
 #include <assert.h>
@@ -950,7 +952,7 @@ void ComponentEngine::Engine::InitRenderer()
 {
 	// Create a instance of the renderer
 	m_renderer = new VulkanRenderer();
-	m_renderer->Start(m_window_handle);
+	m_renderer->Start(m_window_handle, VulkanFlags::Raytrace);
 
 	// If the rendering was not fully created, error out
 	assert(m_renderer != nullptr && "Error, renderer instance could not be created");
@@ -1435,13 +1437,13 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_vertex_data = new ImDrawVert[temp_vert_max];
 	m_imgui.m_vertex_buffer = m_renderer->CreateVertexBuffer(m_imgui.m_vertex_data, sizeof(ImDrawVert), temp_vert_max);
 
-	m_imgui.m_index_data = new ImDrawIdx[temp_in_max];
-	m_imgui.m_index_buffer = m_renderer->CreateIndexBuffer(m_imgui.m_index_data, sizeof(ImDrawIdx), temp_in_max);
+	m_imgui.m_index_data = new uint32_t[temp_in_max];
+	m_imgui.m_index_buffer = m_renderer->CreateIndexBuffer(m_imgui.m_index_data, sizeof(uint32_t), temp_in_max);
 
 	// Setup model instance
-	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, temp_vert_max, m_imgui.m_index_buffer, 0, temp_in_max);
+	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, 0, m_imgui.m_index_buffer, 0, 0);
 	m_imgui.model = m_imgui.model_pool->CreateModel();
-	m_imgui.model_pool->SetVertexDrawCount(0);
+	m_imgui.model->ShouldRender(true);
 
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
 }
@@ -1464,8 +1466,9 @@ void ComponentEngine::Engine::UpdateImGUI()
 	{
 		throw "Dynamic GUI buffers not handled";
 	}
+
 	ImDrawVert* temp_vertex_data = m_imgui.m_vertex_data;
-	ImDrawIdx* temp_index_data = m_imgui.m_index_data;
+	uint32_t* temp_index_data = m_imgui.m_index_data;
 	unsigned int index_count = 0;
 	unsigned int vertex_count = 0;
 	for (int n = 0; n < imDrawData->CmdListsCount; n++)
@@ -1487,7 +1490,13 @@ void ComponentEngine::Engine::UpdateImGUI()
 
 	// Submit the payload to the GPU
 
-	m_imgui.model_pool->SetVertexDrawCount(index_count);
+	if (imDrawData->TotalVtxCount != m_imgui.model_pool->GetVertexSize() ||
+		imDrawData->TotalIdxCount != m_imgui.model_pool->GetIndexSize())
+	{
+		m_imgui.model_pool->SetVertexSize(imDrawData->TotalVtxCount);
+		m_imgui.model_pool->SetIndexSize(imDrawData->TotalIdxCount);
+		m_imgui.model_pool->Update();
+	}
 
 
 	m_logic_lock.lock();

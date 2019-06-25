@@ -683,7 +683,9 @@ void ComponentEngine::ParticleSystem::RebuildAll()
 
 		m_model_pool->SetVertexBuffer(m_vertex_buffer);
 
-		m_model_pool->SetVertexDrawCount(m_particleCount);
+		m_model_pool->SetVertexSize(m_particleCount);
+
+		//m_model_pool->SetVertexDrawCount();
 
 		m_compute_pipeline->SetX(m_particleCount);
 
