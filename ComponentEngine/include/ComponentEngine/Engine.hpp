@@ -1,7 +1,10 @@
 #pragma once
 
 #include <EnteeZ\EnteeZ.hpp>
+
 #include <renderer\vulkan\VulkanRenderer.hpp>
+#include <renderer\IBufferPool.hpp>
+#include <renderer\vulkan\VulkanDescriptorSet.hpp>
 
 #include <ComponentEngine\Components\Transformation.hpp>
 #include <ComponentEngine\Components\Camera.hpp>
@@ -10,6 +13,8 @@
 #include <ComponentEngine\ThreadManager.hpp>
 #include <ComponentEngine/PhysicsWorld.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
+#include <ComponentEngine\DefaultMeshVertex.hpp>
+#include <ComponentEngine\obj_loader.h>
 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -121,7 +126,7 @@ namespace ComponentEngine
 		PipelinePack& GetPipelineContaining(std::string name);
 
 		IGraphicsPipeline* GetDefaultGraphicsPipeline();
-		IRenderer* GetRenderer();
+		VulkanRenderer* GetRenderer();
 		IDescriptorPool* GetCameraPool();
 		IDescriptorSet* GetCameraDescriptorSet();
 		IDescriptorPool* GetTextureMapsPool();
@@ -237,6 +242,9 @@ namespace ComponentEngine
 		IDescriptorSet* m_camera_descriptor_set;
 		IDescriptorPool* m_texture_maps_pool;
 
+		// Raytrace pipeline
+		VulkanRaytracePipeline* m_default_raytrace = nullptr;
+
 		Camera* m_default_camera;
 		// Main camera
 		Camera* m_main_camera = nullptr;
@@ -326,6 +334,41 @@ namespace ComponentEngine
 		int m_lockedPosX;
 		int m_lockedPosY;
 
+		
+		
+		std::vector<VulkanTextureBuffer*> m_textures;
+		std::vector<VkDescriptorImageInfo> m_texture_descriptors;
+		std::vector<MatrialObj> m_materials;
+
+		unsigned int m_used_vertex = 0;
+		unsigned int m_used_index = 0;
+
+		const unsigned int m_vertex_max = 1000000;
+		const unsigned int m_index_max = 1000000;
+
+		std::vector<MeshVertex> m_all_vertexs;
+		std::vector<uint32_t> m_all_indexs;
+
+		VulkanDescriptorSet* m_standardRTConfigSet = nullptr;
+
+		IVertexBuffer* m_vertexBuffer;
+		IIndexBuffer* m_indexBuffer;
+		IUniformBuffer* m_materialbuffer;
+		IUniformBuffer* m_lightBuffer;
+
+		glm::mat4* m_model_position_array;
+		IUniformBuffer* m_model_position_buffer;
+		IBufferPool* m_position_buffer_pool;
+
+		struct ModelOffsets
+		{
+			uint32_t index;
+			uint32_t vertex;
+			uint32_t position;
+		};
+
+		ModelOffsets* m_offset_allocation_array;
+		IUniformBuffer* m_offset_allocation_array_buffer;
 	};
 	
 }

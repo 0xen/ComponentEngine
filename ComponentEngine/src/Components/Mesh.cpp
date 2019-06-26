@@ -17,9 +17,6 @@ using namespace ComponentEngine;
 
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-unsigned int Mesh::m_used_vertex = 0;
-unsigned int Mesh::m_used_index = 0;
-
 ordered_lock ComponentEngine::Mesh::m_transformation_lock;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)

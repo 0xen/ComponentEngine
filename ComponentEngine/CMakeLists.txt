@@ -8,6 +8,7 @@ set(HAVE_LIBC TRUE)
 set(common_headers
     # External
     include/ComponentEngine/tiny_obj_loader.h
+    include/ComponentEngine/obj_loader.h
     ../../lodepng/lodepng.h
 
 
@@ -26,7 +27,8 @@ set(common_headers
 set(common_source
     # External
     ../../lodepng/lodepng.cpp
-
+    
+    src/obj_loader.cpp
     src/Engine.cpp
     src/Common.cpp
     src/ThreadHandler.cpp

@@ -9,13 +9,14 @@ std::vector<ComponentEngine::Camera*> ComponentEngine::Camera::m_global_cameras;
 ComponentEngine::Camera::Camera()
 {
 	m_camera_data.view = glm::mat4(1.0f);
+	m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
 
 	m_near_clip = 0.1f;
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
 
-	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Single, sizeof(Camera), 1);
+	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Single, sizeof(Camera), 1,true);
 	UpdateProjection();
 	m_global_cameras.push_back(this);
 }
@@ -24,14 +25,18 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 {
 	m_entity = entity;
 	m_camera_data.view = glm::mat4(1.0f);
+	m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
+
+
 
 	m_near_clip = 0.1f;
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
 
-	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Double, sizeof(Camera), 1);
-	UpdateProjection();
+	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Double, sizeof(Camera), 1,true);
+	m_camera_buffer->SetData(BufferSlot::Primary);
+	//UpdateProjection();
 
 	SetMainCamera();
 	m_global_cameras.push_back(this);
@@ -67,10 +72,13 @@ void ComponentEngine::Camera::Update(float frame_time)
 
 void ComponentEngine::Camera::SetBufferData()
 {
+
 	m_camera_data.view = glm::inverse(m_camera_data.view);
 	m_camera_data.view = m_entity->GetComponent<Transformation>().Get();
+	m_camera_data.viewInverse = m_camera_data.view;
 	m_camera_data.view = glm::inverse(m_camera_data.view);
 	m_camera_buffer->SetData(BufferSlot::Secondery);
+
 }
 
 void ComponentEngine::Camera::BufferTransfer()
@@ -131,15 +139,19 @@ IUniformBuffer* ComponentEngine::Camera::GetCameraBuffer()
 void ComponentEngine::Camera::UpdateProjection()
 {
 
-	float aspectRatio = ((float)Engine::Singlton()->GetWindowHandle()->width) / ((float)Engine::Singlton()->GetWindowHandle()->height);
-	m_camera_data.projection = glm::perspective(
+	float aspectRatio = ((float)1080) / ((float)720);
+	m_camera_data.proj = glm::perspective(
 		glm::radians(m_fov),
 		aspectRatio,
 		m_near_clip,
 		m_far_clip
 	);
+	m_camera_data.proj[1][1] *= -1;
+
+	m_camera_data.projInverse = glm::inverse(m_camera_data.proj);
+
 	// Need to flip the projection as GLM was made for OpenGL
-	m_camera_data.projection[1][1] *= -1;
+	m_camera_data.proj[1][1] *= -1;
 	{
 		Engine::Singlton()->GetRendererMutex().lock();
 		m_camera_buffer->SetData(BufferSlot::Primary);

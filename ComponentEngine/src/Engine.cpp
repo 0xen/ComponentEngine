@@ -19,6 +19,9 @@
 #include <ComponentEngine\UI\EditorState.hpp>
 
 #include <renderer\vulkan\VulkanFlags.hpp>
+#include <renderer\vulkan\VulkanRaytracePipeline.hpp>
+#include <renderer\vulkan\VulkanAcceleration.hpp>
+#include <renderer\vulkan\VulkanSwapchain.hpp>
 
 #include <lodepng.h>
 
@@ -46,6 +49,9 @@ ComponentEngine::Engine::Engine()
 	}
 
 	m_flags = 0;
+
+	m_all_vertexs.resize(m_vertex_max);
+	m_all_indexs.resize(m_index_max);
 }
 
 Engine* ComponentEngine::Engine::Singlton()
@@ -599,11 +605,10 @@ IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
 	return m_default_pipeline;
 }
 
-IRenderer * ComponentEngine::Engine::GetRenderer()
+VulkanRenderer * ComponentEngine::Engine::GetRenderer()
 {
 	return m_renderer;
 }
-
 
 IDescriptorPool * ComponentEngine::Engine::GetCameraPool()
 {
@@ -722,6 +727,7 @@ void ComponentEngine::Engine::SetCamera(Camera* camera)
 	m_camera_descriptor_set->UpdateSet();
 	camera->UpdateProjection();
 	Rebuild();
+	if(m_standardRTConfigSet!=nullptr) m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
 	GetRendererMutex().unlock();
 }
 
@@ -962,6 +968,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	m_default_camera = new Camera();
 
+
 	// Create camera pool
 	// This is a layout for the camera input data
 	m_camera_pool = m_renderer->CreateDescriptorPool({
@@ -975,36 +982,191 @@ void ComponentEngine::Engine::InitRenderer()
 	m_camera_descriptor_set->UpdateSet();
 
 
-	// Create default pipeline
-	m_default_pipeline = m_renderer->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../Shaders/Default/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/Default/frag.spv" }
-		});
 
-	// Tell the pipeline what data is should expect in the forum of Vertex input
-	m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelBinding());
 
-	m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelPositionBinding());
+	{
+		// Create default pipeline
+		m_default_pipeline = m_renderer->CreateGraphicsPipeline({
+			{ ShaderStage::VERTEX_SHADER, "../Shaders/Default/vert.spv" },
+			{ ShaderStage::FRAGMENT_SHADER, "../Shaders/Default/frag.spv" }
+			});
 
-	// Tell the pipeline what the input data will be payed out like
-	m_default_pipeline->AttachDescriptorPool(m_camera_pool);
-	// Attach the camera descriptor set to the pipeline
-	m_default_pipeline->AttachDescriptorSet(0, m_camera_descriptor_set);
+		// Tell the pipeline what data is should expect in the forum of Vertex input
+		m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelBinding());
 
-	m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
-		Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
-		});
+		m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelPositionBinding());
 
-	//m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
+		// Tell the pipeline what the input data will be payed out like
+		m_default_pipeline->AttachDescriptorPool(m_camera_pool);
+		// Attach the camera descriptor set to the pipeline
+		m_default_pipeline->AttachDescriptorSet(0, m_camera_descriptor_set);
 
-	m_default_pipeline->UseCulling(true);
+		m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
+			Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+			});
 
-	bool sucsess = m_default_pipeline->Build();
-	m_pipelines["Default"] = PipelinePack{ m_default_pipeline };
-	// Build and check default pipeline
-	assert(sucsess && "Unable to build default pipeline");
+		//m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
+
+		m_default_pipeline->UseCulling(true);
+
+		bool sucsess = m_default_pipeline->Build();
+		m_pipelines["Default"] = PipelinePack{ m_default_pipeline };
+
+		// Build and check default pipeline
+		assert(sucsess && "Unable to build default pipeline");
+	}
+
 	SetCamera(m_default_camera);
 
+
+	{
+		m_default_raytrace = m_renderer->CreateRaytracePipeline(
+			{
+				{ ShaderStage::RAY_GEN,		"../Shaders/Raytrace/Compleate/Gen/rgen.spv" },
+				{ ShaderStage::MISS,		"../Shaders/Raytrace/Compleate/Miss/rmiss.spv" },
+				{ ShaderStage::MISS,		"../Shaders/Raytrace/Compleate/Miss/ShadowMiss/rmiss.spv" },
+			},
+			{
+				{ // Involved 
+					{ ShaderStage::CLOSEST_HIT, "../Shaders/Raytrace/Compleate/Hitgroups/rchit.spv" },
+				},
+				{}, // Fall through hit group for shadow's, etc
+			});
+
+		int groupID = 0;
+		// Ray generation entry point
+		m_default_raytrace->AddRayGenerationProgram(groupID++, {});
+
+		m_default_raytrace->AddMissProgram(groupID++, {});
+		m_default_raytrace->AddMissProgram(groupID++, {});
+		m_default_raytrace->AddHitGroup(groupID++, {});
+		m_default_raytrace->AddHitGroup(groupID++, {});
+
+
+		m_default_raytrace->SetMaxRecursionDepth(10);
+
+		m_default_raytrace->AttachVertexBinding({
+			VertexInputRate::INPUT_RATE_VERTEX,
+			{
+				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
+				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
+				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+				{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
+			},
+			sizeof(MeshVertex),
+			0
+			});
+
+
+		VulkanAcceleration* acceleration = m_renderer->CreateAcceleration();
+		//acceleration->AttachModelPool(static_cast<VulkanModelPool*>(model_pool1));
+		//acceleration->AttachModelPool(static_cast<VulkanModelPool*>(model_pool2));
+		acceleration->Build();
+
+
+		
+		
+		{
+			IDescriptorPool* standardRTConfigPool = m_renderer->CreateDescriptorPool({
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
+				});
+			m_default_raytrace->AttachDescriptorPool(standardRTConfigPool);
+
+			m_standardRTConfigSet = static_cast<VulkanDescriptorSet*>(standardRTConfigPool->CreateDescriptorSet());
+
+			m_standardRTConfigSet->AttachBuffer(0, { acceleration->GetDescriptorAcceleration() });
+			m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
+			m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+			m_standardRTConfigSet->UpdateSet();
+
+			m_default_raytrace->AttachDescriptorSet(0, m_standardRTConfigSet);
+		}
+
+		
+
+		m_vertexBuffer = m_renderer->CreateVertexBuffer(m_all_vertexs.data(), sizeof(MeshVertex), m_all_vertexs.size());
+		m_indexBuffer = m_renderer->CreateIndexBuffer(m_all_indexs.data(), sizeof(uint32_t), m_all_indexs.size());
+
+		//m_materialbuffer = m_renderer->CreateUniformBuffer(m_materials.data(), BufferChain::Single, sizeof(MatrialObj), m_materials.size(), true);
+		//m_materialbuffer->SetData(BufferSlot::Primary);
+
+
+		struct Light
+		{
+			glm::vec4 position;
+			glm::vec4 color;
+		};
+		std::vector<Light> lights = {
+			{ glm::vec4(500, 400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) },
+			{ glm::vec4(-500, 400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) }
+		};
+
+		m_lightBuffer = m_renderer->CreateUniformBuffer(lights.data(), BufferChain::Single, sizeof(Light), lights.size(), true);
+		m_lightBuffer->SetData(BufferSlot::Primary);
+
+
+		{
+			IDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3, 1000),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 4),
+			});
+			m_default_raytrace->AttachDescriptorPool(RTModelPool);
+
+			VulkanDescriptorSet* RTModelPoolSet = static_cast<VulkanDescriptorSet*>(RTModelPool->CreateDescriptorSet());
+
+			RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
+			RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
+			//RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
+			if (m_texture_descriptors.size() > 0) RTModelPoolSet->AttachBuffer(3, m_texture_descriptors);
+			RTModelPoolSet->AttachBuffer(4, m_lightBuffer);
+
+
+			RTModelPoolSet->UpdateSet();
+
+			m_default_raytrace->AttachDescriptorSet(1, RTModelPoolSet);
+		}
+
+		m_model_position_array = new glm::mat4[1000];
+		m_model_position_buffer = m_renderer->CreateUniformBuffer(m_model_position_array, BufferChain::Double, sizeof(glm::mat4), 1000, true);
+
+		m_position_buffer_pool = new IBufferPool(m_model_position_buffer);
+
+		
+
+		m_offset_allocation_array = new ModelOffsets[1000];
+		m_offset_allocation_array_buffer = m_renderer->CreateUniformBuffer(m_offset_allocation_array, BufferChain::Single, sizeof(ModelOffsets), 1000, true);
+
+
+		{
+			IDescriptorPool* RTModelInstancePool = m_renderer->CreateDescriptorPool({
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3),
+			});
+			m_default_raytrace->AttachDescriptorPool(RTModelInstancePool);
+
+
+			VulkanDescriptorSet* RTModelInstanceSet = static_cast<VulkanDescriptorSet*>(RTModelInstancePool->CreateDescriptorSet());
+
+			RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
+			RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
+
+
+			RTModelInstanceSet->UpdateSet();
+
+			m_default_raytrace->AttachDescriptorSet(2, RTModelInstanceSet);
+		}
+
+		m_default_raytrace->Build();
+	}
+
+	
 }
 
 void ComponentEngine::Engine::DeInitRenderer()

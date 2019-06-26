@@ -6,6 +6,10 @@
 layout(set = 0, binding = 0) uniform UniformBufferObjectStatic {
     mat4 view;
     mat4 proj;
+
+	// #VKRay
+	mat4 viewInverse;
+	mat4 projInverse;
 }ubo;
 
 layout(location = 0) in vec3 inPosition;

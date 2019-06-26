@@ -84,13 +84,5 @@ namespace ComponentEngine
 		enteez::Entity * m_entity;
 
 
-		static unsigned int m_used_vertex;
-		static unsigned int m_used_index;
-
-		static const unsigned int vertex_max = 1000000;
-		static const unsigned int index_max = 1000000;
-
-		static MeshVertex all_vertexs[vertex_max];
-		static uint32_t all_indexs[index_max];
 	};
 }

@@ -60,7 +60,12 @@ namespace ComponentEngine
 		struct {
 
 			glm::mat4 view;
-			glm::mat4 projection;
+			glm::mat4 proj;
+
+			// #VKRay
+			glm::mat4 viewInverse;
+			glm::mat4 projInverse;
+
 		}m_camera_data;
 	};
 
