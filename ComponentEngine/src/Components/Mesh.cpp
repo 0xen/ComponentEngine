@@ -7,7 +7,13 @@
 #include <ComponentEngine\DefaultMeshVertex.hpp>
 #include <EnteeZ\EnteeZ.hpp>
 
+#include <renderer\vulkan\VulkanTextureBuffer.hpp>
+#include <renderer\vulkan\VulkanAcceleration.hpp>
+#include <renderer\vulkan\VulkanModelPool.hpp>
+
 #include <imgui.h>
+
+#include <lodepng.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 #include <ComponentEngine\tiny_obj_loader.h>
@@ -18,6 +24,8 @@ using namespace ComponentEngine;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
 ordered_lock ComponentEngine::Mesh::m_transformation_lock;
+
+std::map<std::string, IModelPool*> ComponentEngine::Mesh::m_mesh_instances;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 {
@@ -75,10 +83,7 @@ bool ComponentEngine::Mesh::Loaded()
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, RenderStatus& message)
 {
 	if (!m_loaded)return;
-	for (int i = 0; i < m_sub_mesh_count; i++)
-	{
-		m_sub_meshes[i]->ShouldRender(message.should_renderer);
-	}
+	m_model->ShouldRender(message.should_renderer);
 }
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEnter<Transformation>& message)
@@ -88,8 +93,7 @@ void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentEn
 
 void ComponentEngine::Mesh::ReciveMessage(enteez::Entity * sender, OnComponentExit<Transformation>& message)
 {
-	//auto it = m_mesh_instance[m_path].model_position_array.begin() + m_mesh_index;
-	//m_mesh_instance[m_path].model_position_array.erase(it);
+
 }
 
 void ComponentEngine::Mesh::Display()
@@ -97,9 +101,6 @@ void ComponentEngine::Mesh::Display()
 
 	if (m_loaded)
 	{
-		//MeshInstance& meshInstance = m_mesh_instance[m_file_path.data.longForm];
-		//ImGui::Text("Mesh Instance Count: %d", meshInstance.used_instances);
-		ImGui::Text("Sub-Mesh Count: %d", m_sub_mesh_count);
 		ImGui::Text("Vertex Count: %d", m_vertex_count);
 	}
 
@@ -168,5 +169,106 @@ ordered_lock& ComponentEngine::Mesh::GetModelPositionTransferLock()
 
 void ComponentEngine::Mesh::LoadModel()
 {
+	Engine* engine = Engine::Singlton();
+	if (m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end())
+	{
+		IVertexBuffer* vertexBuffer = engine->GetGlobalVertexBufer();
+		IIndexBuffer* indexBuffer = engine->GetGlobalIndexBuffer();
 
+		std::vector<uint32_t>& all_indexs = engine->GetGlobalIndexArray();
+		std::vector<MeshVertex>& all_vertexs = engine->GetGlobalVertexArray();
+		std::vector<MatrialObj>& materials = engine->GetGlobalMaterialArray();
+		std::vector<VkDescriptorImageInfo>& texture_descriptors = engine->GetTextureDescriptors();
+		std::vector<VulkanTextureBuffer*>& textures = engine->GetTextures();
+		IBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
+
+		unsigned int& used_vertex = engine->GetUsedVertex();
+		unsigned int& used_index = engine->GetUsedIndex();
+		unsigned int& used_texture_descriptor = engine->GetUsedTextureDescriptors();
+		unsigned int& used_materials = engine->GetUsedMaterials();
+
+		ObjLoader<MeshVertex> loader;
+		loader.loadModel(m_file_path.data.longForm);
+
+		uint32_t m_nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
+		uint32_t m_nbIndices = static_cast<uint32_t>(loader.m_indices.size());
+
+		unsigned int vertexStart = used_vertex;
+		unsigned int indexStart = used_index;
+
+		for (uint32_t& index : loader.m_indices)
+		{
+			all_indexs[used_index] = index;
+			used_index++;
+		}
+
+		for (MeshVertex& vertex : loader.m_vertices)
+		{
+			vertex.matID += used_materials;
+			all_vertexs[used_vertex] = vertex;
+			used_vertex++;
+		}
+
+		unsigned int material_count = 0;
+		unsigned int offset = used_texture_descriptor;
+		for (auto& material : loader.m_materials)
+		{
+			if (material.textureID >= 0) material.textureID += offset;
+			materials[used_materials + material_count] = material;
+			material_count++;
+		}
+
+		for (auto& texturePath : loader.m_textures)
+		{
+			std::stringstream ss;
+			ss << "../../renderer-demo/media/scenes/" << texturePath;
+
+			std::vector<unsigned char> image; //the raw pixels
+			unsigned width;
+			unsigned height;
+
+			unsigned error = lodepng::decode(image, width, height, ss.str());
+			if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+
+			VulkanTextureBuffer* texture = dynamic_cast<Vulkan::VulkanTextureBuffer*>(engine->GetRenderer()->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height));
+			texture->SetData(BufferSlot::Primary);
+			textures.push_back(texture);
+
+			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+
+		
+		}
+
+		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices);
+
+		m_mesh_instances[m_file_path.data.longForm]->AttachBufferPool(0, position_buffer_pool);
+
+		VulkanAcceleration* as = engine->GetTopLevelAS();
+
+		as->AttachModelPool(static_cast<VulkanModelPool*>(m_mesh_instances[m_file_path.data.longForm]));
+
+	}
+
+	
+	
+
+	
+
+	// Create a instance of the model
+	m_model = m_mesh_instances[m_file_path.data.longForm]->CreateModel();
+
+	glm::mat4 modelPosition = glm::mat4(1.0f);
+	modelPosition = glm::translate(modelPosition, glm::vec3(0, 0, -2));
+	float scale = 0.2;
+	modelPosition = glm::scale(modelPosition, glm::vec3(scale, scale, scale));
+	scale = 0.25f;
+
+	m_model->SetData(0, modelPosition);
+
+	engine->GetModelPositionBuffer()->SetData(BufferSlot::Primary);
+
+	VulkanAcceleration* as = engine->GetTopLevelAS();
+	as->Build();
+
+	engine->RebuildOffsetAllocation();
 }

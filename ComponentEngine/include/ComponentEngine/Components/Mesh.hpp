@@ -67,10 +67,13 @@ namespace ComponentEngine
 		void LoadModel();
 		friend class Engine;
 	private:
+
+		// Key: File path, Value: Model instance
+		static std::map<std::string, IModelPool*> m_mesh_instances;
+
 		DropBoxInstance<FileForms> m_file_path;
 		std::string m_dir;
-		Renderer::IModel** m_sub_meshes;
-		unsigned int m_sub_mesh_count;
+		Renderer::IModel* m_model;
 		unsigned int m_vertex_count;
 		// Index for the current mesh in the position array
 		unsigned int m_mesh_index;

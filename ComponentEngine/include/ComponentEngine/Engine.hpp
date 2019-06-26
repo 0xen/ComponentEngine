@@ -176,6 +176,38 @@ namespace ComponentEngine
 
 		UIManager* GetUIManager();
 
+		IVertexBuffer* GetGlobalVertexBufer();
+
+		IIndexBuffer* GetGlobalIndexBuffer();
+
+		IUniformBuffer* GetMaterialBuffer();
+
+		std::vector<MeshVertex>& GetGlobalVertexArray();
+
+		std::vector<uint32_t>& GetGlobalIndexArray();
+
+		std::vector<MatrialObj>& GetGlobalMaterialArray();
+
+		std::vector<VkDescriptorImageInfo>& GetTextureDescriptors();
+
+		std::vector<VulkanTextureBuffer*>& GetTextures();
+
+		IBufferPool* GetPositionBufferPool();
+
+		VulkanAcceleration* GetTopLevelAS();
+
+		unsigned int& GetUsedVertex();
+
+		unsigned int& GetUsedIndex();
+
+		unsigned int& GetUsedTextureDescriptors();
+
+		unsigned int& GetUsedMaterials();
+
+		void RebuildOffsetAllocation();
+
+		IUniformBuffer* GetModelPositionBuffer();
+
 		friend class UIManager;
 	private:
 		Engine();
@@ -334,7 +366,8 @@ namespace ComponentEngine
 		int m_lockedPosX;
 		int m_lockedPosY;
 
-		
+
+		VulkanAcceleration* m_top_level_acceleration;
 		
 		std::vector<VulkanTextureBuffer*> m_textures;
 		std::vector<VkDescriptorImageInfo> m_texture_descriptors;
@@ -342,9 +375,13 @@ namespace ComponentEngine
 
 		unsigned int m_used_vertex = 0;
 		unsigned int m_used_index = 0;
+		unsigned int m_used_texture_descriptors = 0;
+		unsigned int m_used_materials = 0;
 
 		const unsigned int m_vertex_max = 1000000;
 		const unsigned int m_index_max = 1000000;
+		const unsigned int m_max_texture_descriptors = 1000;
+		const unsigned int m_max_materials = 1000;
 
 		std::vector<MeshVertex> m_all_vertexs;
 		std::vector<uint32_t> m_all_indexs;

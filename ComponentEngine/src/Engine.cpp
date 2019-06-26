@@ -22,6 +22,7 @@
 #include <renderer\vulkan\VulkanRaytracePipeline.hpp>
 #include <renderer\vulkan\VulkanAcceleration.hpp>
 #include <renderer\vulkan\VulkanSwapchain.hpp>
+#include <renderer\vulkan\VulkanModelPool.hpp>
 
 #include <lodepng.h>
 
@@ -630,9 +631,9 @@ VertexBase ComponentEngine::Engine::GetDefaultVertexModelBinding()
 	return VertexBase{
 			VertexInputRate::INPUT_RATE_VERTEX,
 			{
-				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
-				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
-				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,pos) },
+				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,texCoord) },
+				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,nrm) },
 				{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
 			},
 			sizeof(MeshVertex),
@@ -727,7 +728,13 @@ void ComponentEngine::Engine::SetCamera(Camera* camera)
 	m_camera_descriptor_set->UpdateSet();
 	camera->UpdateProjection();
 	Rebuild();
-	if(m_standardRTConfigSet!=nullptr) m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+	if (m_standardRTConfigSet != nullptr)
+	{
+		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
+		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
+		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->UpdateSet();
+	}
 	GetRendererMutex().unlock();
 }
 
@@ -802,6 +809,99 @@ void ComponentEngine::Engine::SetFlag(int flags)
 UIManager * ComponentEngine::Engine::GetUIManager()
 {
 	return m_ui;
+}
+
+IVertexBuffer * ComponentEngine::Engine::GetGlobalVertexBufer()
+{
+	return m_vertexBuffer;
+}
+
+IIndexBuffer * ComponentEngine::Engine::GetGlobalIndexBuffer()
+{
+	return m_indexBuffer;
+}
+
+IUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
+{
+	return m_materialbuffer;
+}
+
+std::vector<MeshVertex>& ComponentEngine::Engine::GetGlobalVertexArray()
+{
+	return m_all_vertexs;
+}
+
+std::vector<uint32_t>& ComponentEngine::Engine::GetGlobalIndexArray()
+{
+	return m_all_indexs;
+}
+
+std::vector<MatrialObj>& ComponentEngine::Engine::GetGlobalMaterialArray()
+{
+	return m_materials;
+}
+
+std::vector<VkDescriptorImageInfo>& ComponentEngine::Engine::GetTextureDescriptors()
+{
+	return m_texture_descriptors;
+}
+
+std::vector<VulkanTextureBuffer*>& ComponentEngine::Engine::GetTextures()
+{
+	return m_textures;
+}
+
+IBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
+{
+	return m_position_buffer_pool;
+}
+
+VulkanAcceleration * ComponentEngine::Engine::GetTopLevelAS()
+{
+	return m_top_level_acceleration;
+}
+
+unsigned int & ComponentEngine::Engine::GetUsedVertex()
+{
+	return m_used_vertex;
+}
+
+unsigned int & ComponentEngine::Engine::GetUsedIndex()
+{
+	return m_used_index;
+}
+
+unsigned int & ComponentEngine::Engine::GetUsedTextureDescriptors()
+{
+	return m_used_texture_descriptors;
+}
+
+unsigned int & ComponentEngine::Engine::GetUsedMaterials()
+{
+	return m_used_materials;
+}
+
+void ComponentEngine::Engine::RebuildOffsetAllocation()
+{
+	unsigned int index = 0;
+	for (auto& mp : m_top_level_acceleration->GetModelPools())
+	{
+		unsigned int index_offset = mp->GetIndexOffset();
+		unsigned int vertex_offset = mp->GetVertexOffset();
+		for (auto& model : mp->GetModels())
+		{
+			m_offset_allocation_array[index].index = index_offset;
+			m_offset_allocation_array[index].vertex = vertex_offset;
+			m_offset_allocation_array[index].position = mp->GetModelBufferOffset(model.second, 0);
+			index++;
+		}
+	}
+	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
+}
+
+IUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
+{
+	return m_model_position_buffer;
 }
 
 Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
@@ -1048,9 +1148,9 @@ void ComponentEngine::Engine::InitRenderer()
 		m_default_raytrace->AttachVertexBinding({
 			VertexInputRate::INPUT_RATE_VERTEX,
 			{
-				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,position) },
-				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,uv) },
-				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,normal) },
+				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,pos) },
+				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,texCoord) },
+				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,nrm) },
 				{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
 			},
 			sizeof(MeshVertex),
@@ -1058,10 +1158,10 @@ void ComponentEngine::Engine::InitRenderer()
 			});
 
 
-		VulkanAcceleration* acceleration = m_renderer->CreateAcceleration();
+		m_top_level_acceleration = m_renderer->CreateAcceleration();
 		//acceleration->AttachModelPool(static_cast<VulkanModelPool*>(model_pool1));
 		//acceleration->AttachModelPool(static_cast<VulkanModelPool*>(model_pool2));
-		acceleration->Build();
+		m_top_level_acceleration->Build();
 
 
 		
@@ -1076,7 +1176,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 			m_standardRTConfigSet = static_cast<VulkanDescriptorSet*>(standardRTConfigPool->CreateDescriptorSet());
 
-			m_standardRTConfigSet->AttachBuffer(0, { acceleration->GetDescriptorAcceleration() });
+			m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 			m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
 			m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
 			m_standardRTConfigSet->UpdateSet();
@@ -1106,13 +1206,18 @@ void ComponentEngine::Engine::InitRenderer()
 		m_lightBuffer = m_renderer->CreateUniformBuffer(lights.data(), BufferChain::Single, sizeof(Light), lights.size(), true);
 		m_lightBuffer->SetData(BufferSlot::Primary);
 
+		m_materials.resize(m_max_materials);
+
+		m_materialbuffer = m_renderer->CreateUniformBuffer(m_materials.data(), BufferChain::Single, sizeof(MatrialObj), m_materials.size(), true);
+		m_materialbuffer->SetData(BufferSlot::Primary);
+
 
 		{
 			IDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3, 1000),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3, m_max_texture_descriptors),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 4),
 			});
 			m_default_raytrace->AttachDescriptorPool(RTModelPool);
@@ -1121,7 +1226,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 			RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
 			RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
-			//RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
+			RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
 			if (m_texture_descriptors.size() > 0) RTModelPoolSet->AttachBuffer(3, m_texture_descriptors);
 			RTModelPoolSet->AttachBuffer(4, m_lightBuffer);
 
