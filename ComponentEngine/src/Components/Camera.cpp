@@ -2,6 +2,8 @@
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\Transformation.hpp>
 
+#include <renderer\vulkan\VulkanUniformBuffer.hpp>
+
 #include <EnteeZ\EnteeZ.hpp>
 
 std::vector<ComponentEngine::Camera*> ComponentEngine::Camera::m_global_cameras;
@@ -9,7 +11,7 @@ std::vector<ComponentEngine::Camera*> ComponentEngine::Camera::m_global_cameras;
 ComponentEngine::Camera::Camera()
 {
 	m_camera_data.view = glm::mat4(1.0f);
-	m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
+	m_camera_data.viewInverse = m_camera_data.view;// glm::inverse(m_camera_data.view);
 
 	m_near_clip = 0.1f;
 	m_far_clip = 200.0f;
@@ -25,7 +27,7 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 {
 	m_entity = entity;
 	m_camera_data.view = glm::mat4(1.0f);
-	m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
+	m_camera_data.viewInverse = m_camera_data.view;// glm::inverse(m_camera_data.view);
 
 
 
@@ -72,13 +74,9 @@ void ComponentEngine::Camera::Update(float frame_time)
 
 void ComponentEngine::Camera::SetBufferData()
 {
-
-	m_camera_data.view = glm::inverse(m_camera_data.view);
 	m_camera_data.view = m_entity->GetComponent<Transformation>().Get();
-	m_camera_data.viewInverse = m_camera_data.view;
-	m_camera_data.view = glm::inverse(m_camera_data.view);
+	m_camera_data.viewInverse = m_camera_data.view;// glm::inverse(m_camera_data.view);
 	m_camera_buffer->SetData(BufferSlot::Secondery);
-
 }
 
 void ComponentEngine::Camera::BufferTransfer()
@@ -131,7 +129,7 @@ void ComponentEngine::Camera::SetMainCamera()
 	Engine::Singlton()->SetCamera(this);
 }
 
-IUniformBuffer* ComponentEngine::Camera::GetCameraBuffer()
+VulkanUniformBuffer* ComponentEngine::Camera::GetCameraBuffer()
 {
 	return m_camera_buffer;
 }
@@ -146,12 +144,19 @@ void ComponentEngine::Camera::UpdateProjection()
 		m_near_clip,
 		m_far_clip
 	);
-	m_camera_data.proj[1][1] *= -1;
+	/*m_camera_data.proj[1][1] *= -1;
 
 	m_camera_data.projInverse = glm::inverse(m_camera_data.proj);
 
 	// Need to flip the projection as GLM was made for OpenGL
-	m_camera_data.proj[1][1] *= -1;
+	m_camera_data.proj[1][1] *= -1;*/
+
+
+	m_camera_data.projInverse = m_camera_data.proj;
+	m_camera_data.projInverse[1][1] *= -1;
+	m_camera_data.projInverse = glm::inverse(m_camera_data.projInverse);
+
+
 	{
 		Engine::Singlton()->GetRendererMutex().lock();
 		m_camera_buffer->SetData(BufferSlot::Primary);

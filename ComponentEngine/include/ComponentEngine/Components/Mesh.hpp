@@ -9,6 +9,7 @@
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\UI.hpp>
 #include <ComponentEngine\Components\IO.hpp>
+#include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\UI\UIManager.hpp>
 #include <ComponentEngine\tiny_obj_loader.h>
 
@@ -24,15 +25,16 @@ namespace enteez
 
 namespace Renderer
 {
-	class IVertexBuffer;
-	class IIndexBuffer;
-	class IUniformBuffer;
-	class IDescriptorPool;
-	class IDescriptorSet;
-	class IGraphicsPipeline;
-	class IModelPool;
-	class IModel;
+	namespace Vulkan
+	{
+		class VulkanModel;
+		class VulkanModelPool;
+	}
 }
+
+using namespace Renderer;
+using namespace Renderer::Vulkan;
+
 namespace ComponentEngine
 {
 	class MeshVertex;
@@ -40,7 +42,7 @@ namespace ComponentEngine
 
 	class Transformation;
 
-	class Mesh : public MsgRecive<RenderStatus>, public UI , public IO,
+	class Mesh : public MsgRecive<RenderStatus>, public UI , public IO, public Logic,
 		public MsgRecive<OnComponentEnter<Transformation>>, public MsgRecive<OnComponentExit<Transformation>>
 	{
 	public:
@@ -61,19 +63,24 @@ namespace ComponentEngine
 		virtual unsigned int PayloadSize();
 		virtual bool DynamiclySized();
 
+		virtual void Update(float frame_time);
+		virtual void EditorUpdate(float frame_time);
+
 		static void SetBufferData();
 		static void TransferToPrimaryBuffers();
 		static ordered_lock& GetModelPositionTransferLock();
 		void LoadModel();
+		void UnloadModel();
+
 		friend class Engine;
 	private:
 
 		// Key: File path, Value: Model instance
-		static std::map<std::string, IModelPool*> m_mesh_instances;
+		static std::map<std::string, VulkanModelPool*> m_mesh_instances;
 
 		DropBoxInstance<FileForms> m_file_path;
 		std::string m_dir;
-		Renderer::IModel* m_model;
+		VulkanModel* m_model;
 		unsigned int m_vertex_count;
 		// Index for the current mesh in the position array
 		unsigned int m_mesh_index;

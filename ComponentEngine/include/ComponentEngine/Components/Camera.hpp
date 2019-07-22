@@ -15,10 +15,15 @@ namespace enteez
 
 namespace Renderer
 {
-	class IUniformBuffer;
+	namespace Vulkan
+	{
+		class VulkanUniformBuffer;
+	}
 }
 
 using namespace Renderer;
+using namespace Renderer::Vulkan;
+
 
 namespace ComponentEngine
 {
@@ -41,14 +46,14 @@ namespace ComponentEngine
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 
 		void SetMainCamera();
-		IUniformBuffer* GetCameraBuffer();
+		VulkanUniformBuffer* GetCameraBuffer();
 		void UpdateProjection();
 
 		Transformation* GetTransformation();
 	private:
 
 		enteez::Entity* m_entity = nullptr;
-		IUniformBuffer* m_camera_buffer;
+		VulkanUniformBuffer* m_camera_buffer;
 
 		static std::vector<Camera*> m_global_cameras;
 

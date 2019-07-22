@@ -5,6 +5,8 @@
 
 #include <renderer\vulkan\VulkanRaytracePipeline.hpp>
 #include <renderer\vulkan\VulkanAcceleration.hpp>
+#include <renderer\vulkan\VulkanGraphicsPipeline.hpp>
+#include <renderer\vulkan\VulkanModelPool.hpp>
 
 #include <EnteeZ\EnteeZ.hpp>
 #include <KeyboardMovment.hpp>
@@ -28,7 +30,7 @@ void RegisterCustomComponents()
 }
 
 
-void LoadTexturedShaderModel(IGraphicsPipeline* pipeline, IModelPool* modelPool,const char* workingDir, tinyobj::material_t material)
+void LoadTexturedShaderModel(VulkanGraphicsPipeline* pipeline, VulkanModelPool* modelPool,const char* workingDir, tinyobj::material_t material)
 {
 	std::string textureName = material.diffuse_texname;
 

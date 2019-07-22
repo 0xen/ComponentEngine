@@ -34,6 +34,26 @@ void ComponentEngine::BoxCollision::Display()
 
 }
 
+void ComponentEngine::BoxCollision::Load(std::ifstream & in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(BoxCollision, m_shape), PayloadSize());
+}
+
+void ComponentEngine::BoxCollision::Save(std::ofstream & out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(BoxCollision, m_shape), PayloadSize());
+}
+
+unsigned int ComponentEngine::BoxCollision::PayloadSize()
+{
+	return SizeOfOffsetRange(BoxCollision, m_shape, m_shape);
+}
+
+bool ComponentEngine::BoxCollision::DynamiclySized()
+{
+	return false;
+}
+
 enteez::BaseComponentWrapper* ComponentEngine::BoxCollision::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<BoxCollision>* mesh = entity.AddComponent<BoxCollision>(&entity);

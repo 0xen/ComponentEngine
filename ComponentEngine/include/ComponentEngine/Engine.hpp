@@ -3,7 +3,6 @@
 #include <EnteeZ\EnteeZ.hpp>
 
 #include <renderer\vulkan\VulkanRenderer.hpp>
-#include <renderer\IBufferPool.hpp>
 #include <renderer\vulkan\VulkanDescriptorSet.hpp>
 
 #include <ComponentEngine\Components\Transformation.hpp>
@@ -31,7 +30,21 @@
 #include <imgui.h>
 
 using namespace enteez;
+using namespace Renderer;
 using namespace Renderer::Vulkan;
+
+namespace Renderer
+{
+	class VertexBase;
+	namespace Vulkan
+	{
+		class VulkanDescriptorPool;
+		class VulkanDescriptorSet;
+		class VulkanTextureBuffer;
+		class VulkanBufferPool;
+		class VulkanModel;
+	}
+}
 
 namespace ComponentEngine
 {
@@ -75,14 +88,14 @@ namespace ComponentEngine
 
 	struct TextureStorage
 	{
-		Renderer::IDescriptorPool* texture_maps_pool;
-		Renderer::IDescriptorSet* texture_descriptor_set;
-		Renderer::ITextureBuffer* texture;
+		Renderer::Vulkan::VulkanDescriptorPool* texture_maps_pool;
+		Renderer::Vulkan::VulkanDescriptorSet* texture_descriptor_set;
+		Renderer::Vulkan::VulkanTextureBuffer* texture;
 	};
 	struct PipelinePack
 	{
-		IGraphicsPipeline* pipeline = nullptr;
-		std::function<void(IGraphicsPipeline*, IModelPool*, const char* workingDir, tinyobj::material_t)> modelCreatePointer = nullptr;
+		VulkanGraphicsPipeline* pipeline = nullptr;
+		std::function<void(VulkanGraphicsPipeline*, VulkanModelPool*, const char* workingDir, tinyobj::material_t)> modelCreatePointer = nullptr;
 	};
 	struct ConsoleMessage
 	{
@@ -125,11 +138,11 @@ namespace ComponentEngine
 		PipelinePack& GetPipeline(std::string name);
 		PipelinePack& GetPipelineContaining(std::string name);
 
-		IGraphicsPipeline* GetDefaultGraphicsPipeline();
+		VulkanGraphicsPipeline* GetDefaultGraphicsPipeline();
 		VulkanRenderer* GetRenderer();
-		IDescriptorPool* GetCameraPool();
-		IDescriptorSet* GetCameraDescriptorSet();
-		IDescriptorPool* GetTextureMapsPool();
+		VulkanDescriptorPool* GetCameraPool();
+		VulkanDescriptorSet* GetCameraDescriptorSet();
+		VulkanDescriptorPool* GetTextureMapsPool();
 
 		VertexBase GetDefaultVertexModelBinding();
 		VertexBase GetDefaultVertexModelPositionBinding();
@@ -176,11 +189,11 @@ namespace ComponentEngine
 
 		UIManager* GetUIManager();
 
-		IVertexBuffer* GetGlobalVertexBufer();
+		VulkanVertexBuffer* GetGlobalVertexBufer();
 
-		IIndexBuffer* GetGlobalIndexBuffer();
+		VulkanIndexBuffer* GetGlobalIndexBuffer();
 
-		IUniformBuffer* GetMaterialBuffer();
+		VulkanUniformBuffer* GetMaterialBuffer();
 
 		std::vector<MeshVertex>& GetGlobalVertexArray();
 
@@ -192,7 +205,7 @@ namespace ComponentEngine
 
 		std::vector<VulkanTextureBuffer*>& GetTextures();
 
-		IBufferPool* GetPositionBufferPool();
+		VulkanBufferPool* GetPositionBufferPool();
 
 		VulkanAcceleration* GetTopLevelAS();
 
@@ -206,12 +219,13 @@ namespace ComponentEngine
 
 		void RebuildOffsetAllocation();
 
-		IUniformBuffer* GetModelPositionBuffer();
+		void UpdateAccelerationDependancys();
+
+		VulkanUniformBuffer* GetModelPositionBuffer();
 
 		friend class UIManager;
 	private:
 		Engine();
-		Uint32 GetWindowFlags(RenderingAPI api);
 
 		void InitWindow();
 		void UpdateWindow();
@@ -269,10 +283,10 @@ namespace ComponentEngine
 		std::map<std::string, PipelinePack> m_pipelines;
 
 		// Default pipeline data
-		IGraphicsPipeline* m_default_pipeline = nullptr;
-		IDescriptorPool* m_camera_pool;
-		IDescriptorSet* m_camera_descriptor_set;
-		IDescriptorPool* m_texture_maps_pool;
+		VulkanGraphicsPipeline* m_default_pipeline = nullptr;
+		VulkanDescriptorPool* m_camera_pool;
+		VulkanDescriptorSet* m_camera_descriptor_set;
+		VulkanDescriptorPool* m_texture_maps_pool;
 
 		// Raytrace pipeline
 		VulkanRaytracePipeline* m_default_raytrace = nullptr;
@@ -284,25 +298,25 @@ namespace ComponentEngine
 		// ImGUI
 		struct
 		{
-			IGraphicsPipeline* m_imgui_pipeline = nullptr;
+			VulkanGraphicsPipeline* m_imgui_pipeline = nullptr;
 			// Screen buffer
 			glm::vec2 m_screen_dim;
-			IUniformBuffer* m_screen_res_buffer = nullptr;
-			IDescriptorPool* m_screen_res_pool = nullptr;
-			IDescriptorSet* m_screen_res_set = nullptr;
+			VulkanUniformBuffer* m_screen_res_buffer = nullptr;
+			VulkanDescriptorPool* m_screen_res_pool = nullptr;
+			VulkanDescriptorSet* m_screen_res_set = nullptr;
 			// Font texture
-			ITextureBuffer* m_font_texture = nullptr;
-			IDescriptorPool* m_font_texture_pool = nullptr;
-			IDescriptorSet* m_texture_descriptor_set = nullptr;
+			VulkanTextureBuffer* m_font_texture = nullptr;
+			VulkanDescriptorPool* m_font_texture_pool = nullptr;
+			VulkanDescriptorSet* m_texture_descriptor_set = nullptr;
 			// Local memory
 			ImDrawVert* m_vertex_data = nullptr;
 			uint32_t* m_index_data = nullptr;
 			// GUI GPU Buffer
-			IVertexBuffer* m_vertex_buffer = nullptr;
-			IIndexBuffer* m_index_buffer = nullptr;
+			VulkanVertexBuffer* m_vertex_buffer = nullptr;
+			VulkanIndexBuffer* m_index_buffer = nullptr;
 			// Model pool instance
-			IModelPool* model_pool = nullptr;
-			IModel* model = nullptr;
+			VulkanModelPool* model_pool = nullptr;
+			VulkanModel* model = nullptr;
 		}m_imgui;
 
 
@@ -387,15 +401,18 @@ namespace ComponentEngine
 		std::vector<uint32_t> m_all_indexs;
 
 		VulkanDescriptorSet* m_standardRTConfigSet = nullptr;
+		VulkanDescriptorSet* m_RTModelPoolSet = nullptr;
+		VulkanDescriptorSet* m_RTTexturePoolSet = nullptr;
+		VulkanDescriptorSet* m_RTModelInstanceSet = nullptr;
 
-		IVertexBuffer* m_vertexBuffer;
-		IIndexBuffer* m_indexBuffer;
-		IUniformBuffer* m_materialbuffer;
-		IUniformBuffer* m_lightBuffer;
+		VulkanVertexBuffer* m_vertexBuffer;
+		VulkanIndexBuffer* m_indexBuffer;
+		VulkanUniformBuffer* m_materialbuffer;
+		VulkanUniformBuffer* m_lightBuffer;
 
 		glm::mat4* m_model_position_array;
-		IUniformBuffer* m_model_position_buffer;
-		IBufferPool* m_position_buffer_pool;
+		VulkanUniformBuffer* m_model_position_buffer;
+		VulkanBufferPool* m_position_buffer_pool;
 
 		struct ModelOffsets
 		{
@@ -405,7 +422,7 @@ namespace ComponentEngine
 		};
 
 		ModelOffsets* m_offset_allocation_array;
-		IUniformBuffer* m_offset_allocation_array_buffer;
+		VulkanUniformBuffer* m_offset_allocation_array_buffer;
 	};
 	
 }

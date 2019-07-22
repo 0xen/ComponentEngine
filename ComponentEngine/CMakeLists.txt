@@ -51,7 +51,6 @@ set(component_headers
     include/ComponentEngine/Components/Camera.hpp
     include/ComponentEngine/Components/Mesh.hpp
     include/ComponentEngine/Components/Transformation.hpp
-    include/ComponentEngine/Components/ParticalSystem.hpp
     include/ComponentEngine/Components/Renderer.hpp
     include/ComponentEngine/Components/Logic.hpp
     include/ComponentEngine/Components/Rigidbody.hpp
@@ -67,7 +66,6 @@ set(component_source
     src/Components/Mesh.cpp
     src/Components/Camera.cpp
     src/Components/Transformation.cpp
-    src/Components/ParticalSystem.cpp
     src/Components/Renderer.cpp
     src/Components/Rigidbody.cpp
     src/Components/ICollisionShape.cpp

@@ -2,7 +2,6 @@
 
 #include <ComponentEngine\Components\Mesh.hpp>
 #include <ComponentEngine\Components\Renderer.hpp>
-#include <ComponentEngine\Components\ParticalSystem.hpp>
 #include <ComponentEngine\Components\Rigidbody.hpp>
 #include <ComponentEngine\Components\ICollisionShape.hpp>
 #include <ComponentEngine\Components\BoxCollision.hpp>
@@ -18,11 +17,19 @@
 #include <ComponentEngine\UI\MenuElement.hpp>
 #include <ComponentEngine\UI\EditorState.hpp>
 
+#include <renderer\VertexBase.hpp>
+
 #include <renderer\vulkan\VulkanFlags.hpp>
 #include <renderer\vulkan\VulkanRaytracePipeline.hpp>
 #include <renderer\vulkan\VulkanAcceleration.hpp>
 #include <renderer\vulkan\VulkanSwapchain.hpp>
+#include <renderer\vulkan\VulkanBufferPool.hpp>
 #include <renderer\vulkan\VulkanModelPool.hpp>
+#include <renderer\vulkan\VulkanVertexBuffer.hpp>
+#include <renderer\vulkan\VulkanIndexBuffer.hpp>
+#include <renderer\vulkan\VulkanTextureBuffer.hpp>
+#include <renderer\vulkan\VulkanDescriptorPool.hpp>
+#include <renderer\vulkan\VulkanDescriptorSet.hpp>
 
 #include <lodepng.h>
 
@@ -268,6 +275,10 @@ void ComponentEngine::Engine::UpdateScene()
 			buffer.BufferTransfer();
 		});
 	}
+
+	m_model_position_buffer->SetData(BufferSlot::Primary);
+	m_lightBuffer->SetData(BufferSlot::Primary);
+
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();
 }
@@ -283,6 +294,13 @@ void ComponentEngine::Engine::Rebuild()
 {
 	GetRendererMutex().lock();
 	m_renderer->Rebuild();
+	if (m_standardRTConfigSet)
+	{
+		// Update raytracer with new info
+		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
+		m_standardRTConfigSet->UpdateSet();
+		m_renderer->GetSwapchain()->RequestRebuildCommandBuffers();
+	}
 	GetRendererMutex().unlock();
 }
 
@@ -291,6 +309,7 @@ void ComponentEngine::Engine::RenderFrame()
 	if (m_main_camera == nullptr)return;
 	GetRendererMutex().lock();
 	// Update all renderer's via there Update function
+	m_top_level_acceleration->Update();
 	m_renderer->Update();
 	GetRendererMutex().unlock();
 }
@@ -601,7 +620,7 @@ PipelinePack & ComponentEngine::Engine::GetPipelineContaining(std::string name)
 	return m_pipelines["Default"];
 }
 
-IGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
+VulkanGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
 {
 	return m_default_pipeline;
 }
@@ -611,17 +630,17 @@ VulkanRenderer * ComponentEngine::Engine::GetRenderer()
 	return m_renderer;
 }
 
-IDescriptorPool * ComponentEngine::Engine::GetCameraPool()
+VulkanDescriptorPool * ComponentEngine::Engine::GetCameraPool()
 {
 	return m_camera_pool;
 }
 
-IDescriptorSet * ComponentEngine::Engine::GetCameraDescriptorSet()
+VulkanDescriptorSet * ComponentEngine::Engine::GetCameraDescriptorSet()
 {
 	return m_camera_descriptor_set;
 }
 
-IDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
+VulkanDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
 {
 	return m_texture_maps_pool;
 }
@@ -629,12 +648,12 @@ IDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
 VertexBase ComponentEngine::Engine::GetDefaultVertexModelBinding()
 {
 	return VertexBase{
-			VertexInputRate::INPUT_RATE_VERTEX,
+		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
 			{
-				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,pos) },
-				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,texCoord) },
-				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,nrm) },
-				{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
+				{ 0, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,pos) },
+				{ 1, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(MeshVertex,texCoord) },
+				{ 2, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,nrm) },
+				{ 3, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,color) },
 			},
 			sizeof(MeshVertex),
 			0
@@ -644,11 +663,11 @@ VertexBase ComponentEngine::Engine::GetDefaultVertexModelBinding()
 VertexBase ComponentEngine::Engine::GetDefaultVertexModelPositionBinding()
 {
 	return VertexBase{
-			VertexInputRate::INPUT_RATE_INSTANCE, // Input Rate
+		VkVertexInputRate::VK_VERTEX_INPUT_RATE_INSTANCE,
 			{
 				{	// Vertex Bindings
 					4, // Location
-					DataFormat::MAT4_FLOAT, // Format
+					VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT, // Format
 					0 // Offset from start of data structure
 				}
 			},
@@ -667,17 +686,17 @@ TextureStorage& ComponentEngine::Engine::GetTexture(std::string path)
 		unsigned error = lodepng::decode(image, width, height, path);
 		if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
 
-		ITextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height);
+		VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
 		texture->SetData(BufferSlot::Primary);
 		m_texture_storage[path].texture = texture;
 
 
 		m_texture_storage[path].texture_maps_pool = GetRenderer()->CreateDescriptorPool({
-			GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+			GetRenderer()->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 		});
 
 
-		IDescriptorSet* texture_maps_descriptor_set = m_texture_storage[path].texture_maps_pool->CreateDescriptorSet();
+		VulkanDescriptorSet* texture_maps_descriptor_set = m_texture_storage[path].texture_maps_pool->CreateDescriptorSet();
 
 		texture_maps_descriptor_set->AttachBuffer(0, texture);
 
@@ -811,17 +830,17 @@ UIManager * ComponentEngine::Engine::GetUIManager()
 	return m_ui;
 }
 
-IVertexBuffer * ComponentEngine::Engine::GetGlobalVertexBufer()
+VulkanVertexBuffer * ComponentEngine::Engine::GetGlobalVertexBufer()
 {
 	return m_vertexBuffer;
 }
 
-IIndexBuffer * ComponentEngine::Engine::GetGlobalIndexBuffer()
+VulkanIndexBuffer * ComponentEngine::Engine::GetGlobalIndexBuffer()
 {
 	return m_indexBuffer;
 }
 
-IUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
+VulkanUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
 {
 	return m_materialbuffer;
 }
@@ -851,7 +870,7 @@ std::vector<VulkanTextureBuffer*>& ComponentEngine::Engine::GetTextures()
 	return m_textures;
 }
 
-IBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
+VulkanBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
 {
 	return m_position_buffer_pool;
 }
@@ -886,34 +905,82 @@ void ComponentEngine::Engine::RebuildOffsetAllocation()
 	unsigned int index = 0;
 	for (auto& mp : m_top_level_acceleration->GetModelPools())
 	{
-		unsigned int index_offset = mp->GetIndexOffset();
-		unsigned int vertex_offset = mp->GetVertexOffset();
-		for (auto& model : mp->GetModels())
+
+		unsigned int index_offset = mp.model_pool->GetIndexOffset();
+		unsigned int vertex_offset = mp.model_pool->GetVertexOffset();
+		for (auto& model : mp.model_pool->GetModels())
 		{
 			m_offset_allocation_array[index].index = index_offset;
 			m_offset_allocation_array[index].vertex = vertex_offset;
-			m_offset_allocation_array[index].position = mp->GetModelBufferOffset(model.second, 0);
+			m_offset_allocation_array[index].position = mp.model_pool->GetModelBufferOffset(model.second, 0);
 			index++;
 		}
 	}
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
+
 }
 
-IUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
+void ComponentEngine::Engine::UpdateAccelerationDependancys()
+{
+	RebuildOffsetAllocation();
+
+	m_renderer->GetSwapchain()->RequestRebuildCommandBuffers();
+
+	m_vertexBuffer->SetData(BufferSlot::Primary);
+	m_indexBuffer->SetData(BufferSlot::Primary);
+	m_materialbuffer->SetData(BufferSlot::Primary);
+	m_lightBuffer->SetData(BufferSlot::Primary);
+	m_model_position_buffer->SetData(BufferSlot::Primary);
+	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
+
+	m_top_level_acceleration->Build();
+
+	{
+		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
+		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
+		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->UpdateSet();
+	}
+
+
+	{
+		m_RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
+		m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
+		m_RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
+		m_RTModelPoolSet->AttachBuffer(3, m_lightBuffer);
+
+		m_RTModelPoolSet->UpdateSet();
+	}
+
+
+	{
+		if (m_texture_descriptors.size() > 0)
+		{
+			m_RTTexturePoolSet->AttachBuffer(0, m_texture_descriptors);
+			m_RTTexturePoolSet->UpdateSet();
+		}
+	}
+
+
+	{
+		m_RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
+		m_RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
+		m_RTModelInstanceSet->UpdateSet();
+	}
+
+	//m_default_raytrace->Build();
+
+
+
+
+
+}
+
+VulkanUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
 {
 	return m_model_position_buffer;
 }
 
-Uint32 ComponentEngine::Engine::GetWindowFlags(RenderingAPI api)
-{
-	switch (api)
-	{
-	case VulkanAPI:
-		return SDL_WINDOW_VULKAN;
-		break;
-	}
-	return 0;
-}
 
 void ComponentEngine::Engine::InitWindow()
 {
@@ -921,7 +988,7 @@ void ComponentEngine::Engine::InitWindow()
 		m_title,
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		m_width, m_height,
-		GetWindowFlags(VulkanAPI) | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
+		SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
 	);
 	//SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	SDL_ShowWindow(m_window);
@@ -963,7 +1030,11 @@ void ComponentEngine::Engine::UpdateWindow()
 				m_imgui.m_screen_dim = glm::vec2(event.window.data1, event.window.data2);
 				io.DisplaySize = ImVec2(event.window.data1, event.window.data2);
 				m_imgui.m_screen_res_buffer->SetData(BufferSlot::Primary);
+
+
 				Rebuild();
+
+
 				GetRendererMutex().unlock();
 				// Update Camera
 				if(m_main_camera!=nullptr) m_main_camera->UpdateProjection();
@@ -1036,17 +1107,16 @@ void ComponentEngine::Engine::InitEnteeZ()
 	// Define what base classes each one of these components have
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI, IO>();
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
-	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, IO, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
-	RegisterBase<ParticleSystem, Logic, UI, MsgRecive<ParticleSystemVisibility>, IO>();
+	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, IO, Logic, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 	RegisterBase<Camera, Logic, UI, TransferBuffers>(); 
 	RegisterBase<Rigidbody,
 		MsgRecive<TransformationChange>, MsgRecive<OnComponentEnter<ICollisionShape>>,
 		MsgRecive<CollisionRecording>, MsgRecive<CollisionEvent>,
 		MsgRecive<OnComponentChange<ICollisionShape>>, MsgRecive<OnComponentExit<ICollisionShape>>,
-		MsgRecive<OnComponentExit<Rigidbody>>, Logic, UI
+		MsgRecive<OnComponentExit<Rigidbody>>, Logic, IO, UI
 	>();
-	RegisterBase<BoxCollision, ICollisionShape, Logic, UI>();
-	RegisterBase<SphereCollision, ICollisionShape, Logic, UI>();
+	RegisterBase<BoxCollision, ICollisionShape, Logic, IO, UI>();
+	RegisterBase<SphereCollision, ICollisionShape, Logic, IO, UI>();
 }
 
 void ComponentEngine::Engine::DeInitEnteeZ()
@@ -1072,14 +1142,14 @@ void ComponentEngine::Engine::InitRenderer()
 	// Create camera pool
 	// This is a layout for the camera input data
 	m_camera_pool = m_renderer->CreateDescriptorPool({
-		m_renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::VERTEX_SHADER, 0),
+		m_renderer->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, 0),
 		});
 
 
 	// Create camera descriptor set from the tempalte
 	m_camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
-	// 
-	m_camera_descriptor_set->UpdateSet();
+
+	SetCamera(m_default_camera);
 
 
 
@@ -1087,8 +1157,8 @@ void ComponentEngine::Engine::InitRenderer()
 	{
 		// Create default pipeline
 		m_default_pipeline = m_renderer->CreateGraphicsPipeline({
-			{ ShaderStage::VERTEX_SHADER, "../Shaders/Default/vert.spv" },
-			{ ShaderStage::FRAGMENT_SHADER, "../Shaders/Default/frag.spv" }
+			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/Default/vert.spv" },
+			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/Default/frag.spv" }
 			});
 
 		// Tell the pipeline what data is should expect in the forum of Vertex input
@@ -1102,12 +1172,8 @@ void ComponentEngine::Engine::InitRenderer()
 		m_default_pipeline->AttachDescriptorSet(0, m_camera_descriptor_set);
 
 		m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
-			Engine::Singlton()->GetRenderer()->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+			Engine::Singlton()->GetRenderer()->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 			});
-
-		//m_default_pipeline->AttachDescriptorPool(m_texture_maps_pool);
-
-		m_default_pipeline->UseCulling(true);
 
 		bool sucsess = m_default_pipeline->Build();
 		m_pipelines["Default"] = PipelinePack{ m_default_pipeline };
@@ -1116,19 +1182,18 @@ void ComponentEngine::Engine::InitRenderer()
 		assert(sucsess && "Unable to build default pipeline");
 	}
 
-	SetCamera(m_default_camera);
 
 
 	{
 		m_default_raytrace = m_renderer->CreateRaytracePipeline(
 			{
-				{ ShaderStage::RAY_GEN,		"../Shaders/Raytrace/Compleate/Gen/rgen.spv" },
-				{ ShaderStage::MISS,		"../Shaders/Raytrace/Compleate/Miss/rmiss.spv" },
-				{ ShaderStage::MISS,		"../Shaders/Raytrace/Compleate/Miss/ShadowMiss/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/rgen.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Miss/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Miss/ShadowMiss/rmiss.spv" },
 			},
 			{
 				{ // Involved 
-					{ ShaderStage::CLOSEST_HIT, "../Shaders/Raytrace/Compleate/Hitgroups/rchit.spv" },
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Hitgroups/TexturedLighting/rchit.spv" },
 				},
 				{}, // Fall through hit group for shadow's, etc
 			});
@@ -1144,14 +1209,14 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		m_default_raytrace->SetMaxRecursionDepth(10);
-
+		
 		m_default_raytrace->AttachVertexBinding({
-			VertexInputRate::INPUT_RATE_VERTEX,
+			VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
 			{
-				{ 0, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,pos) },
-				{ 1, DataFormat::R32G32_FLOAT,offsetof(MeshVertex,texCoord) },
-				{ 2, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,nrm) },
-				{ 3, DataFormat::R32G32B32_FLOAT,offsetof(MeshVertex,color) },
+				{ 0, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,pos) },
+				{ 1, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(MeshVertex,texCoord) },
+				{ 2, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,nrm) },
+				{ 3, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,color) },
 			},
 			sizeof(MeshVertex),
 			0
@@ -1167,14 +1232,14 @@ void ComponentEngine::Engine::InitRenderer()
 		
 		
 		{
-			IDescriptorPool* standardRTConfigPool = m_renderer->CreateDescriptorPool({
+			VulkanDescriptorPool* standardRTConfigPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
 				});
 			m_default_raytrace->AttachDescriptorPool(standardRTConfigPool);
 
-			m_standardRTConfigSet = static_cast<VulkanDescriptorSet*>(standardRTConfigPool->CreateDescriptorSet());
+			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
 
 			m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 			m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
@@ -1199,8 +1264,8 @@ void ComponentEngine::Engine::InitRenderer()
 			glm::vec4 color;
 		};
 		std::vector<Light> lights = {
-			{ glm::vec4(500, 400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) },
-			{ glm::vec4(-500, 400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) }
+			{ glm::vec4(500, -400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) },
+			{ glm::vec4(-500, -400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) }
 		};
 
 		m_lightBuffer = m_renderer->CreateUniformBuffer(lights.data(), BufferChain::Single, sizeof(Light), lights.size(), true);
@@ -1213,33 +1278,50 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		{
-			IDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
+			VulkanDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3, m_max_texture_descriptors),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 4),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3),
 			});
 			m_default_raytrace->AttachDescriptorPool(RTModelPool);
 
-			VulkanDescriptorSet* RTModelPoolSet = static_cast<VulkanDescriptorSet*>(RTModelPool->CreateDescriptorSet());
+			m_RTModelPoolSet = RTModelPool->CreateDescriptorSet();
 
-			RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
-			RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
-			RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
-			if (m_texture_descriptors.size() > 0) RTModelPoolSet->AttachBuffer(3, m_texture_descriptors);
-			RTModelPoolSet->AttachBuffer(4, m_lightBuffer);
+			m_RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
+			m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
+			m_RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
+			m_RTModelPoolSet->AttachBuffer(3, m_lightBuffer);
 
 
-			RTModelPoolSet->UpdateSet();
+			m_RTModelPoolSet->UpdateSet();
 
-			m_default_raytrace->AttachDescriptorSet(1, RTModelPoolSet);
+			m_default_raytrace->AttachDescriptorSet(1, m_RTModelPoolSet);
+		}
+
+		{
+			VulkanDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0, m_max_texture_descriptors),
+				});
+			m_default_raytrace->AttachDescriptorPool(RTModelPool);
+
+			m_RTTexturePoolSet = RTModelPool->CreateDescriptorSet();
+
+			if (m_texture_descriptors.size() > 0)
+			{
+				m_RTTexturePoolSet->AttachBuffer(0, m_texture_descriptors);
+				m_RTTexturePoolSet->UpdateSet();
+			}
+
+
+
+			m_default_raytrace->AttachDescriptorSet(2, m_RTTexturePoolSet);
 		}
 
 		m_model_position_array = new glm::mat4[1000];
 		m_model_position_buffer = m_renderer->CreateUniformBuffer(m_model_position_array, BufferChain::Double, sizeof(glm::mat4), 1000, true);
 
-		m_position_buffer_pool = new IBufferPool(m_model_position_buffer);
+		m_position_buffer_pool = new VulkanBufferPool(m_model_position_buffer);
 
 		
 
@@ -1248,24 +1330,22 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		{
-			IDescriptorPool* RTModelInstancePool = m_renderer->CreateDescriptorPool({
+			VulkanDescriptorPool* RTModelInstancePool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3),
 			});
 			m_default_raytrace->AttachDescriptorPool(RTModelInstancePool);
 
 
-			VulkanDescriptorSet* RTModelInstanceSet = static_cast<VulkanDescriptorSet*>(RTModelInstancePool->CreateDescriptorSet());
+			m_RTModelInstanceSet = static_cast<VulkanDescriptorSet*>(RTModelInstancePool->CreateDescriptorSet());
 
-			RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
-			RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
+			m_RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
+			m_RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
 
 
-			RTModelInstanceSet->UpdateSet();
+			m_RTModelInstanceSet->UpdateSet();
 
-			m_default_raytrace->AttachDescriptorSet(2, RTModelInstanceSet);
+			m_default_raytrace->AttachDescriptorSet(3, m_RTModelInstanceSet);
 		}
 
 		m_default_raytrace->Build();
@@ -1312,7 +1392,6 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Transformation", Transformation::EntityHookDefault);
 	RegisterComponentBase("Mesh", Mesh::EntityHookDefault);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault);
-	RegisterComponentBase("Particle System", ParticleSystem::EntityHookDefault);
 	RegisterComponentBase("Camera", Camera::EntityHookDefault);
 	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault);
 	RegisterComponentBase("Box Collision", BoxCollision::EntityHookDefault);
@@ -1647,7 +1726,7 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_screen_res_buffer = m_renderer->CreateUniformBuffer(&m_imgui.m_screen_dim, BufferChain::Single, sizeof(glm::vec2), 1, true);
 	m_imgui.m_screen_res_buffer->SetData(BufferSlot::Primary);
 	m_imgui.m_screen_res_pool = m_renderer->CreateDescriptorPool({
-		m_renderer->CreateDescriptor(Renderer::DescriptorType::UNIFORM, Renderer::ShaderStage::VERTEX_SHADER, 0),
+		m_renderer->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, 0),
 		});
 	m_imgui.m_screen_res_set = m_imgui.m_screen_res_pool->CreateDescriptorSet();
 	m_imgui.m_screen_res_set->AttachBuffer(0, m_imgui.m_screen_res_buffer);
@@ -1657,12 +1736,12 @@ void ComponentEngine::Engine::InitImGUI()
 	unsigned char* font_data;
 	int font_width, font_height;
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &font_width, &font_height);
-	m_imgui.m_font_texture = m_renderer->CreateTextureBuffer(font_data, Renderer::DataFormat::R8G8B8A8_FLOAT, font_width, font_height);
+	m_imgui.m_font_texture = m_renderer->CreateTextureBuffer(font_data, VkFormat::VK_FORMAT_R8G8B8A8_UNORM, font_width, font_height);
 
 	io.Fonts->TexID = (ImTextureID)m_imgui.m_font_texture->GetTextureID();
 
 	m_imgui.m_font_texture_pool = m_renderer->CreateDescriptorPool({
-		m_renderer->CreateDescriptor(Renderer::DescriptorType::IMAGE_SAMPLER, Renderer::ShaderStage::FRAGMENT_SHADER, 0),
+		m_renderer->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 		});
 	m_imgui.m_texture_descriptor_set = m_imgui.m_font_texture_pool->CreateDescriptorSet();
 	m_imgui.m_texture_descriptor_set->AttachBuffer(0, m_imgui.m_font_texture);
@@ -1670,17 +1749,21 @@ void ComponentEngine::Engine::InitImGUI()
 
 	// Setup ImGUI Pipeline
 	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../Shaders/ImGUI/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/ImGUI/frag.spv" }
+		{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
+		{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/frag.spv" }
 		}, true);
-	m_imgui.m_imgui_pipeline->UseDepth(false);
+
+	{
+		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
+		config.culling = VK_CULL_MODE_NONE;
+	}
 
 	m_imgui.m_imgui_pipeline->AttachVertexBinding({
-		VertexInputRate::INPUT_RATE_VERTEX,
+		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
 		{
-			{ 0, DataFormat::R32G32_FLOAT,offsetof(ImDrawVert,pos) },
-			{ 1, DataFormat::R32G32_FLOAT,offsetof(ImDrawVert,uv) },
-			{ 2, DataFormat::R8G8B8A8_UNORM,offsetof(ImDrawVert,col) },
+			{ 0, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(ImDrawVert,pos) },
+			{ 1, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(ImDrawVert,uv) },
+			{ 2, VkFormat::VK_FORMAT_R8G8B8A8_UNORM,offsetof(ImDrawVert,col) },
 		},
 		sizeof(ImDrawVert),
 		0
@@ -1710,7 +1793,7 @@ void ComponentEngine::Engine::InitImGUI()
 	// Setup model instance
 	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, 0, m_imgui.m_index_buffer, 0, 0);
 	m_imgui.model = m_imgui.model_pool->CreateModel();
-	m_imgui.model->ShouldRender(true);
+	//m_imgui.model->ShouldRender(true);
 
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
 }

@@ -34,6 +34,26 @@ void ComponentEngine::SphereCollision::Display()
 
 }
 
+void ComponentEngine::SphereCollision::Load(std::ifstream & in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(SphereCollision, m_rad), PayloadSize());
+}
+
+void ComponentEngine::SphereCollision::Save(std::ofstream & out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(SphereCollision, m_rad), PayloadSize());
+}
+
+unsigned int ComponentEngine::SphereCollision::PayloadSize()
+{
+	return SizeOfOffsetRange(SphereCollision, m_rad, m_rad);
+}
+
+bool ComponentEngine::SphereCollision::DynamiclySized()
+{
+	return false;
+}
+
 enteez::BaseComponentWrapper* ComponentEngine::SphereCollision::EntityHookDefault(enteez::Entity & entity)
 {
 	enteez::ComponentWrapper<SphereCollision>* mesh = entity.AddComponent<SphereCollision>(&entity);

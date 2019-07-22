@@ -166,6 +166,26 @@ enteez::BaseComponentWrapper* ComponentEngine::Rigidbody::EntityHookDefault(ente
 	return mesh;
 }
 
+void ComponentEngine::Rigidbody::Load(std::ifstream & in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Rigidbody, m_friction), PayloadSize());
+}
+
+void ComponentEngine::Rigidbody::Save(std::ofstream & out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Rigidbody, m_friction), PayloadSize());
+}
+
+unsigned int ComponentEngine::Rigidbody::PayloadSize()
+{
+	return SizeOfOffsetRange(Rigidbody, m_friction, m_mass);
+}
+
+bool ComponentEngine::Rigidbody::DynamiclySized()
+{
+	return false;
+}
+
 void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, TransformationChange & message)
 {
 	RemoveRigidbody();

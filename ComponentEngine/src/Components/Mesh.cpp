@@ -10,6 +10,7 @@
 #include <renderer\vulkan\VulkanTextureBuffer.hpp>
 #include <renderer\vulkan\VulkanAcceleration.hpp>
 #include <renderer\vulkan\VulkanModelPool.hpp>
+#include <renderer\vulkan\VulkanModel.hpp>
 
 #include <imgui.h>
 
@@ -25,7 +26,7 @@ const unsigned int Mesh::m_buffer_size_step = 100;
 
 ordered_lock ComponentEngine::Mesh::m_transformation_lock;
 
-std::map<std::string, IModelPool*> ComponentEngine::Mesh::m_mesh_instances;
+std::map<std::string, VulkanModelPool*> ComponentEngine::Mesh::m_mesh_instances;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 {
@@ -46,7 +47,10 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSen
 
 ComponentEngine::Mesh::~Mesh()
 {
-
+	if (m_loaded)
+	{
+		UnloadModel();
+	}
 }
 
 void ComponentEngine::Mesh::ChangePath(std::string path)
@@ -152,6 +156,16 @@ bool ComponentEngine::Mesh::DynamiclySized()
 	return true;
 }
 
+void ComponentEngine::Mesh::Update(float frame_time)
+{
+	if (m_loaded)m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+}
+
+void ComponentEngine::Mesh::EditorUpdate(float frame_time)
+{
+	if(m_loaded)m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+}
+
 void ComponentEngine::Mesh::SetBufferData()
 {
 
@@ -170,17 +184,25 @@ ordered_lock& ComponentEngine::Mesh::GetModelPositionTransferLock()
 void ComponentEngine::Mesh::LoadModel()
 {
 	Engine* engine = Engine::Singlton();
+
+	if (m_loaded)
+	{
+		UnloadModel();
+	}
+
+	VulkanAcceleration* as = engine->GetTopLevelAS();
+
 	if (m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end())
 	{
-		IVertexBuffer* vertexBuffer = engine->GetGlobalVertexBufer();
-		IIndexBuffer* indexBuffer = engine->GetGlobalIndexBuffer();
+		VulkanVertexBuffer* vertexBuffer = engine->GetGlobalVertexBufer();
+		VulkanIndexBuffer* indexBuffer = engine->GetGlobalIndexBuffer();
 
 		std::vector<uint32_t>& all_indexs = engine->GetGlobalIndexArray();
 		std::vector<MeshVertex>& all_vertexs = engine->GetGlobalVertexArray();
 		std::vector<MatrialObj>& materials = engine->GetGlobalMaterialArray();
 		std::vector<VkDescriptorImageInfo>& texture_descriptors = engine->GetTextureDescriptors();
 		std::vector<VulkanTextureBuffer*>& textures = engine->GetTextures();
-		IBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
+		VulkanBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
 
 		unsigned int& used_vertex = engine->GetUsedVertex();
 		unsigned int& used_index = engine->GetUsedIndex();
@@ -214,14 +236,14 @@ void ComponentEngine::Mesh::LoadModel()
 		for (auto& material : loader.m_materials)
 		{
 			if (material.textureID >= 0) material.textureID += offset;
-			materials[used_materials + material_count] = material;
-			material_count++;
+			materials[used_materials] = material;
+			used_materials++;
 		}
 
 		for (auto& texturePath : loader.m_textures)
 		{
 			std::stringstream ss;
-			ss << "../../renderer-demo/media/scenes/" << texturePath;
+			ss << m_dir << texturePath;
 
 			std::vector<unsigned char> image; //the raw pixels
 			unsigned width;
@@ -230,23 +252,22 @@ void ComponentEngine::Mesh::LoadModel()
 			unsigned error = lodepng::decode(image, width, height, ss.str());
 			if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
 
-			VulkanTextureBuffer* texture = dynamic_cast<Vulkan::VulkanTextureBuffer*>(engine->GetRenderer()->CreateTextureBuffer(image.data(), Renderer::DataFormat::R8G8B8A8_FLOAT, width, height));
+			VulkanTextureBuffer* texture = engine->GetRenderer()->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
 			texture->SetData(BufferSlot::Primary);
 			textures.push_back(texture);
 
 			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
-		
 		}
 
 		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices);
 
 		m_mesh_instances[m_file_path.data.longForm]->AttachBufferPool(0, position_buffer_pool);
 
-		VulkanAcceleration* as = engine->GetTopLevelAS();
 
-		as->AttachModelPool(static_cast<VulkanModelPool*>(m_mesh_instances[m_file_path.data.longForm]));
 
+		as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm]);
+		used_texture_descriptor++;
 	}
 
 	
@@ -257,18 +278,20 @@ void ComponentEngine::Mesh::LoadModel()
 	// Create a instance of the model
 	m_model = m_mesh_instances[m_file_path.data.longForm]->CreateModel();
 
-	glm::mat4 modelPosition = glm::mat4(1.0f);
-	modelPosition = glm::translate(modelPosition, glm::vec3(0, 0, -2));
-	float scale = 0.2;
-	modelPosition = glm::scale(modelPosition, glm::vec3(scale, scale, scale));
-	scale = 0.25f;
+	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
 
-	m_model->SetData(0, modelPosition);
 
-	engine->GetModelPositionBuffer()->SetData(BufferSlot::Primary);
+	engine->UpdateAccelerationDependancys();
 
-	VulkanAcceleration* as = engine->GetTopLevelAS();
-	as->Build();
+	m_loaded = true;
+}
 
-	engine->RebuildOffsetAllocation();
+void ComponentEngine::Mesh::UnloadModel()
+{
+	if (m_loaded)
+	{
+		m_model->Remove();
+		Engine::Singlton()->UpdateAccelerationDependancys();
+		m_loaded = false;
+	}
 }

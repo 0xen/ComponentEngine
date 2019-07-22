@@ -8,6 +8,7 @@
 #include <ComponentEngine\Components\MsgSend.hpp>
 #include <ComponentEngine\Components\ComponentMessages.hpp>
 #include <ComponentEngine\Components\ICollisionShape.hpp>
+#include <ComponentEngine\Components\IO.hpp>
 #include <btBulletDynamicsCommon.h>
 
 #include <vector>
@@ -36,7 +37,7 @@ namespace ComponentEngine
 		public MsgRecive<CollisionRecording>, public MsgRecive<CollisionEvent>,
 		public MsgRecive<OnComponentChange<ICollisionShape>>, public MsgRecive<OnComponentExit<ICollisionShape>>, 
 		public MsgRecive<OnComponentExit<Rigidbody>>,
-		public Logic, public UI
+		public Logic, public UI, public IO
 	{
 	public:
 		Rigidbody(enteez::Entity* entity);
@@ -48,6 +49,12 @@ namespace ComponentEngine
 		void SetMass(float mass);
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
+
+
+		virtual void Load(std::ifstream& in);
+		virtual void Save(std::ofstream& out);
+		virtual unsigned int PayloadSize();
+		virtual bool DynamiclySized();
 
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationChange& message);
 		virtual void ReciveMessage(enteez::Entity* sender, OnComponentEnter<ICollisionShape>& message);
@@ -68,17 +75,18 @@ namespace ComponentEngine
 
 		btDefaultMotionState* m_myMotionState;
 		btRigidBody* m_body;
-		btScalar m_mass;
 
+		// PAYLOAD
 		btScalar m_friction;
 		btScalar m_RollingFriction;
 		btScalar m_SpinningFriction;
 		btVector3 m_AnisotropicFriction;
-
 		btVector3 m_localInertia;
 		bool m_useGravity = true;
 		bool m_useCollision = true;
 		bool m_recordingCollisions = false;
+		btScalar m_mass;
+		// PAYLOAD END
 
 		std::vector<enteez::Entity*>* m_collisionFrameRecording;
 		std::vector<enteez::Entity*>* m_collisionStaging;
