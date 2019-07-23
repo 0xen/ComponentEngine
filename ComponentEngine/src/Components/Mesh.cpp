@@ -206,7 +206,6 @@ void ComponentEngine::Mesh::LoadModel()
 
 		unsigned int& used_vertex = engine->GetUsedVertex();
 		unsigned int& used_index = engine->GetUsedIndex();
-		unsigned int& used_texture_descriptor = engine->GetUsedTextureDescriptors();
 		unsigned int& used_materials = engine->GetUsedMaterials();
 
 		ObjLoader<MeshVertex> loader;
@@ -232,11 +231,26 @@ void ComponentEngine::Mesh::LoadModel()
 		}
 
 		unsigned int material_count = 0;
-		unsigned int offset = used_texture_descriptor;
+		unsigned int offset = texture_descriptors.size();
 		for (auto& material : loader.m_materials)
 		{
-			if (material.textureID >= 0) material.textureID += offset;
+			if (material.textureID >= 0)
+				material.textureID += offset;
+			else
+				material.textureID = 0; // Set to default texture
+
+			if (material.metalicTextureID >= 0)
+				material.metalicTextureID += offset;
+			else
+				material.metalicTextureID = 0; // Set to default texture
+
+			if (material.roughnessTextureID >= 0)
+				material.roughnessTextureID += offset;
+			else
+				material.roughnessTextureID = 0; // Set to default texture
+
 			materials[used_materials] = material;
+
 			used_materials++;
 		}
 
@@ -245,7 +259,13 @@ void ComponentEngine::Mesh::LoadModel()
 			std::stringstream ss;
 			ss << m_dir << texturePath;
 
-			std::vector<unsigned char> image; //the raw pixels
+			VulkanTextureBuffer* texture = engine->LoadTexture(ss.str());
+
+			textures.push_back(texture);
+
+			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+
+			/*std::vector<unsigned char> image; //the raw pixels
 			unsigned width;
 			unsigned height;
 
@@ -256,7 +276,7 @@ void ComponentEngine::Mesh::LoadModel()
 			texture->SetData(BufferSlot::Primary);
 			textures.push_back(texture);
 
-			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));*/
 
 		}
 
@@ -267,7 +287,6 @@ void ComponentEngine::Mesh::LoadModel()
 
 
 		as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm]);
-		used_texture_descriptor++;
 	}
 
 	

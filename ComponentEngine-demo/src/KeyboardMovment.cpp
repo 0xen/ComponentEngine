@@ -15,6 +15,10 @@ ComponentEngine::KeyboardMovment::KeyboardMovment(enteez::Entity* entity)
 	keys[2] = { SDL_SCANCODE_A };
 	keys[3] = { SDL_SCANCODE_D };
 	m_speed = 10.0f;
+	m_ignore_axis[0] = false;
+	m_ignore_axis[1] = false;
+	m_ignore_axis[2] = false;
+	m_local_movment = true;
 }
 
 void ComponentEngine::KeyboardMovment::Update(float frame_time)
@@ -26,15 +30,55 @@ void ComponentEngine::KeyboardMovment::Update(float frame_time)
 	Engine* engine = Engine::Singlton();
 	Transformation* trans = &m_entity->GetComponent<Transformation>();
 
-	// Check the movment axis and move accordingly
+	glm::mat4 mat4;
+	if(m_local_movment)
+		mat4 = trans->GetLocalMat4();
+	else
+		mat4 = trans->GetMat4();
+
+	bool change = false;
+
 	if (engine->KeyDown(keys[0].key)) // Forward
-		trans->MoveLocalZ(-m_speed * frame_time);
+	{
+		glm::vec3 zFacing = mat4[2];
+		zFacing = glm::normalize(zFacing) * -m_speed * frame_time;
+		if (!m_ignore_axis[0])(mat4)[3][0] += zFacing.x;
+		if (!m_ignore_axis[1])(mat4)[3][1] += zFacing.y;
+		if (!m_ignore_axis[2])(mat4)[3][2] += zFacing.z;
+		change = true;
+	}
 	if (engine->KeyDown(keys[1].key)) // Back
-		trans->MoveLocalZ(m_speed * frame_time);
+	{
+		glm::vec3 zFacing = mat4[2];
+		zFacing = glm::normalize(zFacing) * m_speed * frame_time;
+		if (!m_ignore_axis[0])(mat4)[3][0] += zFacing.x;
+		if (!m_ignore_axis[1])(mat4)[3][1] += zFacing.y;
+		if (!m_ignore_axis[2])(mat4)[3][2] += zFacing.z;
+		change = true;
+	}
 	if (engine->KeyDown(keys[2].key)) // Left
-		trans->MoveLocalX(-m_speed * frame_time);
+	{
+		glm::vec3 xFacing = mat4[0];
+		xFacing = glm::normalize(xFacing) * -m_speed * frame_time;
+		if (!m_ignore_axis[0])(mat4)[3][0] += xFacing.x;
+		if (!m_ignore_axis[1])(mat4)[3][1] += xFacing.y;
+		if (!m_ignore_axis[2])(mat4)[3][2] += xFacing.z;
+		change = true;
+	}
 	if (engine->KeyDown(keys[3].key)) // Right
-		trans->MoveLocalX(m_speed * frame_time);
+	{
+		glm::vec3 xFacing = mat4[0];
+		xFacing = glm::normalize(xFacing) * m_speed * frame_time;
+		if (!m_ignore_axis[0])(mat4)[3][0] += xFacing.x;
+		if (!m_ignore_axis[1])(mat4)[3][1] += xFacing.y;
+		if (!m_ignore_axis[2])(mat4)[3][2] += xFacing.z;
+		change = true;
+	}
+
+	if (m_local_movment)
+		trans->SetLocalMat4(mat4);
+	else
+		trans->SetWorldMat4(mat4);
 }
 
 void ComponentEngine::KeyboardMovment::EditorUpdate(float frame_time)
@@ -60,8 +104,38 @@ void ComponentEngine::KeyboardMovment::Display()
 
 		ImGui::Text("Right");
 		UIManager::KeyboardButtonInput("##KeyboardMovment_KeyRight", keys[3].focused, keys[3].key);
-		
+
 	}
+	{
+		ImGui::Text("Local Movement");
+		ImGui::Checkbox("##LocalMovment", &m_local_movment);
+	}
+	{
+		ImGui::Text("Ignore Axis");
+		ImGui::Checkbox("X", &m_ignore_axis[0]);
+		ImGui::Checkbox("Y", &m_ignore_axis[1]);
+		ImGui::Checkbox("Z", &m_ignore_axis[2]);
+	}
+}
+
+void ComponentEngine::KeyboardMovment::Load(std::ifstream & in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(KeyboardMovment, keys), PayloadSize());
+}
+
+void ComponentEngine::KeyboardMovment::Save(std::ofstream & out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(KeyboardMovment, keys), PayloadSize());
+}
+
+unsigned int ComponentEngine::KeyboardMovment::PayloadSize()
+{
+	return SizeOfOffsetRange(KeyboardMovment, keys, m_local_movment);
+}
+
+bool ComponentEngine::KeyboardMovment::DynamiclySized()
+{
+	return false;
 }
 
 enteez::BaseComponentWrapper* ComponentEngine::KeyboardMovment::EntityHookDefault(enteez::Entity& entity)

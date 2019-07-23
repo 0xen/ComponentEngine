@@ -26,6 +26,9 @@ struct MatrialObj
       // illumination model (see http://www.fileformat.info/format/material/)
   int illum     = 0;
   int textureID = -1;
+  int metalicTextureID = -1;
+  int roughnessTextureID = -1;
+  int n[2];//Padding
 };
 
 template <class TVert>
@@ -101,6 +104,16 @@ void ObjLoader<TVert>::loadModel(const std::string& filename)
       m_textures.push_back(material.diffuse_texname);
       m.textureID = static_cast<int>(m_textures.size()) - 1;
     }
+	if (!material.reflection_texname.empty())
+	{
+		m_textures.push_back(material.reflection_texname);
+		m.metalicTextureID = static_cast<int>(m_textures.size()) - 1;
+	}
+	if (!material.specular_highlight_texname.empty())
+	{
+		m_textures.push_back(material.specular_highlight_texname);
+		m.roughnessTextureID = static_cast<int>(m_textures.size()) - 1;
+	}
 
     m_materials.emplace_back(m);
   }

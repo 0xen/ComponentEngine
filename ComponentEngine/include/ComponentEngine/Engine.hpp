@@ -85,13 +85,6 @@ namespace ComponentEngine
 
 		MAX
 	};
-
-	struct TextureStorage
-	{
-		Renderer::Vulkan::VulkanDescriptorPool* texture_maps_pool;
-		Renderer::Vulkan::VulkanDescriptorSet* texture_descriptor_set;
-		Renderer::Vulkan::VulkanTextureBuffer* texture;
-	};
 	struct PipelinePack
 	{
 		VulkanGraphicsPipeline* pipeline = nullptr;
@@ -149,7 +142,7 @@ namespace ComponentEngine
 
 		//float GetThreadDeltaTime();
 		//float GetLastThreadTime();
-		TextureStorage& GetTexture(std::string path);
+		VulkanTextureBuffer* LoadTexture(std::string path);
 
 		std::string GetCurrentScene();
 		std::string GetCurrentSceneDirectory();
@@ -212,8 +205,6 @@ namespace ComponentEngine
 		unsigned int& GetUsedVertex();
 
 		unsigned int& GetUsedIndex();
-
-		unsigned int& GetUsedTextureDescriptors();
 
 		unsigned int& GetUsedMaterials();
 
@@ -360,8 +351,6 @@ namespace ComponentEngine
 
 		std::map<std::string, void(*)(enteez::Entity& entity)> m_component_gui;
 
-		std::map<std::string, TextureStorage> m_texture_storage;
-
 		std::string m_currentScene;
 		std::string m_currentSceneDirectory;
 
@@ -389,7 +378,6 @@ namespace ComponentEngine
 
 		unsigned int m_used_vertex = 0;
 		unsigned int m_used_index = 0;
-		unsigned int m_used_texture_descriptors = 0;
 		unsigned int m_used_materials = 0;
 
 		const unsigned int m_vertex_max = 1000000;
@@ -423,6 +411,20 @@ namespace ComponentEngine
 
 		ModelOffsets* m_offset_allocation_array;
 		VulkanUniformBuffer* m_offset_allocation_array_buffer;
+
+		struct Light
+		{
+			glm::vec3 position;
+			float intensity;
+			glm::vec3 color;
+			float padding;
+		};
+		std::vector<Light> lights = {
+			{ glm::vec3(60.0f, 200.0f, -20.0f), 32000, glm::vec3(1.0f, 0.9f, 0.8f) },
+			/*{ glm::vec3(0.0f, 2.0f, 0.0f), 20, glm::vec3(0.0f, 1.0f, 1.0f) },
+			{ glm::vec3(-10.0f, 5.0f, 0.0f), 20, glm::vec3(1.0f, 1.0f, 0.0f) }*/
+		};
+
 	};
 	
 }

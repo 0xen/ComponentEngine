@@ -26,28 +26,7 @@ void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault);
 
-	engine->RegisterBase<KeyboardMovment, Logic, UI>();
-}
-
-
-void LoadTexturedShaderModel(VulkanGraphicsPipeline* pipeline, VulkanModelPool* modelPool,const char* workingDir, tinyobj::material_t material)
-{
-	std::string textureName = material.diffuse_texname;
-
-	std::stringstream ss;
-	if (textureName.empty())
-	{
-		ss << Engine::Singlton()->GetCurrentSceneDirectory();
-		ss << "/Resources/Models/default.png";
-		modelPool->AttachDescriptorSet(1, Engine::Singlton()->GetTexture(ss.str()).texture_descriptor_set);
-	}
-	else
-	{
-		ss << workingDir;
-		ss << material.diffuse_texname;
-		modelPool->AttachDescriptorSet(1, Engine::Singlton()->GetTexture(ss.str()).texture_descriptor_set);
-	}
-
+	engine->RegisterBase<KeyboardMovment, Logic, UI, IO>();
 }
 
 void SetupShaders()

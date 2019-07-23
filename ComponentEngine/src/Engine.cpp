@@ -676,42 +676,28 @@ VertexBase ComponentEngine::Engine::GetDefaultVertexModelPositionBinding()
 	};
 }
  
-TextureStorage& ComponentEngine::Engine::GetTexture(std::string path)
+VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 {
-	if (m_texture_storage.find(path) == m_texture_storage.end())
+	std::vector<unsigned char> image; //the raw pixels
+	unsigned width;
+	unsigned height;
+	unsigned error = lodepng::decode(image, width, height, path);
+	if (error)
 	{
-		std::vector<unsigned char> image; //the raw pixels
-		unsigned width;
-		unsigned height;
-		unsigned error = lodepng::decode(image, width, height, path);
-		if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
-
-		VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
-		texture->SetData(BufferSlot::Primary);
-		m_texture_storage[path].texture = texture;
-
-
-		m_texture_storage[path].texture_maps_pool = GetRenderer()->CreateDescriptorPool({
-			GetRenderer()->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-		});
-
-
-		VulkanDescriptorSet* texture_maps_descriptor_set = m_texture_storage[path].texture_maps_pool->CreateDescriptorSet();
-
-		texture_maps_descriptor_set->AttachBuffer(0, texture);
-
-		texture_maps_descriptor_set->UpdateSet();
-
-		m_texture_storage[path].texture_descriptor_set = texture_maps_descriptor_set;
-
-
-		{
-			std::stringstream ss;
-			ss << "Loaded texture" << path;
-			Log(ss.str(), Info);
-		}
+		std::stringstream ss;
+		ss << "Error loading texture: " << lodepng_error_text(error) << " " << path << "("<< error << ")";
+		Log(ss.str(), Error);
+		return nullptr;
 	}
-	return m_texture_storage[path];
+
+	VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
+	texture->SetData(BufferSlot::Primary);
+	{
+		std::stringstream ss;
+		ss << "Loaded texture" << path;
+		Log(ss.str(), Info);
+	}
+	return texture;
 }
 
 std::string ComponentEngine::Engine::GetCurrentScene()
@@ -888,11 +874,6 @@ unsigned int & ComponentEngine::Engine::GetUsedVertex()
 unsigned int & ComponentEngine::Engine::GetUsedIndex()
 {
 	return m_used_index;
-}
-
-unsigned int & ComponentEngine::Engine::GetUsedTextureDescriptors()
-{
-	return m_used_texture_descriptors;
 }
 
 unsigned int & ComponentEngine::Engine::GetUsedMaterials()
@@ -1182,18 +1163,20 @@ void ComponentEngine::Engine::InitRenderer()
 		assert(sucsess && "Unable to build default pipeline");
 	}
 
-
+	VulkanTextureBuffer* texture = LoadTexture("../Resources/scenes/white.png");
+	m_textures.push_back(texture);
+	m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
 	{
 		m_default_raytrace = m_renderer->CreateRaytracePipeline(
 			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/rgen.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Miss/rmiss.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Miss/ShadowMiss/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/PBR/Gen/rgen.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/ShadowMiss/rmiss.spv" },
 			},
 			{
 				{ // Involved 
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Hitgroups/TexturedLighting/rchit.spv" },
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
 				},
 				{}, // Fall through hit group for shadow's, etc
 			});
@@ -1208,7 +1191,7 @@ void ComponentEngine::Engine::InitRenderer()
 		m_default_raytrace->AddHitGroup(groupID++, {});
 
 
-		m_default_raytrace->SetMaxRecursionDepth(10);
+		m_default_raytrace->SetMaxRecursionDepth(5);
 		
 		m_default_raytrace->AttachVertexBinding({
 			VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
@@ -1258,15 +1241,7 @@ void ComponentEngine::Engine::InitRenderer()
 		//m_materialbuffer->SetData(BufferSlot::Primary);
 
 
-		struct Light
-		{
-			glm::vec4 position;
-			glm::vec4 color;
-		};
-		std::vector<Light> lights = {
-			{ glm::vec4(500, -400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) },
-			{ glm::vec4(-500, -400, 300,0), glm::vec4(1.0f,1.0f,1.0f,1.0f) }
-		};
+		
 
 		m_lightBuffer = m_renderer->CreateUniformBuffer(lights.data(), BufferChain::Single, sizeof(Light), lights.size(), true);
 		m_lightBuffer->SetData(BufferSlot::Primary);
@@ -1358,13 +1333,11 @@ void ComponentEngine::Engine::DeInitRenderer()
 {
 	DeInitImGUI();
 
-	for (auto it = m_texture_storage.begin(); it != m_texture_storage.end(); it++)
+	for (auto it : m_textures)
 	{
-		delete it->second.texture_maps_pool;
-		delete it->second.texture_descriptor_set;
-		delete it->second.texture;
+		delete it;
 	}
-	m_texture_storage.clear();
+
 
 
 	delete m_default_camera;
