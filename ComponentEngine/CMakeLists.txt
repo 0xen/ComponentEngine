@@ -196,8 +196,9 @@ add_library(${project_name} STATIC ${source} ${headers})
 target_link_libraries( ${project_name} debug ../../../VK-EZ/build/renderer/Debug/Renderer)
 target_link_libraries( ${project_name} optimized ../../../VK-EZ/build/renderer/Release/Renderer)
 
-target_link_libraries(${project_name} ../../../VK-EZ/build/renderer/Release/Renderer)
-target_link_libraries(${project_name} ../../../EnteeZ/build/EnteeZ/Release/EnteeZ)
+
+target_link_libraries( ${project_name} debug ../../../EnteeZ/build/EnteeZ/Debug/EnteeZ)
+target_link_libraries( ${project_name} optimized ../../../EnteeZ/build/EnteeZ/Release/EnteeZ)
 
 
 target_link_libraries(${project_name} BulletDynamics)

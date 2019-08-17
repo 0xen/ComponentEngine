@@ -30,6 +30,8 @@
 #include <renderer\vulkan\VulkanTextureBuffer.hpp>
 #include <renderer\vulkan\VulkanDescriptorPool.hpp>
 #include <renderer\vulkan\VulkanDescriptorSet.hpp>
+#include <renderer\vulkan\VulkanSwapchain.hpp>
+#include <renderer\vulkan\VulkanRenderPass.hpp>
 
 #include <lodepng.h>
 
@@ -293,14 +295,14 @@ void ComponentEngine::Engine::UpdateUI(float delta)
 void ComponentEngine::Engine::Rebuild()
 {
 	GetRendererMutex().lock();
-	m_renderer->Rebuild();
+	m_swapchain->RebuildSwapchain();
 	if (m_standardRTConfigSet)
 	{
 		// Update raytracer with new info
-		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
+		m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
 		m_standardRTConfigSet->UpdateSet();
-		m_renderer->GetSwapchain()->RequestRebuildCommandBuffers();
 	}
+	m_render_pass->Rebuild();
 	GetRendererMutex().unlock();
 }
 
@@ -310,7 +312,9 @@ void ComponentEngine::Engine::RenderFrame()
 	GetRendererMutex().lock();
 	// Update all renderer's via there Update function
 	m_top_level_acceleration->Update();
-	m_renderer->Update();
+	//m_renderer->Update();
+	m_render_pass->Render();
+
 	GetRendererMutex().unlock();
 }
 
@@ -903,9 +907,9 @@ void ComponentEngine::Engine::RebuildOffsetAllocation()
 
 void ComponentEngine::Engine::UpdateAccelerationDependancys()
 {
+	GetRendererMutex().lock();
 	RebuildOffsetAllocation();
 
-	m_renderer->GetSwapchain()->RequestRebuildCommandBuffers();
 
 	m_vertexBuffer->SetData(BufferSlot::Primary);
 	m_indexBuffer->SetData(BufferSlot::Primary);
@@ -951,10 +955,10 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 
 	//m_default_raytrace->Build();
 
+	m_render_pass->RebuildCommandBuffers();
 
 
-
-
+	GetRendererMutex().unlock();
 }
 
 VulkanUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
@@ -1111,6 +1115,10 @@ void ComponentEngine::Engine::InitRenderer()
 	m_renderer = new VulkanRenderer();
 	m_renderer->Start(m_window_handle, VulkanFlags::Raytrace);
 
+	m_swapchain = m_renderer->GetSwapchain();
+	m_render_pass = m_renderer->CreateRenderPass(1);
+
+
 	// If the rendering was not fully created, error out
 	assert(m_renderer != nullptr && "Error, renderer instance could not be created");
 
@@ -1137,7 +1145,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	{
 		// Create default pipeline
-		m_default_pipeline = m_renderer->CreateGraphicsPipeline({
+		m_default_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass,{
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/Default/vert.spv" },
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/Default/frag.spv" }
 			});
@@ -1168,7 +1176,7 @@ void ComponentEngine::Engine::InitRenderer()
 	m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
 	{
-		m_default_raytrace = m_renderer->CreateRaytracePipeline(
+		m_default_raytrace = m_renderer->CreateRaytracePipeline(m_render_pass,
 			{
 				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/PBR/Gen/rgen.spv" },
 				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/rmiss.spv" },
@@ -1225,7 +1233,7 @@ void ComponentEngine::Engine::InitRenderer()
 			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
 
 			m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
-			m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
+			m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
 			m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
 			m_standardRTConfigSet->UpdateSet();
 
@@ -1324,9 +1332,11 @@ void ComponentEngine::Engine::InitRenderer()
 		}
 
 		m_default_raytrace->Build();
-	}
 
-	
+
+		m_render_pass->AttachGraphicsPipeline(m_default_raytrace);
+
+	}
 }
 
 void ComponentEngine::Engine::DeInitRenderer()
@@ -1721,11 +1731,12 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_texture_descriptor_set->UpdateSet();
 
 	// Setup ImGUI Pipeline
-	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline({
+	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass,{
 		{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
 		{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/frag.spv" }
-		}, true);
+		});
 
+	m_render_pass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
 		config.culling = VK_CULL_MODE_NONE;
@@ -1764,7 +1775,7 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_index_buffer = m_renderer->CreateIndexBuffer(m_imgui.m_index_data, sizeof(uint32_t), temp_in_max);
 
 	// Setup model instance
-	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, 0, m_imgui.m_index_buffer, 0, 0);
+	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, 0, m_imgui.m_index_buffer, 0, 0, ModelPoolUsage::SingleMesh);
 	m_imgui.model = m_imgui.model_pool->CreateModel();
 	//m_imgui.model->ShouldRender(true);
 

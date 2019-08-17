@@ -280,7 +280,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 		}
 
-		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices);
+		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
 
 		m_mesh_instances[m_file_path.data.longForm]->AttachBufferPool(0, position_buffer_pool);
 

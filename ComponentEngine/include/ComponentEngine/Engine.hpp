@@ -43,6 +43,8 @@ namespace Renderer
 		class VulkanTextureBuffer;
 		class VulkanBufferPool;
 		class VulkanModel;
+		class VulkanRenderPass;
+		class VulkanSwapchain;
 	}
 }
 
@@ -270,6 +272,8 @@ namespace ComponentEngine
 
 		// Rendering Data
 		VulkanRenderer* m_renderer = nullptr;
+		VulkanRenderPass* m_render_pass = nullptr;
+		VulkanSwapchain* m_swapchain = nullptr;
 
 		std::map<std::string, PipelinePack> m_pipelines;
 
