@@ -17,9 +17,7 @@ using namespace enteez;
 using namespace Renderer;
 
 Engine* engine;
-/*IGraphicsPipeline* textured_lighting_pipeline = nullptr;
-IGraphicsPipeline* textured_pipeline = nullptr;
-*/
+
 VulkanRaytracePipeline* ray_pipeline = nullptr;
 
 void RegisterCustomComponents()
@@ -27,40 +25,6 @@ void RegisterCustomComponents()
 	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault);
 
 	engine->RegisterBase<KeyboardMovment, Logic, UI, IO>();
-}
-
-void SetupShaders()
-{
-	/*{// Textured Lighting Pipeline
-		textured_lighting_pipeline = engine->GetRenderer()->CreateGraphicsPipeline({
-		{ ShaderStage::VERTEX_SHADER, "../Shaders/TexturedLighting/vert.spv" },
-		{ ShaderStage::FRAGMENT_SHADER, "../Shaders/TexturedLighting/frag.spv" }
-		});
-
-		// Tell the pipeline what data is should expect in the forum of Vertex input
-		textured_lighting_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelBinding());
-
-		textured_lighting_pipeline->AttachVertexBinding(engine->GetDefaultVertexModelPositionBinding());
-
-		// Tell the pipeline what the input data will be payed out like
-		textured_lighting_pipeline->AttachDescriptorPool(engine->GetCameraPool());
-		// Attach the camera descriptor set to the pipeline
-		textured_lighting_pipeline->AttachDescriptorSet(0, engine->GetCameraDescriptorSet());
-
-		textured_lighting_pipeline->AttachDescriptorPool(engine->GetTextureMapsPool());
-
-		textured_lighting_pipeline->UseCulling(true);
-
-		bool sucsess = textured_lighting_pipeline->Build();
-
-		engine->AddPipeline("TexturedLighting_", { textured_lighting_pipeline ,LoadTexturedShaderModel });
-	}
-	*/
-
-
-
-
-
 }
 
 int main(int argc, char **argv)
@@ -71,7 +35,6 @@ int main(int argc, char **argv)
 	engine->SetFlag(flags);
 
 	engine->Start();
-	SetupShaders();
 	RegisterCustomComponents();
 
 	engine->GetUIManager()->AddMenuElement(new MenuElement("Debugging", {
@@ -91,12 +54,6 @@ int main(int argc, char **argv)
 		})
 	}));
 
-
-	/*
-	new MenuElement("Debugging", [&] {
-		std::cout << "test" << std::endl;
-	})
-	*/
 	if ((flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild)
 	{
 		// Load the scene

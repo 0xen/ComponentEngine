@@ -87,11 +87,6 @@ namespace ComponentEngine
 
 		MAX
 	};
-	struct PipelinePack
-	{
-		VulkanGraphicsPipeline* pipeline = nullptr;
-		std::function<void(VulkanGraphicsPipeline*, VulkanModelPool*, const char* workingDir, tinyobj::material_t)> modelCreatePointer = nullptr;
-	};
 	struct ConsoleMessage
 	{
 		std::string message;
@@ -104,149 +99,168 @@ namespace ComponentEngine
 	{
 	public:
 
-
+		// Gets a singlton instance of the engine
 		static Engine* Singlton();
-		~Engine();
-		void Start();
-		//void AddThread(ThreadHandler* handler, const char* name = (const char*)0);
-		void Stop();
-		void Join();
-		bool Running();
-		bool IsRunning(); // To be used, update safe and dose not call the thread timing reset
-		void Update();
-		void UpdateScene();
-		void UpdateUI(float delta);
-		void Rebuild();
-		void RenderFrame();
-		void Log(std::string data, ConsoleState state = Default);
-		bool KeyDown(int key);
-		bool MouseKeyDown(int key);
-		glm::vec2 GetLastMouseMovment();
 
+		~Engine();
+		// Start the engine and run all services
+		void Start();
+		// Stop the engine and kill all services
+		void Stop();
+		// Force all threads to join the main thread
+		void Join();
+		// Is the engine running
+		bool Running();
+		// To be used, update safe and dose not call the thread timing reset
+		bool IsRunning();
+		// Update the threading and window services
+		void Update();
+		// Update the scene by transferring all data from the temporary secondary buffers to the primary ones
+		void UpdateScene();
+		// Update the ui manager
+		void UpdateUI(float delta);
+		// Rebuild the renderer components of the engine
+		void Rebuild();
+		// Render the next scene frame
+		void RenderFrame();
+		// Log some data to the internal console
+		void Log(std::string data, ConsoleState state = Default);
+		// Check to see if X key is down
+		bool KeyDown(int key);
+		// Check to see if X Mouse Button is down
+		bool MouseKeyDown(int key);
+		// Return the last mouse movement instance
+		glm::vec2 GetLastMouseMovment();
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path);
-
+		// Save to the current scene
 		void SaveScene();
-
-		void AddPipeline(std::string name, PipelinePack pipeline);
-
-		PipelinePack& GetPipeline(std::string name);
-		PipelinePack& GetPipelineContaining(std::string name);
-
-		VulkanGraphicsPipeline* GetDefaultGraphicsPipeline();
+		// Get the renderer instance
 		VulkanRenderer* GetRenderer();
+		// Get the cameras description pool
 		VulkanDescriptorPool* GetCameraPool();
+		// Get the main cameras description set
 		VulkanDescriptorSet* GetCameraDescriptorSet();
+		// Get the texture map descriptor pool
 		VulkanDescriptorPool* GetTextureMapsPool();
-
-		VertexBase GetDefaultVertexModelBinding();
-		VertexBase GetDefaultVertexModelPositionBinding();
-
-		//float GetThreadDeltaTime();
-		//float GetLastThreadTime();
+		// Load a texture, if the texture is already loaded, get the texture instance
 		VulkanTextureBuffer* LoadTexture(std::string path);
-
+		// Get the current scene name and directory
 		std::string GetCurrentScene();
+		// Get the current scene directory
 		std::string GetCurrentSceneDirectory();
-
+		// Get the mutex that locks all logic calls
 		ordered_lock& GetLogicMutex();
+		// Get the mutex that locks all render calls
 		ordered_lock& GetRendererMutex();
-
+		// Get the thread manager instance
 		ThreadManager* GetThreadManager();
-
+		// Define what camera should be the primary camera
 		void SetCamera(Camera* camera);
-
+		// Check to see if we have a custom camera defined
 		bool HasCamera();
-
+		// Get the current main camera even if it is the default one
 		Camera* GetMainCamera();
-
+		// Get the default camera
 		Camera* GetDefaultCamera();
-
+		// Get the current window handle
 		NativeWindowHandle* GetWindowHandle();
-
+		// Define a new component and how it should be initialized
 		void RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity& entity));
-
+		// Define that the mouse should be locked to the window
 		void GrabMouse(bool grab);
-
+		// Set the engines current state
 		void SetPlayState(PlayState play_state);
-
+		// Set the engines current state
 		PlayState GetPlayState();
-
+		// Get the current physics world
 		PhysicsWorld* GetPhysicsWorld();
-
+		// Get a engine mutex
 		std::mutex& GetLock(EngineLock lock);
-
+		// Get all console messages
 		std::vector<ConsoleMessage>& GetConsoleMessages();
-
+		// Get all registered components
 		std::map<std::string, BaseComponentWrapper*(*)(enteez::Entity& entity)> GetComponentRegister();
-
+		// Set a engine flag
 		void SetFlag(int flags);
-
+		// Return the UI manager instance
 		UIManager* GetUIManager();
-
+		// Get the global vertex buffer that stores all primary vertex data
 		VulkanVertexBuffer* GetGlobalVertexBufer();
-
+		// Get the global index buffer that stores all primary index data
 		VulkanIndexBuffer* GetGlobalIndexBuffer();
-
+		// Get the uniform buffer that stored all material data
 		VulkanUniformBuffer* GetMaterialBuffer();
-
+		// Get the local vertex array data
 		std::vector<MeshVertex>& GetGlobalVertexArray();
-
+		// Get the local index array data
 		std::vector<uint32_t>& GetGlobalIndexArray();
-
+		// Get the local material array data
 		std::vector<MatrialObj>& GetGlobalMaterialArray();
-
+		// Get the local texture descriptor array data
 		std::vector<VkDescriptorImageInfo>& GetTextureDescriptors();
-
+		// Get the local texture buffer array
 		std::vector<VulkanTextureBuffer*>& GetTextures();
-
+		// Get the allocation pool for model positions
 		VulkanBufferPool* GetPositionBufferPool();
-
+		// Get the raytracing top level acceleration structure
 		VulkanAcceleration* GetTopLevelAS();
-
+		// Get the total used vertex size
 		unsigned int& GetUsedVertex();
-
+		// Get the total used index size
 		unsigned int& GetUsedIndex();
-
+		// Get the total used materials size
 		unsigned int& GetUsedMaterials();
-
+		// Rebuild the offset array that defined where models information is defined
 		void RebuildOffsetAllocation();
-
+		// Update all buffers and offsets that are needed for RTX
 		void UpdateAccelerationDependancys();
-
+		// Get the uniform buffer that stores all position buffers
 		VulkanUniformBuffer* GetModelPositionBuffer();
 
 		friend class UIManager;
 	private:
 		Engine();
 
+		// Create a SDL window instance
 		void InitWindow();
+		// Poll the SDL window for updates
 		void UpdateWindow();
+		// Destroy the SDL window instance
 		void DeInitWindow();
 
+		// Define all built in component definitions
 		void InitEnteeZ();
+		// DeInit EnteeZ
 		void DeInitEnteeZ();
 
+		// Create the renderer instance and all required components
 		void InitRenderer();
+		// Destroy the current renderer instance
 		void DeInitRenderer();
+		// Define the EnteeZ component hooks
 		void InitComponentHooks();
 
+		// Create the physics world instance
 		void InitPhysicsWorld();
+		// Destroy physics world
 		void DeInitPhysicsWorld();
 
+		// Create a instance of imgui
 		void InitImGUI();
+		// Update the ui manager
 		void UpdateImGUI();
+		// Destroy the instance of imgui
 		void DeInitImGUI();
-
-		//void NewThreadUpdatePass();
+		// Request that the engine should stop
 		void RequestStop();
+		// Request that the engine should switch threading mode
 		void RequestToggleThreading();
-
-		//void ToggleFrameLimiting();
+		// Are we currently threading
 		bool Threading();
+		// Request that the engine should switch threading mode
 		void ToggleThreading();
-
-
+		// Set the current scene path
 		void SetScenePath(const char* path);
 
 		// Singlton instance of engine
@@ -275,10 +289,7 @@ namespace ComponentEngine
 		VulkanRenderPass* m_render_pass = nullptr;
 		VulkanSwapchain* m_swapchain = nullptr;
 
-		std::map<std::string, PipelinePack> m_pipelines;
-
 		// Default pipeline data
-		VulkanGraphicsPipeline* m_default_pipeline = nullptr;
 		VulkanDescriptorPool* m_camera_pool;
 		VulkanDescriptorSet* m_camera_descriptor_set;
 		VulkanDescriptorPool* m_texture_maps_pool;

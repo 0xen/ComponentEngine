@@ -66,6 +66,7 @@ ComponentEngine::Engine::Engine()
 
 Engine* ComponentEngine::Engine::Singlton()
 {
+	// If we do not have a instance of the engine already made, create one
 	if (m_engine == nullptr)
 	{
 		m_engine = new Engine();
@@ -73,48 +74,59 @@ Engine* ComponentEngine::Engine::Singlton()
 	return m_engine;
 }
 
+// Stop the engine and destroy the thread manager
 ComponentEngine::Engine::~Engine()
 {
 	Stop();
 	delete m_threadManager;
 }
 
+// Start the engine and run all services
 void ComponentEngine::Engine::Start()
 {
+	// Provide a default name and window size
 	m_title = "Component Engine";
 	m_width = 1080;
 	m_height = 720;
+	// Initialize the various core components of the engine
 	InitWindow();
 	InitEnteeZ();
 	InitRenderer();
 	InitImGUI();
 	InitPhysicsWorld();
+	// Define the EnteeZ component hooks
 	InitComponentHooks();
 	m_main_thread = std::this_thread::get_id();
 	m_running = EngineStates::Running;
 
+	// Start the thread manager
 	m_threadManager = new ThreadManager(ThreadMode::Threading);
 
 	// Render a frame so you know it has not crashed xD
 	RenderFrame();
-
+	// Are we in the editor or are we running a release version of the engine
 	bool editor = !(m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild;
 	if (editor)
 	{
+		// Define the play state to be in the editor
 		m_play_state = PlayState::Editor;
-		// Add UI task
+
+		// Add UI task. Updates the UI manager
 		m_threadManager->AddTask([&](float frameTime) {
 			UpdateUI(frameTime);
 		}, 30, "UI");
 
-		// Add Update Scene task
+		// Add Update Scene task. Update all components attached to each entity that supports it
 		m_threadManager->AddTask([&, this](float frameTime) {
 			EntityManager& em = GetEntityManager();
 			m_logic_lock.lock();
+			// Check if we are in a played state or not
 			if (m_play_state == PlayState::Play)
 			{
+				// Loop through all entities in the scene
 				for (auto e : em.GetEntitys())
 				{
+					// Loop through all components attached to the entity that inherits the Logic component
 					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 					{
 						logic.Update(frameTime);
@@ -123,8 +135,10 @@ void ComponentEngine::Engine::Start()
 			}
 			else
 			{
+				// Loop through all entities in the scene
 				for (auto e : em.GetEntitys())
 				{
+					// Loop through all components attached to the entity that inherits the Logic component
 					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 					{
 						logic.EditorUpdate(frameTime);
@@ -150,12 +164,14 @@ void ComponentEngine::Engine::Start()
 	else
 	{
 		m_play_state = PlayState::Play;
-		// Add Update Scene task
+		// Add Update Scene task. Update all components attached to each entity that supports it
 		m_threadManager->AddTask([&, this](float frameTime) {
 			EntityManager& em = GetEntityManager();
 			m_logic_lock.lock();
+			// Loop through all entities in the scene
 			for (auto e : em.GetEntitys())
 			{
+				// Loop through all components attached to the entity that inherits the Logic component
 				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 				{
 					logic.Update(frameTime);
@@ -184,59 +200,61 @@ void ComponentEngine::Engine::Start()
 	Log("Starting Engine", Info);
 }
 
+// Stop the engine and kill all services
 void ComponentEngine::Engine::Stop()
 {
+	// If we are already stopped, skio
 	if (m_running != EngineStates::Stoping)
 	{
 		return;
 	}
+	// Force all threads to join the primary one
 	m_threadManager->ChangeMode(ThreadMode::Joined);
+	// Set the engine to the stopped state
 	{
 		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
 		m_running = EngineStates::Stopped;
 	}
 
-
-
 	GetRendererMutex().lock();
-
-
+	// Remove all entities
 	GetEntityManager().Clear();
+	// Destroy all the core parts of the engine
 	DeInitEnteeZ();
 	DeInitPhysicsWorld();
 	DeInitRenderer();
 	DeInitWindow();
 	GetRendererMutex().unlock();
+
 	Log("Stopping Engine", Info);
 }
 
+// Force all threads to join the main thread
 void ComponentEngine::Engine::Join()
 {
 	m_threadManager->ChangeMode(Joined);
 }
 
+// Is the engine running
 bool ComponentEngine::Engine::Running()
 {
-	//NewThreadUpdatePass();
+	// Are we checking this state from the main thread
 	if (m_main_thread == std::this_thread::get_id())
 	{
+		// Has a request to stop been made
 		if (m_request_stop)
 		{
 			m_running = EngineStates::Stoping;
-			/*m_request_stop = false;
-			Stop();*/
 			return false;
 		}
-		else if (m_request_toggle_threading)
+		else if (m_request_toggle_threading) // Has a request to switch between threading ~ not threading been made
 		{
 			m_request_toggle_threading = false;
 			ToggleThreading();
 		}
 		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
+		// return the renderer state
 		bool result = m_renderer != nullptr && m_renderer->IsRunning();
-
-		//GetRendererMutex().lock();
-		//GetRendererMutex().unlock();
 		return result;
 	}
 	else
@@ -246,6 +264,7 @@ bool ComponentEngine::Engine::Running()
 	}
 }
 
+// Update the threading and window services
 void ComponentEngine::Engine::Update()
 {
 	m_threadManager->Update();
@@ -254,14 +273,17 @@ void ComponentEngine::Engine::Update()
 	GetRendererMutex().unlock();
 }
 
+// Update the scene by transferring all data from the temporary secondary buffers to the primary ones
 void ComponentEngine::Engine::UpdateScene()
 {
 	EntityManager& em = GetEntityManager();
 
 	m_logic_lock.lock();
 	Mesh::SetBufferData();
+	// Store the data from local memory to the secondary buffer
 	for (auto e : em.GetEntitys())
 	{
+		// Loop through each component that inherits TransferBuffers and set the data
 		e->ForEach<TransferBuffers>([&](enteez::Entity * entity, TransferBuffers & buffer)
 		{
 			buffer.SetBufferData();
@@ -270,8 +292,10 @@ void ComponentEngine::Engine::UpdateScene()
 
 	GetRendererMutex().lock();
 	Mesh::TransferToPrimaryBuffers();
+	// Loop through each entity
 	for (auto e : em.GetEntitys())
 	{
+		// Loop through each component that inherits TransferBuffers and transfer the data from the secondary buffer to the primary one
 		e->ForEach<TransferBuffers>([&](enteez::Entity * entity, TransferBuffers & buffer)
 		{
 			buffer.BufferTransfer();
@@ -285,6 +309,7 @@ void ComponentEngine::Engine::UpdateScene()
 	m_logic_lock.unlock();
 }
 
+// Update the ui manager
 void ComponentEngine::Engine::UpdateUI(float delta)
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -292,22 +317,27 @@ void ComponentEngine::Engine::UpdateUI(float delta)
 	UpdateImGUI();
 }
 
+// Rebuild the renderer components of the engine
 void ComponentEngine::Engine::Rebuild()
 {
 	GetRendererMutex().lock();
+	// Rebuild the swapchain as well as the image views
 	m_swapchain->RebuildSwapchain();
 	if (m_standardRTConfigSet)
 	{
-		// Update raytracer with new info
+		// Update raytracer with new raytracing staging buffers
 		m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
 		m_standardRTConfigSet->UpdateSet();
 	}
+	// Rebuild the render pass instance
 	m_render_pass->Rebuild();
 	GetRendererMutex().unlock();
 }
 
+// Render the next scene frame
 void ComponentEngine::Engine::RenderFrame()
 {
+	// If we do not have a camera, break
 	if (m_main_camera == nullptr)return;
 	GetRendererMutex().lock();
 	// Update all renderer's via there Update function
@@ -318,20 +348,18 @@ void ComponentEngine::Engine::RenderFrame()
 	GetRendererMutex().unlock();
 }
 
-
-
+// Log some data to the internal console
 void ComponentEngine::Engine::Log(std::string data, ConsoleState state)
 {
 	std::stringstream ss;
 	ss << "(%i) " << data;
-
 	std::lock_guard<std::mutex> guard(GetLock(CONSOLE));
-
+	// If the last message was the same, append the log count
 	if (m_console.size() > 0 && m_console[m_console.size() - 1].message == ss.str() && m_console[m_console.size() - 1].state == state)
 	{
 		m_console[m_console.size() - 1].count++;
 	}
-	else
+	else // Add the new message
 	{
 		ConsoleMessage message;
 		message.message = ss.str();
@@ -341,12 +369,14 @@ void ComponentEngine::Engine::Log(std::string data, ConsoleState state)
 	}
 }
 
+// Check to see if X key is down
 bool ComponentEngine::Engine::KeyDown(int key)
 {
 	std::lock_guard<std::mutex> guard(m_locks[READ_KEY_PRESS]);
 	return m_keys[key];
 }
 
+// Check to see if X Mouse Button is down
 bool ComponentEngine::Engine::MouseKeyDown(int key)
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -354,22 +384,22 @@ bool ComponentEngine::Engine::MouseKeyDown(int key)
 	return io.MouseDown[key];
 }
 
+// Return the last mouse movement instance
 glm::vec2 ComponentEngine::Engine::GetLastMouseMovment()
 {
 	std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
 	return m_mousePosDelta;
 }
 
+// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 bool ComponentEngine::Engine::LoadScene(const char * path)
 {
-
 	// clear scene
 	{
 		m_logic_lock.lock();
 		GetRendererMutex().lock();
 
 		GetEntityManager().Clear();
-		//UpdateScene();
 
 		GetRendererMutex().unlock();
 		m_logic_lock.unlock();
@@ -382,7 +412,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	m_logic_lock.lock();
 	GetRendererMutex().lock();
 
-	
+	// Check to see if the input stream is open, if not return
 	if (!in.is_open()) 
 	{
 		Log("Uable to load scene: Could not open", ConsoleState::Error);
@@ -424,30 +454,46 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		}
 	}
 
+	// Define where we have loaded from
 	SetScenePath(path);
 
-	
+	// Read in how many top level entities there are (Entities that have no parents)
 	unsigned int topLevelEntityCount;
 	Common::Read(in, &topLevelEntityCount, sizeof(unsigned int));
 
-
+	// Define a in-function, function for creating new entities using I/O stream
 	std::function<void(Entity* parent)> createEntity = [&](Entity* parent)
 	{
-		std::string entityName = Common::ReadString(in);
+		// File format for Entities
+		/* - Entity Name
+		** - Component Count (0-*)
+		**     - Component Name
+		**     - Component Payload (How much data the file has after this integer that is for the component)
+		**     - Child count
+		*/
 
+		// Read in the name of the entity
+		std::string entityName = Common::ReadString(in);
 		Entity* entity = em.CreateEntity(entityName);
 
+		// Read in the component count
 		unsigned int componentCount;
 		Common::Read(in, &componentCount, sizeof(unsigned int));
 
+		// Loop through each component
 		for (int j = 0; j < componentCount; j++)
 		{
+			// Read in the component name
 			std::string componentName = Common::ReadString(in);
 
+			// Read in how much data the file has for the component
 			unsigned int payloadSize;
 			Common::Read(in, &payloadSize, sizeof(unsigned int));
 
+			// Check to see if we have that component on record
 			auto it = m_component_register.find(componentName);
+
+			// If we have the component
 			if (it != m_component_register.end())
 			{
 
@@ -462,6 +508,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 					}
 					else
 					{
+						// If the component is of the wrong size, log it
 						std::stringstream ss;
 						ss << "Unable to load component's '" << componentName << "' payload, size miss match. Expecting " << io->PayloadSize() << " Bytes, but recived " << payloadSize << " Bytes";
 						Log(ss.str(), ComponentEngine::Warning);
@@ -470,12 +517,13 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 			}
 			else
 			{
+				// If we don't have the component log it
 				std::stringstream ss;
 				ss << "Unable to find component '" << componentName << "' for entity '" << entityName << "'";
 				Log(ss.str(), ComponentEngine::Warning);
 			}
 
-			// Dump the invalid payload
+			// Dump the invalid payload if it has not all bee read
 			if (payloadSize > 0)
 			{
 				std::stringstream ss;
@@ -487,27 +535,28 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 				delete temp;
 
 			}
-
-
 		}
 
+		// If we did not load a transformation, attach a default one
 		if (!entity->HasComponent<Transformation>())
 		{
 			Transformation::EntityHookDefault(*entity);
 		}
 
+		// Define the transformations parent
 		entity->GetComponent<Transformation>().SetParent(parent);
 
+		// Read in the child count
 		unsigned int childrenCount;
 		Common::Read(in, &childrenCount, sizeof(unsigned int));
 
+		// Loop through for all children and read them in
 		for (int i = 0; i < childrenCount; i++)
 		{
 			createEntity(entity);
 		}
 	};
-
-
+	// Loop through all top level entities and read them in
 	for (int i = 0; i < topLevelEntityCount; i++)
 	{
 		createEntity(nullptr);
@@ -518,9 +567,10 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	return true;
 }
 
+// Save to the current scene
 void ComponentEngine::Engine::SaveScene()
 {
-
+	// Load the current scene file
 	std::ofstream out(m_currentScene);
 	EntityManager& em = GetEntityManager();
 
@@ -528,7 +578,7 @@ void ComponentEngine::Engine::SaveScene()
 		Common::Write(out, EngineName);
 	}
 
-
+	// Create a in-function, function for saving each entity
 	std::function<void(Entity*)> saveEntity = [&](Entity* entity)
 	{
 		// Output entitys name
@@ -538,6 +588,7 @@ void ComponentEngine::Engine::SaveScene()
 		unsigned int componentCount = entity->GetComponentCount();
 		Common::Write(out, &componentCount, sizeof(unsigned int));
 
+		// Loop through each component
 		entity->ForEach([&](BaseComponentWrapper& wrapper) {
 			// Output Components name 
 			Common::Write(out, wrapper.GetName());
@@ -546,6 +597,7 @@ void ComponentEngine::Engine::SaveScene()
 			IO* io = nullptr;
 			if (em.BaseClassInstance(wrapper, io))
 			{
+				// Get the payload size and write it to the file
 				unsigned int payloadSize = io->PayloadSize();
 				Common::Write(out, &payloadSize, sizeof(unsigned int));
 				io->Save(out);
@@ -558,6 +610,7 @@ void ComponentEngine::Engine::SaveScene()
 			}
 		});
 
+		// Check to see if we have a transformation
 		if (entity->HasComponent<Transformation>())
 		{
 			Transformation& trans = entity->GetComponent<Transformation>();
@@ -566,12 +619,13 @@ void ComponentEngine::Engine::SaveScene()
 			unsigned int childrenCount = trans.GetChildren().size();
 			Common::Write(out, &childrenCount, sizeof(unsigned int));
 
+			// Save each child entity
 			for (Transformation* child : trans.GetChildren())
 			{
 				saveEntity(child->GetEntity());
 			}
 		}
-		else
+		else // If we have no transformation, set that we had 0 children
 		{
 			// Output the amount of children the entity has
 			unsigned int childrenCount = 0;
@@ -579,107 +633,55 @@ void ComponentEngine::Engine::SaveScene()
 		}
 
 	};
-
+	// Loop through all entities
 	std::vector<Entity*> topLevelEntities;
 	for (auto entity : em.GetEntitys())
 	{
-		if (entity->GetComponent<Transformation>().GetParent() == nullptr)
+		// Check to see if we have a component and that it dose not have a parent, if so, save the top level parent
+		if (entity->HasComponent<Transformation>() && entity->GetComponent<Transformation>().GetParent() == nullptr)
 		{
 			topLevelEntities.push_back(entity);
 		}
 	}
 
+	// Output how many top level entities there are
 	unsigned int entityCount = topLevelEntities.size();
 	Common::Write(out, &entityCount, sizeof(unsigned int));
-
+	// Loop through the entities and save them
 	for (auto entity : topLevelEntities)
 	{
 		saveEntity(entity);
 	}
-
+	// Store into the file and close the stream
 	out.flush();
 	out.close();
 }
 
-void ComponentEngine::Engine::AddPipeline(std::string name, PipelinePack pipeline)
-{
-	m_pipelines[name] = pipeline;
-}
-
-PipelinePack& ComponentEngine::Engine::GetPipeline(std::string name)
-{
-	if (m_pipelines.find(name) != m_pipelines.end())return m_pipelines[name];
-	return m_pipelines["Default"];
-}
-
-PipelinePack & ComponentEngine::Engine::GetPipelineContaining(std::string name)
-{
-	for (auto p : m_pipelines)
-	{
-		if (Common::Contains(name, p.first))
-		{
-			return m_pipelines[p.first];
-		}
-	}
-	return m_pipelines["Default"];
-}
-
-VulkanGraphicsPipeline * ComponentEngine::Engine::GetDefaultGraphicsPipeline()
-{
-	return m_default_pipeline;
-}
-
+// Get the renderer instance
 VulkanRenderer * ComponentEngine::Engine::GetRenderer()
 {
 	return m_renderer;
 }
 
+// Get the cameras description pool
 VulkanDescriptorPool * ComponentEngine::Engine::GetCameraPool()
 {
 	return m_camera_pool;
 }
 
+// Get the main cameras description set
 VulkanDescriptorSet * ComponentEngine::Engine::GetCameraDescriptorSet()
 {
 	return m_camera_descriptor_set;
 }
 
+// Get the texture map descriptor pool
 VulkanDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
 {
 	return m_texture_maps_pool;
 }
 
-VertexBase ComponentEngine::Engine::GetDefaultVertexModelBinding()
-{
-	return VertexBase{
-		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
-			{
-				{ 0, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,pos) },
-				{ 1, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(MeshVertex,texCoord) },
-				{ 2, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,nrm) },
-				{ 3, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,color) },
-			},
-			sizeof(MeshVertex),
-			0
-	};
-}
-
-VertexBase ComponentEngine::Engine::GetDefaultVertexModelPositionBinding()
-{
-	return VertexBase{
-		VkVertexInputRate::VK_VERTEX_INPUT_RATE_INSTANCE,
-			{
-				{	// Vertex Bindings
-					4, // Location
-					VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT, // Format
-					0 // Offset from start of data structure
-				}
-			},
-			sizeof(glm::mat4), // Total size
-			1 // Binding
-	};
-}
- 
+// Load a texture, if the texture is already loaded, get the texture instance
 VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 {
 	std::vector<unsigned char> image; //the raw pixels
@@ -693,7 +695,7 @@ VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 		Log(ss.str(), Error);
 		return nullptr;
 	}
-
+	// Create and store the texture on the graphics card
 	VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
 	texture->SetData(BufferSlot::Primary);
 	{
@@ -704,38 +706,47 @@ VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 	return texture;
 }
 
+// Get the current scene name and directory
 std::string ComponentEngine::Engine::GetCurrentScene()
 {
 	return m_currentScene;
 }
 
+// Get the current scene directory
 std::string ComponentEngine::Engine::GetCurrentSceneDirectory()
 {
 	return m_currentSceneDirectory;
 }
 
+// Get the mutex that locks all logic calls
 ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 {
 	return m_logic_lock;
 }
 
+// Get the mutex that locks all render calls
 ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 {
 	return m_renderer_thread;
 }
 
+// Get the thread manager instance
 ThreadManager * ComponentEngine::Engine::GetThreadManager()
 {
 	return m_threadManager;
 }
 
+// Define what camera should be the primary camera
 void ComponentEngine::Engine::SetCamera(Camera* camera)
 {
 	GetRendererMutex().lock();
+	// Set the current camera
 	m_main_camera = camera;
+	// Define to the camera descriptor, what is the current camera
 	m_camera_descriptor_set->AttachBuffer(0, camera->GetCameraBuffer());
 	m_camera_descriptor_set->UpdateSet();
 	camera->UpdateProjection();
+	// Rebuild the render pass and raytracing dependences
 	Rebuild();
 	if (m_standardRTConfigSet != nullptr)
 	{
@@ -747,31 +758,37 @@ void ComponentEngine::Engine::SetCamera(Camera* camera)
 	GetRendererMutex().unlock();
 }
 
+// Check to see if we have a custom camera defined
 bool ComponentEngine::Engine::HasCamera()
 {
 	return m_main_camera != m_default_camera;
 }
 
+// Get the current main camera even if it is the default one
 Camera* ComponentEngine::Engine::GetMainCamera()
 {
 	return m_main_camera;
 }
 
+// Get the default camera
 Camera* ComponentEngine::Engine::GetDefaultCamera()
 {
 	return m_default_camera;;
 }
 
+// Get the current window handle
 NativeWindowHandle* ComponentEngine::Engine::GetWindowHandle()
 {
 	return m_window_handle;
 }
 
+// Define a new component and how it should be initialized
 void ComponentEngine::Engine::RegisterComponentBase(std::string name, BaseComponentWrapper*(*default_initilizer)(enteez::Entity &entity))
 {
 	m_component_register[name] = default_initilizer;
 }
 
+// Define that the mouse should be locked to the window
 void ComponentEngine::Engine::GrabMouse(bool grab)
 {
 	SDL_SetRelativeMouseMode((SDL_bool)grab);
@@ -785,132 +802,158 @@ void ComponentEngine::Engine::SetPlayState(PlayState play_state)
 	m_logic_lock.unlock();
 }
 
+// Set the engines current state
 PlayState ComponentEngine::Engine::GetPlayState()
 {
 	return m_play_state;
 }
 
+// Get the current physics world
 PhysicsWorld * ComponentEngine::Engine::GetPhysicsWorld()
 {
 	return m_physicsWorld;
 }
 
+// Get a engine mutex
 std::mutex & ComponentEngine::Engine::GetLock(EngineLock lock)
 {
 	return m_locks[(int)lock];
 }
 
+// Get all console messages
 std::vector<ConsoleMessage>& ComponentEngine::Engine::GetConsoleMessages()
 {
 	return m_console;
 }
 
+// Get all registered components
 std::map<std::string, BaseComponentWrapper*(*)(enteez::Entity& entity)> ComponentEngine::Engine::GetComponentRegister()
 {
 	return m_component_register;
 }
 
+// Set a engine flag
 void ComponentEngine::Engine::SetFlag(int flags)
 {
 	m_flags |= flags;
 }
 
+// Return the UI manager instance
 UIManager * ComponentEngine::Engine::GetUIManager()
 {
 	return m_ui;
 }
 
+// Get the global vertex buffer that stores all primary vertex data
 VulkanVertexBuffer * ComponentEngine::Engine::GetGlobalVertexBufer()
 {
 	return m_vertexBuffer;
 }
 
+// Get the global index buffer that stores all primary index data
 VulkanIndexBuffer * ComponentEngine::Engine::GetGlobalIndexBuffer()
 {
 	return m_indexBuffer;
 }
 
+// Get the uniform buffer that stored all material data
 VulkanUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
 {
 	return m_materialbuffer;
 }
 
+// Get the local vertex array data
 std::vector<MeshVertex>& ComponentEngine::Engine::GetGlobalVertexArray()
 {
 	return m_all_vertexs;
 }
 
+// Get the local index array data
 std::vector<uint32_t>& ComponentEngine::Engine::GetGlobalIndexArray()
 {
 	return m_all_indexs;
 }
 
+// Get the local material array data
 std::vector<MatrialObj>& ComponentEngine::Engine::GetGlobalMaterialArray()
 {
 	return m_materials;
 }
 
+// Get the local texture descriptor array data
 std::vector<VkDescriptorImageInfo>& ComponentEngine::Engine::GetTextureDescriptors()
 {
 	return m_texture_descriptors;
 }
 
+// Get the local texture buffer array
 std::vector<VulkanTextureBuffer*>& ComponentEngine::Engine::GetTextures()
 {
 	return m_textures;
 }
 
+// Get the allocation pool for model positions
 VulkanBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
 {
 	return m_position_buffer_pool;
 }
 
+// Get the raytracing top level acceleration structure
 VulkanAcceleration * ComponentEngine::Engine::GetTopLevelAS()
 {
 	return m_top_level_acceleration;
 }
 
+// Get the total used vertex size
 unsigned int & ComponentEngine::Engine::GetUsedVertex()
 {
 	return m_used_vertex;
 }
 
+// Get the total used index size
 unsigned int & ComponentEngine::Engine::GetUsedIndex()
 {
 	return m_used_index;
 }
 
+// Get the total used materials size
 unsigned int & ComponentEngine::Engine::GetUsedMaterials()
 {
 	return m_used_materials;
 }
 
+// Rebuild the offset array that defined where models information is defined
 void ComponentEngine::Engine::RebuildOffsetAllocation()
 {
 	unsigned int index = 0;
+	// Loop through all model pools
 	for (auto& mp : m_top_level_acceleration->GetModelPools())
 	{
-
+		// Define where the index and vertex offsets for the model are
 		unsigned int index_offset = mp.model_pool->GetIndexOffset();
 		unsigned int vertex_offset = mp.model_pool->GetVertexOffset();
+		// Loop through each model instance
 		for (auto& model : mp.model_pool->GetModels())
 		{
+			// Define all the ofsets
 			m_offset_allocation_array[index].index = index_offset;
 			m_offset_allocation_array[index].vertex = vertex_offset;
 			m_offset_allocation_array[index].position = mp.model_pool->GetModelBufferOffset(model.second, 0);
 			index++;
 		}
 	}
+	// Push the data to the GPU
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
-
 }
 
+// Update all buffers and offsets that are needed for RTX
 void ComponentEngine::Engine::UpdateAccelerationDependancys()
 {
 	GetRendererMutex().lock();
+	// Update offsets
 	RebuildOffsetAllocation();
 
-
+	// Push all the data to the GPU
 	m_vertexBuffer->SetData(BufferSlot::Primary);
 	m_indexBuffer->SetData(BufferSlot::Primary);
 	m_materialbuffer->SetData(BufferSlot::Primary);
@@ -927,7 +970,6 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_standardRTConfigSet->UpdateSet();
 	}
 
-
 	{
 		m_RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
 		m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
@@ -937,7 +979,6 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_RTModelPoolSet->UpdateSet();
 	}
 
-
 	{
 		if (m_texture_descriptors.size() > 0)
 		{
@@ -946,14 +987,12 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		}
 	}
 
-
 	{
 		m_RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
 		m_RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
 		m_RTModelInstanceSet->UpdateSet();
 	}
 
-	//m_default_raytrace->Build();
 
 	m_render_pass->RebuildCommandBuffers();
 
@@ -961,12 +1000,13 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	GetRendererMutex().unlock();
 }
 
+// Get the uniform buffer that stores all position buffers
 VulkanUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
 {
 	return m_model_position_buffer;
 }
 
-
+// Create a SDL window instance
 void ComponentEngine::Engine::InitWindow()
 {
 	m_window = SDL_CreateWindow(
@@ -987,27 +1027,30 @@ void ComponentEngine::Engine::InitWindow()
 	m_window_handle->clear_color = { 0.2f,0.2f,0.2f,1.0f };
 }
 
+// Poll the SDL window for updates
 void ComponentEngine::Engine::UpdateWindow()
 {
-
 	ImGuiIO& io = ImGui::GetIO();
 	SDL_Event event;
 	m_mousePosDelta = glm::vec2();
+	// Loop through each window update
 	while (SDL_PollEvent(&event) > 0)
 	{
 		switch (event.type)
 		{
-		case SDL_QUIT:
+		// Was the window closed
+		case SDL_QUIT: 
 			if (Running())
 			{
 				RequestStop();
 				return;
 			}
 			break;
+		// Was a window event called
 		case SDL_WINDOWEVENT:
 			switch (event.window.event)
 			{
-				//Get new dimensions and repaint on window size change
+			//Get new dimensions and repaint on window size change
 			case SDL_WINDOWEVENT_SIZE_CHANGED:
 				GetRendererMutex().lock();
 				m_window_handle->width = event.window.data1;
@@ -1026,6 +1069,7 @@ void ComponentEngine::Engine::UpdateWindow()
 				break;
 			}
 			break;
+			// Was a mouse button pressed or released
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
 				if (event.button.button == SDL_BUTTON_LEFT) io.MouseDown[0] = event.button.state == SDL_PRESSED;
@@ -1033,6 +1077,7 @@ void ComponentEngine::Engine::UpdateWindow()
 				if (event.button.button == SDL_BUTTON_MIDDLE) io.MouseDown[2] = event.button.state == SDL_PRESSED;
 				//io.MouseDown[0] = true;
 				break;
+			// Was a mouse moved
 			case SDL_MOUSEMOTION:
 			{
 				if (!SDL_GetRelativeMouseMode())
@@ -1044,11 +1089,13 @@ void ComponentEngine::Engine::UpdateWindow()
 				m_mousePosDelta = glm::vec2(event.motion.xrel, event.motion.yrel);
 			}
 				break;
+			// Was a key typed
 			case SDL_TEXTINPUT:
 			{
 				io.AddInputCharactersUTF8(event.text.text);
 				break;
 			}
+			// Was a mouse wheel rotated
 			case SDL_MOUSEWHEEL:
 			{
 				if (event.wheel.x > 0) io.MouseWheelH += 1;
@@ -1057,6 +1104,7 @@ void ComponentEngine::Engine::UpdateWindow()
 				if (event.wheel.y < 0) io.MouseWheel -= 1;
 				break;
 			}
+			// Was a keyboard key pressed or released
 			case SDL_KEYDOWN:
 			case SDL_KEYUP:
 			{
@@ -1079,14 +1127,15 @@ void ComponentEngine::Engine::UpdateWindow()
 	}
 }
 
+// Destroy the SDL window instance
 void ComponentEngine::Engine::DeInitWindow()
 {
 	SDL_RestoreWindow(m_window);
 	SDL_DestroyWindow(m_window);
-	//SDL_ShowWindow
 	delete m_window_handle;
 }
 
+// Define all built in component definitions
 void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
@@ -1104,26 +1153,26 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<SphereCollision, ICollisionShape, Logic, IO, UI>();
 }
 
+// DeInit EnteeZ
 void ComponentEngine::Engine::DeInitEnteeZ()
 {
 
 }
 
+// Create the renderer instance and all required components
 void ComponentEngine::Engine::InitRenderer()
 {
 	// Create a instance of the renderer
 	m_renderer = new VulkanRenderer();
 	m_renderer->Start(m_window_handle, VulkanFlags::Raytrace);
 
+	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
 	m_render_pass = m_renderer->CreateRenderPass(1);
 
 
 	// If the rendering was not fully created, error out
 	assert(m_renderer != nullptr && "Error, renderer instance could not be created");
-
-	//m_camera_entity = this->GetEntityManager().CreateEntity("Camera");
-	//m_camera_entity->AddComponent(&m_camera_component);
 
 	m_default_camera = new Camera();
 
@@ -1141,41 +1190,13 @@ void ComponentEngine::Engine::InitRenderer()
 	SetCamera(m_default_camera);
 
 
-
-
-	{
-		// Create default pipeline
-		m_default_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass,{
-			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/Default/vert.spv" },
-			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/Default/frag.spv" }
-			});
-
-		// Tell the pipeline what data is should expect in the forum of Vertex input
-		m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelBinding());
-
-		m_default_pipeline->AttachVertexBinding(GetDefaultVertexModelPositionBinding());
-
-		// Tell the pipeline what the input data will be payed out like
-		m_default_pipeline->AttachDescriptorPool(m_camera_pool);
-		// Attach the camera descriptor set to the pipeline
-		m_default_pipeline->AttachDescriptorSet(0, m_camera_descriptor_set);
-
-		m_texture_maps_pool = Engine::Singlton()->GetRenderer()->CreateDescriptorPool({
-			Engine::Singlton()->GetRenderer()->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-			});
-
-		bool sucsess = m_default_pipeline->Build();
-		m_pipelines["Default"] = PipelinePack{ m_default_pipeline };
-
-		// Build and check default pipeline
-		assert(sucsess && "Unable to build default pipeline");
-	}
-
+	// Load a default texture
 	VulkanTextureBuffer* texture = LoadTexture("../Resources/scenes/white.png");
 	m_textures.push_back(texture);
 	m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
 	{
+		// Create the raytracing pipeline
 		m_default_raytrace = m_renderer->CreateRaytracePipeline(m_render_pass,
 			{
 				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/PBR/Gen/rgen.spv" },
@@ -1241,15 +1262,9 @@ void ComponentEngine::Engine::InitRenderer()
 		}
 
 		
-
+		// Create all needed buffers for vertex, index, lighting and materials
 		m_vertexBuffer = m_renderer->CreateVertexBuffer(m_all_vertexs.data(), sizeof(MeshVertex), m_all_vertexs.size());
 		m_indexBuffer = m_renderer->CreateIndexBuffer(m_all_indexs.data(), sizeof(uint32_t), m_all_indexs.size());
-
-		//m_materialbuffer = m_renderer->CreateUniformBuffer(m_materials.data(), BufferChain::Single, sizeof(MatrialObj), m_materials.size(), true);
-		//m_materialbuffer->SetData(BufferSlot::Primary);
-
-
-		
 
 		m_lightBuffer = m_renderer->CreateUniformBuffer(lights.data(), BufferChain::Single, sizeof(Light), lights.size(), true);
 		m_lightBuffer->SetData(BufferSlot::Primary);
@@ -1301,6 +1316,7 @@ void ComponentEngine::Engine::InitRenderer()
 			m_default_raytrace->AttachDescriptorSet(2, m_RTTexturePoolSet);
 		}
 
+		// Create buffers for model positions, position allocation pool and offsets
 		m_model_position_array = new glm::mat4[1000];
 		m_model_position_buffer = m_renderer->CreateUniformBuffer(m_model_position_array, BufferChain::Double, sizeof(glm::mat4), 1000, true);
 
@@ -1339,27 +1355,19 @@ void ComponentEngine::Engine::InitRenderer()
 	}
 }
 
+// Destroy the current renderer instance
 void ComponentEngine::Engine::DeInitRenderer()
 {
+	// Destroy ui instance
 	DeInitImGUI();
-
+	// delete all textures
 	for (auto it : m_textures)
 	{
 		delete it;
 	}
-
-
-
+	// Destroy all renderer components
 	delete m_default_camera;
 	m_default_camera = nullptr;
-	//delete m_default_pipeline;
-	//m_default_pipeline = nullptr;
-
-	for (auto& pipeline : m_pipelines)
-	{
-		delete pipeline.second.pipeline;
-	}
-
 	delete m_camera_pool;
 	m_camera_pool = nullptr;
 	delete m_texture_maps_pool;
@@ -1369,9 +1377,9 @@ void ComponentEngine::Engine::DeInitRenderer()
 	m_renderer = nullptr;
 }
 
+// Define the EnteeZ component hooks
 void ComponentEngine::Engine::InitComponentHooks()
 {
-	
 	RegisterComponentBase("Transformation", Transformation::EntityHookDefault);
 	RegisterComponentBase("Mesh", Mesh::EntityHookDefault);
 	RegisterComponentBase("Renderer", RendererComponent::EntityHookDefault);
@@ -1381,25 +1389,28 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Sphere Collision", SphereCollision::EntityHookDefault);
 }
 
+// Create the physics world instance
 void ComponentEngine::Engine::InitPhysicsWorld()
 {
 	m_physicsWorld = new PhysicsWorld(this);
 }
 
+// Destroy physics world
 void ComponentEngine::Engine::DeInitPhysicsWorld()
 {
 	delete m_physicsWorld;
 }
 
+// Create a instance of imgui
 void ComponentEngine::Engine::InitImGUI()
 {
-
+	// Create the ui manager instance
 	m_ui = new UIManager(this);
-
-
+	// Are we in the editor?
 	bool editor = !(m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild;
 	if (editor)
 	{
+		// Define all the ui windows
 		m_ui->AddElement(new Console("Console", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new ThreadingWindow("Threading", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
@@ -1407,11 +1418,12 @@ void ComponentEngine::Engine::InitImGUI()
 		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
 
+		// Define the autofills
 		static std::string filenameAutofill = "Scene.bin";
 		static std::string defaultSavePath = "../Scene.bin";
 		static unsigned int maxFileLength = 200;
 		static char* saveAsStream = new char[maxFileLength + 1];
-
+		// Define all default menu elements for the engine
 		m_ui->AddMenuElement(new MenuElement("File", 
 		{
 			new MenuElement("Add",[&] {
@@ -1478,10 +1490,6 @@ void ComponentEngine::Engine::InitImGUI()
 			new MenuElement("Save As",[&] {
 
 				ImGui::OpenPopup("Save As##SaveAsFilePopup");
-
-
-
-
 				for (int i = 0; i < filenameAutofill.size(); i++)
 				{
 					saveAsStream[i] = filenameAutofill.at(i);
@@ -1782,13 +1790,12 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
 }
 
+// Update the ui manager
 void ComponentEngine::Engine::UpdateImGUI()
 {
 	m_logic_lock.lock();
 
-
 	m_ui->Render();
-
 
 	m_logic_lock.unlock();
 	ImDrawData* imDrawData = ImGui::GetDrawData();
@@ -1844,6 +1851,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 	m_logic_lock.unlock();
 }
 
+// Destroy the instance of imgui
 void ComponentEngine::Engine::DeInitImGUI()
 {
 	ImGui::SaveIniSettingsToDisk("imgui.ini");
@@ -1861,81 +1869,34 @@ void ComponentEngine::Engine::DeInitImGUI()
 	delete m_imgui.model_pool;
 	delete m_imgui.model;
 	delete m_ui;
-
-
 }
 
-
-/*void ComponentEngine::Engine::NewThreadUpdatePass()
-{
-	std::thread::id id = std::this_thread::get_id();
-
-	auto it = m_thread_linker.find(id);
-	if (it == m_thread_linker.end())return;
-
-	ThreadData*& data = m_thread_linker[id];
-	float thread_last = GetThreadDeltaTime(); // Get the time from the last call to Sync or NewThreadUpdatePass
-	data->process_time = thread_last + data->delta_process_time; // Set the final time for data.process_time for this loop
-	data->loop_time = thread_last + data->delta_loop_time; // Set the final time for data.delta_loop_time for this loop
-
-
-
-	data->process_time_average_storage.push_back(data->process_time);
-	data->loop_time_average_storage.push_back(data->loop_time);
-
-	if (data->process_time_average_storage.size() >= 10)
-	{
-		data->process_time_average = 0.0f;
-		data->loop_time_average = 0.0f;
-		for (int i = 0; i < data->process_time_average_storage.size(); i++)
-		{
-			data->process_time_average += data->process_time_average_storage[i];
-			data->loop_time_average += data->loop_time_average_storage[i];
-		}
-		data->process_time_average /= data->process_time_average_storage.size();
-		data->loop_time_average /= data->loop_time_average_storage.size();
-		data->process_time_average_storage.clear();
-		data->loop_time_average_storage.clear();
-	}
-	// Reset the process time delta and delta loop time for this loop
-	data->delta_process_time = 0.0f;
-	data->delta_loop_time = 0.0f;
-}*/
-
-
+// Request that the engine should stop
 void ComponentEngine::Engine::RequestStop()
 {
 	m_request_stop = true;
 }
 
+// Request that the engine should switch threading mode
 void ComponentEngine::Engine::RequestToggleThreading()
 {
 	m_request_toggle_threading = true;
 }
 
-/*void ComponentEngine::Engine::ToggleFrameLimiting()
-{
-	std::lock_guard<std::mutex> guard(m_locks[TOGGLE_FRAME_LIMITING]);
-	std::thread::id id = std::this_thread::get_id();
-	auto it = m_thread_linker.find(id);
-	if (it == m_thread_linker.end())return;
-	ThreadData*& data = m_thread_linker[id];
-	data->frame_limited = !data->frame_limited;
-}*/
-
+// Are we currently threading
 bool ComponentEngine::Engine::Threading()
 {
 	return m_threading;
 }
 
+// Request that the engine should switch threading mode
 void ComponentEngine::Engine::ToggleThreading()
 {
 	m_threading = !m_threading;
-
 	m_threadManager->ChangeMode(m_threading ? ThreadMode::Threading : ThreadMode::Joined);
-
 }
 
+// Set the current scene path
 void ComponentEngine::Engine::SetScenePath(const char * path)
 {
 	m_currentScene = path;
