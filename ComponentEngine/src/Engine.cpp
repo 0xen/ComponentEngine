@@ -1836,8 +1836,6 @@ void ComponentEngine::Engine::UpdateImGUI()
 
 
 
-
-
 	ImDrawData* imDrawData = ImGui::GetDrawData();
 
 	ImVec2 clip_off = imDrawData->DisplayPos;         // (0,0) unless using multi-viewports

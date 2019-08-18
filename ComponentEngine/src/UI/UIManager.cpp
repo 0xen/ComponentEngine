@@ -3,6 +3,8 @@
 #include <ComponentEngine\UI\UIBase.hpp>
 #include <ComponentEngine\UI\MenuElement.hpp>
 
+#include <Renderer/NativeWindowHandle.hpp>
+
 using namespace ComponentEngine;
 
 
@@ -255,7 +257,7 @@ void ComponentEngine::UIManager::ResetSceneFocus()
 
 void ComponentEngine::UIManager::DockSpace()
 {
-
+	//ImGui::ShowDemoWindow();
 	static ImGuiDockNodeFlags opt_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
@@ -276,14 +278,17 @@ void ComponentEngine::UIManager::DockSpace()
 	if (opt_flags& ImGuiDockNodeFlags_PassthruCentralNode)
 		window_flags |= ImGuiWindowFlags_NoBackground;
 
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(255, 255, 255, 255));
+	//ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(255, 255, 255, 255));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	static bool open = true;
 	ImGui::Begin("Main DockSpace", &open, window_flags);
 	ImGui::PopStyleVar();
-	ImGui::PopStyleColor();
 
 	ImGui::PopStyleVar(2);
+
+	Engine* engine = Engine::Singlton();
+	if (engine->GetPlayState() == PlayState::Editor)
+		ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(), ImVec2(engine->GetWindowHandle()->width, engine->GetWindowHandle()->height), ImGui::ColorConvertFloat4ToU32(ImVec4(0.060f, 0.060f, 0.060f, 0.940f)));
 
 	// Dockspace
 	ImGuiIO & io = ImGui::GetIO();
@@ -298,6 +303,7 @@ void ComponentEngine::UIManager::DockSpace()
 	}
 
 	ImGui::End();
+	//ImGui::PopStyleColor();
 }
 
 void ComponentEngine::UIManager::RenderMainMenu()
