@@ -5,7 +5,7 @@ layout (location = 1) in vec2 inUV;
 layout (location = 2) in vec4 inColor;
 layout (location = 3) in int inTexID;
 
-layout(set = 0, binding = 0) uniform UniformBufferObjectStatic {
+layout(set = 1, binding = 0) uniform UniformBufferObjectStatic {
     vec2 ScreenDim;
 };
 

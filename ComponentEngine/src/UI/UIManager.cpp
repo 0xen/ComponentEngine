@@ -148,6 +148,47 @@ bool ComponentEngine::UIManager::EdiableText(std::string & text, char *& temp_da
 	return false;
 }
 
+unsigned int ComponentEngine::UIManager::GetMenuBarHeight()
+{
+	return ImGui::GetFont()->FontSize + ImGui::GetStyle().FramePadding.y * 2;
+}
+
+void ComponentEngine::UIManager::DrawScalingImage(unsigned int texture_id, unsigned int image_width, unsigned int image_height, unsigned int window_width, unsigned int window_height)
+{
+	// Create pass by refrance variables to calculate image size and offset
+	ImVec2 imageOffset;
+	ImVec2 imageSize;
+	// Calculate image size/offset
+	CalculateImageScaling(image_width, image_height, window_width, window_height, imageOffset, imageSize);
+	// Offset image
+	ImGui::SetCursorPos(imageOffset);
+	// Draw Image
+	ImGui::Image((ImTextureID)texture_id, imageSize, ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+}
+
+void ComponentEngine::UIManager::CalculateImageScaling(unsigned int image_width, unsigned int image_height, unsigned int window_width, unsigned int window_height, ImVec2 & new_image_offset, ImVec2 & new_image_size)
+{
+	// Used to offset the image to stop it going over the menu bar
+	unsigned int menuBarHeight = GetMenuBarHeight();
+	window_height -= menuBarHeight;
+	float aspect = (float)image_height / (float)image_width;
+	float childAspect = (float)window_height / (float)window_width;
+	if (childAspect > aspect) // Fit to width
+	{
+		new_image_size.x = window_width;
+		new_image_size.y = window_width * aspect;
+		new_image_offset.x = 0;
+		new_image_offset.y = (window_height - new_image_size.y) / 2 + menuBarHeight;
+	}
+	else // Fit to height
+	{
+		new_image_size.x = window_height / aspect;
+		new_image_size.y = window_height;
+		new_image_offset.x = (window_width - new_image_size.x) / 2;
+		new_image_offset.y = menuBarHeight;
+	}
+}
+
 
 
 UIManager::UIManager(Engine* engine) : m_engine(engine)
@@ -235,10 +276,12 @@ void ComponentEngine::UIManager::DockSpace()
 	if (opt_flags& ImGuiDockNodeFlags_PassthruCentralNode)
 		window_flags |= ImGuiWindowFlags_NoBackground;
 
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(255, 255, 255, 255));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	static bool open = true;
 	ImGui::Begin("Main DockSpace", &open, window_flags);
 	ImGui::PopStyleVar();
+	ImGui::PopStyleColor();
 
 	ImGui::PopStyleVar(2);
 

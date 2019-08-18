@@ -92,6 +92,8 @@ set(ui_headers
     include/ComponentEngine/UI/ComponentHierarchy.hpp
     include/ComponentEngine/UI/Explorer.hpp
     include/ComponentEngine/UI/EditorState.hpp
+    include/ComponentEngine/UI/SceneWindow.hpp
+    include/ComponentEngine/UI/PlayWindow.hpp
 )
 
 set(ui_source
@@ -105,6 +107,8 @@ set(ui_source
     src/UI/ComponentHierarchy.cpp
     src/UI/Explorer.cpp
     src/UI/EditorState.cpp
+    src/UI/SceneWindow.cpp
+    src/UI/PlayWindow.cpp
 )
 
 

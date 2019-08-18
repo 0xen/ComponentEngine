@@ -16,6 +16,8 @@
 #include <ComponentEngine\UI\SceneHierarchy.hpp>
 #include <ComponentEngine\UI\MenuElement.hpp>
 #include <ComponentEngine\UI\EditorState.hpp>
+#include <ComponentEngine\UI\SceneWindow.hpp>
+#include <ComponentEngine\UI\PlayWindow.hpp>
 
 #include <renderer\VertexBase.hpp>
 
@@ -747,14 +749,14 @@ void ComponentEngine::Engine::SetCamera(Camera* camera)
 	m_camera_descriptor_set->AttachBuffer(0, camera->GetCameraBuffer());
 	m_camera_descriptor_set->UpdateSet();
 	camera->UpdateProjection();
-	// Rebuild the render pass and raytracing dependences
-	Rebuild();
 	if (m_standardRTConfigSet != nullptr)
 	{
 		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
 		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
 		m_standardRTConfigSet->UpdateSet();
+		// Rebuild the render pass and raytracing dependences
+		Rebuild();
 	}
 	GetRendererMutex().unlock();
 }
@@ -1169,7 +1171,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
-	m_render_pass = m_renderer->CreateRenderPass(1);
+	m_render_pass = m_renderer->CreateRenderPass(2);
 
 
 	// If the rendering was not fully created, error out
@@ -1250,7 +1252,7 @@ void ComponentEngine::Engine::InitRenderer()
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
 				});
-			m_default_raytrace->AttachDescriptorPool(standardRTConfigPool);
+			m_default_raytrace->AttachDescriptorPool(0,standardRTConfigPool);
 
 			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
 
@@ -1283,7 +1285,7 @@ void ComponentEngine::Engine::InitRenderer()
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3),
 			});
-			m_default_raytrace->AttachDescriptorPool(RTModelPool);
+			m_default_raytrace->AttachDescriptorPool(1,RTModelPool);
 
 			m_RTModelPoolSet = RTModelPool->CreateDescriptorSet();
 
@@ -1302,7 +1304,7 @@ void ComponentEngine::Engine::InitRenderer()
 			VulkanDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0, m_max_texture_descriptors),
 				});
-			m_default_raytrace->AttachDescriptorPool(RTModelPool);
+			m_default_raytrace->AttachDescriptorPool(2,RTModelPool);
 
 			m_RTTexturePoolSet = RTModelPool->CreateDescriptorSet();
 
@@ -1334,7 +1336,7 @@ void ComponentEngine::Engine::InitRenderer()
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
 			});
-			m_default_raytrace->AttachDescriptorPool(RTModelInstancePool);
+			m_default_raytrace->AttachDescriptorPool(3,RTModelInstancePool);
 
 
 			m_RTModelInstanceSet = static_cast<VulkanDescriptorSet*>(RTModelInstancePool->CreateDescriptorSet());
@@ -1418,6 +1420,10 @@ void ComponentEngine::Engine::InitImGUI()
 		m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 		m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
+
+		m_ui->AddElement(new SceneWindow("SceneWindow", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+
+		m_ui->AddElement(new PlayWindow("PlayWindow", ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus, PlayState::Play | PlayState::Release));
 
 		// Define the autofills
 		static std::string filenameAutofill = "Scene.bin";
@@ -1730,7 +1736,7 @@ void ComponentEngine::Engine::InitImGUI()
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &font_width, &font_height);
 	m_imgui.m_font_texture = m_renderer->CreateTextureBuffer(font_data, VkFormat::VK_FORMAT_R8G8B8A8_UNORM, font_width, font_height);
 
-	io.Fonts->TexID = 0;
+	io.Fonts->TexID = (ImTextureID)1;
 	m_imgui.texture_descriptors.push_back(m_imgui.m_font_texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
 
@@ -1746,12 +1752,10 @@ void ComponentEngine::Engine::InitImGUI()
 		{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
 		{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/frag.spv" }
 		});
-
-	m_render_pass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
-		config.input = NONE;
-		config.subpass = 0;
+		config.input = COMBINED_IMAGE_SAMPLER;
+		config.subpass = 1;
 		config.culling = VK_CULL_MODE_NONE;
 		config.use_depth_stencil = false;
 	}
@@ -1778,16 +1782,21 @@ void ComponentEngine::Engine::InitImGUI()
 		});
 
 	// Attach screen buffer
-	m_imgui.m_imgui_pipeline->AttachDescriptorPool(m_imgui.m_screen_res_pool);
-	m_imgui.m_imgui_pipeline->AttachDescriptorSet(0, m_imgui.m_screen_res_set);
+	m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_render_pass->GetCombinedImageSamplerReadPool());
+
+	// Attach screen buffer
+	m_imgui.m_imgui_pipeline->AttachDescriptorPool(1, m_imgui.m_screen_res_pool);
+	m_imgui.m_imgui_pipeline->AttachDescriptorSet(1, m_imgui.m_screen_res_set);
 
 	// Attach font buffer
-	m_imgui.m_imgui_pipeline->AttachDescriptorPool(m_imgui.m_font_texture_pool);
-	m_imgui.m_imgui_pipeline->AttachDescriptorSet(1, m_imgui.m_texture_descriptor_set);
+	m_imgui.m_imgui_pipeline->AttachDescriptorPool(2,m_imgui.m_font_texture_pool);
+	m_imgui.m_imgui_pipeline->AttachDescriptorSet(2, m_imgui.m_texture_descriptor_set);
 	
 
 	// Build Pipeline
 	m_imgui.m_imgui_pipeline->Build();
+
+	m_render_pass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
 
 	const int temp_vert_max = 30000;
 	const int temp_in_max = 40000;

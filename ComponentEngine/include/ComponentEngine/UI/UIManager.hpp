@@ -146,6 +146,10 @@ namespace ComponentEngine
 		static void KeyboardButtonInput(const char* lable, bool& focused, unsigned int& key);
 		static bool EdiableText(std::string& text, char*& temp_data, int max_size, bool editable = true);
 
+		static unsigned int GetMenuBarHeight();
+		static void DrawScalingImage(unsigned int texture_id, unsigned int image_width, unsigned int image_height, unsigned int window_width, unsigned int window_height);
+		static void CalculateImageScaling(unsigned int image_width, unsigned int image_height, unsigned int window_width, unsigned int window_height, ImVec2& new_image_offset, ImVec2& new_image_size);
+
 		UIManager(Engine* engine);
 		~UIManager();
 		void AddElement(UIBase* base);

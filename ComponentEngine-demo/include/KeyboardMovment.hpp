@@ -27,10 +27,15 @@ namespace ComponentEngine
 		2 : Left
 		3: Right
 		*/
-		KeyInstance keys[4];
 		float m_speed;
-		bool m_ignore_axis[3];
+		bool m_ignore_axis_x;
+		bool m_ignore_axis_y;
+		bool m_ignore_axis_z;
 		bool m_local_movment;
+		KeyInstance keys0;
+		KeyInstance keys1;
+		KeyInstance keys2;
+		KeyInstance keys3;
 	public:
 		KeyboardMovment(enteez::Entity* entity);
 		virtual void Update(float frame_time);
