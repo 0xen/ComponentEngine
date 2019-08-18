@@ -25,6 +25,7 @@
 #include <renderer\vulkan\VulkanSwapchain.hpp>
 #include <renderer\vulkan\VulkanBufferPool.hpp>
 #include <renderer\vulkan\VulkanModelPool.hpp>
+#include <renderer\vulkan\VulkanModel.hpp>
 #include <renderer\vulkan\VulkanVertexBuffer.hpp>
 #include <renderer\vulkan\VulkanIndexBuffer.hpp>
 #include <renderer\vulkan\VulkanTextureBuffer.hpp>
@@ -1729,13 +1730,15 @@ void ComponentEngine::Engine::InitImGUI()
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &font_width, &font_height);
 	m_imgui.m_font_texture = m_renderer->CreateTextureBuffer(font_data, VkFormat::VK_FORMAT_R8G8B8A8_UNORM, font_width, font_height);
 
-	io.Fonts->TexID = (ImTextureID)m_imgui.m_font_texture->GetTextureID();
+	io.Fonts->TexID = 0;
+	m_imgui.texture_descriptors.push_back(m_imgui.m_font_texture->GetDescriptorImageInfo(BufferSlot::Primary));
+
 
 	m_imgui.m_font_texture_pool = m_renderer->CreateDescriptorPool({
-		m_renderer->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+		m_renderer->CreateDescriptor(VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0 ,m_imgui.texture_descriptors.size()),
 		});
 	m_imgui.m_texture_descriptor_set = m_imgui.m_font_texture_pool->CreateDescriptorSet();
-	m_imgui.m_texture_descriptor_set->AttachBuffer(0, m_imgui.m_font_texture);
+	m_imgui.m_texture_descriptor_set->AttachBuffer(0, m_imgui.texture_descriptors);
 	m_imgui.m_texture_descriptor_set->UpdateSet();
 
 	// Setup ImGUI Pipeline
@@ -1747,7 +1750,10 @@ void ComponentEngine::Engine::InitImGUI()
 	m_render_pass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
+		config.input = NONE;
+		config.subpass = 0;
 		config.culling = VK_CULL_MODE_NONE;
+		config.use_depth_stencil = false;
 	}
 
 	m_imgui.m_imgui_pipeline->AttachVertexBinding({
@@ -1759,6 +1765,16 @@ void ComponentEngine::Engine::InitImGUI()
 		},
 		sizeof(ImDrawVert),
 		0
+		});
+
+	// Texture ID and layer
+	m_imgui.m_imgui_pipeline->AttachVertexBinding({
+		VkVertexInputRate::VK_VERTEX_INPUT_RATE_INSTANCE,
+		{
+			{ 3, VkFormat::VK_FORMAT_R32_SINT,0 }, // Texture ID
+		},
+		sizeof(glm::mat4),
+		1
 		});
 
 	// Attach screen buffer
@@ -1782,10 +1798,20 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_index_data = new uint32_t[temp_in_max];
 	m_imgui.m_index_buffer = m_renderer->CreateIndexBuffer(m_imgui.m_index_data, sizeof(uint32_t), temp_in_max);
 
+
 	// Setup model instance
-	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, 0, m_imgui.m_index_buffer, 0, 0, ModelPoolUsage::SingleMesh);
-	m_imgui.model = m_imgui.model_pool->CreateModel();
-	//m_imgui.model->ShouldRender(true);
+	m_imgui.model_pool = m_renderer->CreateModelPool(m_imgui.m_vertex_buffer, 0, 0, m_imgui.m_index_buffer, 0, 0, ModelPoolUsage::MultiMesh);
+
+	// Define a buffer for the texture ids
+	m_imgui.draw_group_textures_buffer = m_renderer->CreateUniformBuffer(m_imgui.draw_group_textures, BufferChain::Single, sizeof(glm::mat4), 1000, true);
+
+	// Pass the data to the GPU
+	m_imgui.draw_group_textures_buffer->SetData(BufferSlot::Primary);
+
+	// Create a allocation pool for the textures
+	m_imgui.draw_group_textures_buffer_pool = new VulkanBufferPool(m_imgui.draw_group_textures_buffer);
+
+	m_imgui.model_pool->AttachBufferPool(0, m_imgui.draw_group_textures_buffer_pool);
 
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
 }
@@ -1794,11 +1820,92 @@ void ComponentEngine::Engine::InitImGUI()
 void ComponentEngine::Engine::UpdateImGUI()
 {
 	m_logic_lock.lock();
+	GetRendererMutex().lock();
 
+	// Render all imgui menu components
 	m_ui->Render();
 
-	m_logic_lock.unlock();
+
+
+
+
 	ImDrawData* imDrawData = ImGui::GetDrawData();
+
+	ImVec2 clip_off = imDrawData->DisplayPos;         // (0,0) unless using multi-viewports
+	ImVec2 clip_scale = imDrawData->FramebufferScale; // (1,1) unless using retina display which are often (2,2)
+	int fb_width = (int)(imDrawData->DisplaySize.x * imDrawData->FramebufferScale.x);
+	int fb_height = (int)(imDrawData->DisplaySize.y * imDrawData->FramebufferScale.y);
+
+	ImDrawVert* temp_vertex_data = m_imgui.m_vertex_data;
+	unsigned int* temp_index_data = m_imgui.m_index_data;
+	unsigned int index_count = 0;
+	unsigned int vertex_count = 0;
+	int drawGroup = 0;
+	for (int n = 0; n < imDrawData->CmdListsCount; n++)
+	{
+
+		const ImDrawList* cmd_list = imDrawData->CmdLists[n];
+
+		memcpy(temp_vertex_data, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+		//memcpy(temp_index_data, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(unsigned int));
+
+		// Loop through and manually add a offset to the index's so they can all be rendered in one render pass
+		for (int i = 0; i < cmd_list->VtxBuffer.Size; i++)
+		{
+			temp_vertex_data[i] = cmd_list->VtxBuffer.Data[i];
+		}
+		for (int i = 0; i < cmd_list->IdxBuffer.Size; i++)
+		{
+			temp_index_data[i] = cmd_list->IdxBuffer.Data[i];
+		}
+
+		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+		{
+			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+
+
+			if (drawGroup >= m_imgui.draw_group.size())
+			{
+				m_imgui.draw_group.push_back(m_imgui.model_pool->CreateModel(pcmd->VtxOffset + vertex_count, pcmd->IdxOffset + index_count, pcmd->ElemCount));
+			}
+			else
+			{
+				m_imgui.draw_group[drawGroup]->SetIndexOffset(pcmd->IdxOffset + index_count);
+				m_imgui.draw_group[drawGroup]->SetVertexOffset(pcmd->VtxOffset + vertex_count);
+				m_imgui.draw_group[drawGroup]->SetIndexSize(pcmd->ElemCount);
+			}
+			m_imgui.draw_group[drawGroup]->SetData(0, (int)pcmd->TextureId);
+			drawGroup++;
+		}
+
+
+		temp_vertex_data += cmd_list->VtxBuffer.Size;
+		temp_index_data += cmd_list->IdxBuffer.Size;
+
+		vertex_count += cmd_list->VtxBuffer.Size;
+		index_count += cmd_list->IdxBuffer.Size;
+	}
+
+	for (int i = m_imgui.draw_group.size() - 1; i >= drawGroup; i--)
+	{
+		m_imgui.draw_group[i]->SetIndexOffset(0);
+		m_imgui.draw_group[i]->SetVertexOffset(0);
+		m_imgui.draw_group[i]->SetIndexSize(0);
+	}
+
+	m_imgui.draw_group_textures_buffer->SetData(BufferSlot::Primary);
+	m_imgui.model_pool->Update();
+
+	if (IsRunning())
+	{
+		m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
+		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
+	}
+	GetRendererMutex().unlock();
+	m_logic_lock.unlock();
+
+
+	/*ImDrawData* imDrawData = ImGui::GetDrawData();
 
 	if (imDrawData == nullptr)return;
 
@@ -1848,7 +1955,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
 	}
 	GetRendererMutex().unlock();
-	m_logic_lock.unlock();
+	m_logic_lock.unlock();*/
 }
 
 // Destroy the instance of imgui
@@ -1867,7 +1974,6 @@ void ComponentEngine::Engine::DeInitImGUI()
 	delete m_imgui.m_vertex_buffer;
 	delete m_imgui.m_index_buffer;
 	delete m_imgui.model_pool;
-	delete m_imgui.model;
 	delete m_ui;
 }
 

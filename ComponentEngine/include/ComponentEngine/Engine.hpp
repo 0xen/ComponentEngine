@@ -42,6 +42,7 @@ namespace Renderer
 		class VulkanDescriptorSet;
 		class VulkanTextureBuffer;
 		class VulkanBufferPool;
+		class VulkanModelPool;
 		class VulkanModel;
 		class VulkanRenderPass;
 		class VulkanSwapchain;
@@ -322,7 +323,13 @@ namespace ComponentEngine
 			VulkanIndexBuffer* m_index_buffer = nullptr;
 			// Model pool instance
 			VulkanModelPool* model_pool = nullptr;
-			VulkanModel* model = nullptr;
+			std::vector<VulkanModel*> draw_group;
+
+			glm::mat4* draw_group_textures = new glm::mat4[1000];
+			VulkanUniformBuffer* draw_group_textures_buffer = nullptr;
+			VulkanBufferPool* draw_group_textures_buffer_pool = nullptr;
+
+			std::vector<VkDescriptorImageInfo> texture_descriptors;
 		}m_imgui;
 
 
