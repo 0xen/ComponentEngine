@@ -57,6 +57,7 @@ set(component_headers
     include/ComponentEngine/Components/ICollisionShape.hpp
     include/ComponentEngine/Components/BoxCollision.hpp
     include/ComponentEngine/Components/SphereCollision.hpp
+    include/ComponentEngine/Components/Light.hpp
 )
 
 set(component_source
@@ -71,6 +72,7 @@ set(component_source
     src/Components/ICollisionShape.cpp
     src/Components/BoxCollision.cpp
     src/Components/SphereCollision.cpp
+    src/Components/Light.cpp
 )
 
 

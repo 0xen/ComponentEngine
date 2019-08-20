@@ -6,6 +6,7 @@
 #include <ComponentEngine\Components\ICollisionShape.hpp>
 #include <ComponentEngine\Components\BoxCollision.hpp>
 #include <ComponentEngine\Components\SphereCollision.hpp>
+#include <ComponentEngine\Components\Light.hpp>
 
 
 #include <ComponentEngine\UI\UIManager.hpp>
@@ -306,7 +307,7 @@ void ComponentEngine::Engine::UpdateScene()
 	}
 
 	m_model_position_buffer->SetData(BufferSlot::Primary);
-	m_lightBuffer->SetData(BufferSlot::Primary);
+	m_light_buffer->SetData(BufferSlot::Primary);
 
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();
@@ -709,6 +710,19 @@ VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 	return texture;
 }
 
+VulkanTextureBuffer * ComponentEngine::Engine::LoadTexture(unsigned int width, unsigned int height, char * data)
+{
+	// Create and store the texture on the graphics card
+	VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(data, VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
+	texture->SetData(BufferSlot::Primary);
+	{
+		std::stringstream ss;
+		ss << "Loaded texture";
+		Log(ss.str(), Info);
+	}
+	return texture;
+}
+
 // Get the current scene name and directory
 std::string ComponentEngine::Engine::GetCurrentScene()
 {
@@ -901,6 +915,11 @@ VulkanBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
 	return m_position_buffer_pool;
 }
 
+VulkanBufferPool * ComponentEngine::Engine::GetLightBufferPool()
+{
+	return m_light_buffer_pool;
+}
+
 // Get the raytracing top level acceleration structure
 VulkanAcceleration * ComponentEngine::Engine::GetTopLevelAS()
 {
@@ -960,7 +979,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	m_vertexBuffer->SetData(BufferSlot::Primary);
 	m_indexBuffer->SetData(BufferSlot::Primary);
 	m_materialbuffer->SetData(BufferSlot::Primary);
-	m_lightBuffer->SetData(BufferSlot::Primary);
+	m_light_buffer->SetData(BufferSlot::Primary);
 	m_model_position_buffer->SetData(BufferSlot::Primary);
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
 
@@ -977,7 +996,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
 		m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
 		m_RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
-		m_RTModelPoolSet->AttachBuffer(3, m_lightBuffer);
+		m_RTModelPoolSet->AttachBuffer(3, m_light_buffer);
 
 		m_RTModelPoolSet->UpdateSet();
 	}
@@ -1154,6 +1173,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	>();
 	RegisterBase<BoxCollision, ICollisionShape, Logic, IO, UI>();
 	RegisterBase<SphereCollision, ICollisionShape, Logic, IO, UI>();
+	RegisterBase<Light, Logic, IO, UI>();
 }
 
 // DeInit EnteeZ
@@ -1193,22 +1213,33 @@ void ComponentEngine::Engine::InitRenderer()
 	SetCamera(m_default_camera);
 
 
-	// Load a default texture
-	VulkanTextureBuffer* texture = LoadTexture("../Resources/scenes/white.png");
-	m_textures.push_back(texture);
-	m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+
+	{
+		// Load a default white texture
+		char imageData[4] = { 255,255,255,255 };
+		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
+		m_textures.push_back(texture);
+		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+	}
+	{
+		// Load a default black texture
+		char imageData[4] = { 0,0,0,255 };
+		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
+		m_textures.push_back(texture);
+		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+	}
 
 	{
 		// Create the raytracing pipeline
 		m_default_raytrace = m_renderer->CreateRaytracePipeline(m_render_pass,
 			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/PBR/Gen/rgen.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/rmiss.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/ShadowMiss/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Test/Gen/rgen.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Test/Miss/Default/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Test/Miss/ShadowMiss/rmiss.spv" },
 			},
 			{
 				{ // Involved 
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Test/Hitgroups/rchit.spv" },
 				},
 				{}, // Fall through hit group for shadow's, etc
 			});
@@ -1269,8 +1300,13 @@ void ComponentEngine::Engine::InitRenderer()
 		m_vertexBuffer = m_renderer->CreateVertexBuffer(m_all_vertexs.data(), sizeof(MeshVertex), m_all_vertexs.size());
 		m_indexBuffer = m_renderer->CreateIndexBuffer(m_all_indexs.data(), sizeof(uint32_t), m_all_indexs.size());
 
-		m_lightBuffer = m_renderer->CreateUniformBuffer(lights.data(), BufferChain::Single, sizeof(Light), lights.size(), true);
-		m_lightBuffer->SetData(BufferSlot::Primary);
+		m_lights.resize(100);
+
+		m_light_buffer = m_renderer->CreateUniformBuffer(m_lights.data(), BufferChain::Double, sizeof(LightData), m_lights.size(), true);
+		m_light_buffer->SetData(BufferSlot::Primary);
+
+		m_light_buffer_pool = new VulkanBufferPool(m_light_buffer);
+
 
 		m_materials.resize(m_max_materials);
 
@@ -1292,7 +1328,7 @@ void ComponentEngine::Engine::InitRenderer()
 			m_RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
 			m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
 			m_RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
-			m_RTModelPoolSet->AttachBuffer(3, m_lightBuffer);
+			m_RTModelPoolSet->AttachBuffer(3, m_light_buffer);
 
 
 			m_RTModelPoolSet->UpdateSet();
@@ -1390,6 +1426,7 @@ void ComponentEngine::Engine::InitComponentHooks()
 	RegisterComponentBase("Rigidbody", Rigidbody::EntityHookDefault);
 	RegisterComponentBase("Box Collision", BoxCollision::EntityHookDefault);
 	RegisterComponentBase("Sphere Collision", SphereCollision::EntityHookDefault);
+	RegisterComponentBase("Light", Light::EntityHookDefault);
 }
 
 // Create the physics world instance

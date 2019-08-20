@@ -237,17 +237,17 @@ void ComponentEngine::Mesh::LoadModel()
 			if (material.textureID >= 0)
 				material.textureID += offset;
 			else
-				material.textureID = 0; // Set to default texture
+				material.textureID = 0; // Set to default white texture
 
 			if (material.metalicTextureID >= 0)
 				material.metalicTextureID += offset;
 			else
-				material.metalicTextureID = 0; // Set to default texture
+				material.metalicTextureID = 1; // Set to default black texture
 
 			if (material.roughnessTextureID >= 0)
 				material.roughnessTextureID += offset;
 			else
-				material.roughnessTextureID = 0; // Set to default texture
+				material.roughnessTextureID = 0; // Set to default white texture
 
 			materials[used_materials] = material;
 

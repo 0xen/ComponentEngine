@@ -95,6 +95,10 @@ namespace ComponentEngine
 		ConsoleState state;
 	};
 	class UIManager;
+	// Found in Components/Light.hpp
+	struct LightData;
+
+
 	static const std::string EngineName = "Component Engine";
 	class Engine : public EnteeZ
 	{
@@ -146,6 +150,8 @@ namespace ComponentEngine
 		VulkanDescriptorPool* GetTextureMapsPool();
 		// Load a texture, if the texture is already loaded, get the texture instance
 		VulkanTextureBuffer* LoadTexture(std::string path);
+		// Load a texture from a data pointer
+		VulkanTextureBuffer* LoadTexture(unsigned int width, unsigned int height, char* data);
 		// Get the current scene name and directory
 		std::string GetCurrentScene();
 		// Get the current scene directory
@@ -204,6 +210,8 @@ namespace ComponentEngine
 		std::vector<VulkanTextureBuffer*>& GetTextures();
 		// Get the allocation pool for model positions
 		VulkanBufferPool* GetPositionBufferPool();
+		// Get the allocation pool for lights
+		VulkanBufferPool* GetLightBufferPool();
 		// Get the raytracing top level acceleration structure
 		VulkanAcceleration* GetTopLevelAS();
 		// Get the total used vertex size
@@ -418,7 +426,6 @@ namespace ComponentEngine
 		VulkanVertexBuffer* m_vertexBuffer;
 		VulkanIndexBuffer* m_indexBuffer;
 		VulkanUniformBuffer* m_materialbuffer;
-		VulkanUniformBuffer* m_lightBuffer;
 
 		glm::mat4* m_model_position_array;
 		VulkanUniformBuffer* m_model_position_buffer;
@@ -434,18 +441,13 @@ namespace ComponentEngine
 		ModelOffsets* m_offset_allocation_array;
 		VulkanUniformBuffer* m_offset_allocation_array_buffer;
 
-		struct Light
-		{
-			glm::vec3 position;
-			float intensity;
-			glm::vec3 color;
-			float padding;
+		
+		std::vector<LightData> m_lights = {
+		//{ glm::vec3(60.0f, 200.0f, -20.0f), 32000, glm::vec3(1.0f, 0.9f, 0.8f) },
+		//{ glm::vec3(0.0f, 2.0f, 0.0f), 20, glm::vec3(0.0f, 1.0f, 1.0f) },
 		};
-		std::vector<Light> lights = {
-			{ glm::vec3(60.0f, 200.0f, -20.0f), 32000, glm::vec3(1.0f, 0.9f, 0.8f) },
-			/*{ glm::vec3(0.0f, 2.0f, 0.0f), 20, glm::vec3(0.0f, 1.0f, 1.0f) },
-			{ glm::vec3(-10.0f, 5.0f, 0.0f), 20, glm::vec3(1.0f, 1.0f, 0.0f) }*/
-		};
+		VulkanUniformBuffer* m_light_buffer;
+		VulkanBufferPool* m_light_buffer_pool;
 
 	};
 	
