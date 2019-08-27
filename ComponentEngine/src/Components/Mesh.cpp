@@ -189,6 +189,7 @@ void ComponentEngine::Mesh::LoadModel()
 	{
 		UnloadModel();
 	}
+	m_loaded = false;
 
 	VulkanAcceleration* as = engine->GetTopLevelAS();
 
@@ -207,6 +208,15 @@ void ComponentEngine::Mesh::LoadModel()
 		unsigned int& used_vertex = engine->GetUsedVertex();
 		unsigned int& used_index = engine->GetUsedIndex();
 		unsigned int& used_materials = engine->GetUsedMaterials();
+
+		{
+			std::ifstream file(m_file_path.data.longForm, std::ios::ate | std::ios::binary);
+			if (!file.is_open())
+			{
+				return;
+			}
+			file.close();
+		}
 
 		ObjLoader<MeshVertex> loader;
 		loader.loadModel(m_file_path.data.longForm);

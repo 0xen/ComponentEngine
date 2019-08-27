@@ -48,7 +48,7 @@ void ComponentEngine::Light::Display()
 	ImGui::Text("Intensity");
 	ImGui::DragFloat("##LightIntensity", (float*)&m_intensity, 0.5f, 0.0f, 10000.0f);
 	ImGui::Text("Color");
-	ImGui::ColorEdit3("##LightColor", (float*)&m_color);
+	ImGui::ColorEdit3("##LightColor", (float*)&m_color, ImGuiColorEditFlags_InputRGB);
 }
 
 void ComponentEngine::Light::Load(std::ifstream & in)

@@ -283,9 +283,11 @@ void main()
     uint missIndex = 1;
     isShadowed = true;
 
+    float tmax = 0.001;
+
     traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, l, rdist, 2);
+            missIndex, origin, tmin, l, rdist + 1.0f, 2);
     if (!isShadowed)
     {
     

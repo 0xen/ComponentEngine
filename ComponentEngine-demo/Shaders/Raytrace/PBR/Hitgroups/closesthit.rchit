@@ -3,7 +3,10 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
 struct RayPayload {
-	vec3 color;
+  vec3 color;
+  float distance;
+  vec3 normal;
+  float reflector;
 };
 
 layout(location = 0) rayPayloadInNV RayPayload rayPayload;
@@ -38,11 +41,13 @@ offsets;
 
 
 
+
 struct Light
 {
   vec3 position;
   float intensity;
   vec3 color;
+  float alive;
 };
 
 Light unpackLight(uint index)
@@ -56,6 +61,7 @@ Light unpackLight(uint index)
   l.position = vec3(d0.x,d0.y,d0.z);
   l.intensity = d0.w;
   l.color = vec3(d1.x,d1.y,d1.z);
+  l.alive = d1.w;
 
   return l;
 }
@@ -179,6 +185,7 @@ void main()
   normalMatrix = transpose(normalMatrix);
   vec3 normal = normalize(f_normal * normalMatrix);
 
+  rayPayload.normal = normal;
 
   vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
                             v2.texCoord * barycentrics.z; 
@@ -191,21 +198,25 @@ void main()
 
   // Texture maps             
   vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
-  float roughness = 0.0f;//texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
-  float metalness = 0.0f;//texture(textureSamplers[mat.metalicTextureId], texCoord).r;
-  float  cavity = 1.0f; // Temp
-  float  ao = cavity; // Temp
+  float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
+  float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
+  float cavity = 1.0f; // Temp
+  float ao = cavity; // Temp
 
 
 
   
+  rayPayload.distance = gl_RayTmaxNV;
 
 
   float nDotV = max(dot(normal,viewVector), 0.001f);
+  // Calculate how reflective the surface from 4% (Min) to 100%
+  float reflectivness = mix(0.04f, 1.0f, metalness);
+
   // Mix the minimum reflectiveness (4%) with the current albedo based on the range of 0-1
-  vec3 specularColour = mix(vec3(0.04f, 0.04f, 0.04f), albedo, metalness);
+  vec3 specularColour = mix(vec3(0.0f, 0.0f, 0.0f), albedo, reflectivness);
 
-
+  rayPayload.reflector *= metalness;
 
   // Calculate the reflection angle
   vec3 reflectVec = reflect(-viewVector, normal);
@@ -216,33 +227,27 @@ void main()
   // To do, global illumination /////////
 
 
-
-
     float tmin = 0.001;
   float tmax = 100.0;
 
-    uint sbtRecordOffset = 0;
+    uint sbtRecordOffset = -1;
     uint sbtRecordStride = 0;
     uint missIndex = 0;
     isShadowed = true;
 
-  //vec3 tempCurrentPayloadColor = rayPayload.color;
+  vec3 tempCurrentPayloadColor = rayPayload.color;
 
-
-  vec3 globalIll = vec3(0.4f,0.4f,0.4f);
-  vec3 globalIll2 = vec3(0.4f,0.4f,0.4f);
-
-    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV, 
+    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, normal, tmax, 0);
-  vec3 globalIll = rayPayload.color;
+            missIndex, origin, tmin, normal, tmax, 0);*/
+  vec3 globalIll = vec3(0.4f,0.4f,0.4f);//rayPayload.color;
 
-    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV, 
+    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, reflectVec, tmax, 0);
-  vec3 globalIll2 = rayPayload.color;
+            missIndex, origin, tmin, reflectVec, tmax, 0);*/
+  vec3 globalIll2 = vec3(0.4f,0.4f,0.4f);//rayPayload.color;
   
- rayPayload.color = tempCurrentPayloadColor;*/
+ rayPayload.color = tempCurrentPayloadColor;
 
   //////////////////////////////////////
 
@@ -259,14 +264,14 @@ void main()
 
 
 
-  for(int i = 0 ; i < 1; i ++)
+   for(uint i = 0 ; i < 100; i ++)
   {
-
-  
     // Lighting Calc
-
     Light light = unpackLight(i);
-
+    if(light.alive<0.1f)
+    {
+        continue;
+    }
     vec3 l = light.position - origin;
     
     float rdist = 1 / length(l);
@@ -279,9 +284,11 @@ void main()
     uint missIndex = 1;
     isShadowed = true;
 
+    float tmax = 0.001;
+
     traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, l, tmax, 2);
+            missIndex, origin, tmin, l, rdist + 1.0f, 2);
     if (!isShadowed)
     {
     
@@ -328,6 +335,12 @@ void main()
 
     }
   }
+
+
+
+
+
+
 
 
 

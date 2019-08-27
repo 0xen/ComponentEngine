@@ -442,10 +442,7 @@ namespace ComponentEngine
 		VulkanUniformBuffer* m_offset_allocation_array_buffer;
 
 		
-		std::vector<LightData> m_lights = {
-		//{ glm::vec3(60.0f, 200.0f, -20.0f), 32000, glm::vec3(1.0f, 0.9f, 0.8f) },
-		//{ glm::vec3(0.0f, 2.0f, 0.0f), 20, glm::vec3(0.0f, 1.0f, 1.0f) },
-		};
+		std::vector<LightData> m_lights;
 		VulkanUniformBuffer* m_light_buffer;
 		VulkanBufferPool* m_light_buffer_pool;
 

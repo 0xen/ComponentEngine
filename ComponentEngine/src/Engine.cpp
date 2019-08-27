@@ -1233,13 +1233,13 @@ void ComponentEngine::Engine::InitRenderer()
 		// Create the raytracing pipeline
 		m_default_raytrace = m_renderer->CreateRaytracePipeline(m_render_pass,
 			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Test/Gen/rgen.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Test/Miss/Default/rmiss.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/Test/Miss/ShadowMiss/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/PBR/Gen/rgen.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/Default/rmiss.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/ShadowMiss/rmiss.spv" },
 			},
 			{
 				{ // Involved 
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Test/Hitgroups/rchit.spv" },
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
 				},
 				{}, // Fall through hit group for shadow's, etc
 			});
