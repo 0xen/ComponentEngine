@@ -1029,16 +1029,19 @@ VulkanUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
 }
 
 // Define a new miss shader for the pipeline
-void ComponentEngine::Engine::AddMissShader(const char * missShader)
+unsigned int ComponentEngine::Engine::AddMissShader(const char * missShader)
 {
 	// Pre construct the renderer shader input format
 	m_miss_groups.push_back({ VK_SHADER_STAGE_MISS_BIT_NV, missShader });
+	return m_miss_groups.size() - 1;
 }
 
 // Define a new hit group for the raytracing pipeline
-void ComponentEngine::Engine::AddHitShaderPipeline(HitShaderPipeline pipeline)
+unsigned int ComponentEngine::Engine::AddHitShaderPipeline(HitShaderPipeline pipeline)
 {
 	m_pipelines.push_back(pipeline);
+
+	return m_pipelines.size() - 1;
 }
 
 // Get all hit shader instances
@@ -1339,8 +1342,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		m_top_level_acceleration = m_renderer->CreateAcceleration();
-		//acceleration->AttachModelPool(static_cast<VulkanModelPool*>(model_pool1));
-		//acceleration->AttachModelPool(static_cast<VulkanModelPool*>(model_pool2));
+
 		m_top_level_acceleration->Build();
 
 
@@ -1446,7 +1448,7 @@ void ComponentEngine::Engine::InitRenderer()
 	{// Define default hit and miss groups
 
 		
-		AddMissShader("../Shaders/Raytrace/Default/Miss/rmiss.spv");
+		unsigned int generalMissShader = AddMissShader("../Shaders/Raytrace/Default/Miss/rmiss.spv");
 
 		/*{ // Default Textured PBR
 			{ // Primary PBR hitgroup
@@ -1478,7 +1480,7 @@ void ComponentEngine::Engine::InitRenderer()
 			},
 			true
 			};
-			AddHitShaderPipeline(defaultHitgroup);
+			unsigned int defaultTexturedPBRShdaer = AddHitShaderPipeline(defaultHitgroup);
 		}
 	}
 	RebuildRaytracePipeline();

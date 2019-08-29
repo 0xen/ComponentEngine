@@ -236,9 +236,9 @@ namespace ComponentEngine
 		// Get the uniform buffer that stores all position buffers
 		VulkanUniformBuffer* GetModelPositionBuffer();
 		// Define a new miss shader for the pipeline
-		void AddMissShader(const char* missShader);
+		unsigned int AddMissShader(const char* missShader);
 		// Define a new hit group for the raytracing pipeline
-		void AddHitShaderPipeline(HitShaderPipeline pipeline);
+		unsigned int AddHitShaderPipeline(HitShaderPipeline pipeline);
 		// Get all hit shader instances
 		std::vector<HitShaderPipeline>& GetHitShaderPipelines();
 
