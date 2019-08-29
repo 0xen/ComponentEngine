@@ -94,6 +94,15 @@ namespace ComponentEngine
 		unsigned int count;
 		ConsoleState state;
 	};
+
+	struct HitShaderPipeline
+	{
+		std::string name;
+		std::map<VkShaderStageFlagBits, const char*> hitgroup;
+		// Can the hitgroup be used as a primary hit group? For example, if we have a fall through shadow shader, then we should not be able to select it
+		bool primaryHitgroup;
+	};
+
 	class UIManager;
 	// Found in Components/Light.hpp
 	struct LightData;
@@ -226,6 +235,12 @@ namespace ComponentEngine
 		void UpdateAccelerationDependancys();
 		// Get the uniform buffer that stores all position buffers
 		VulkanUniformBuffer* GetModelPositionBuffer();
+		// Define a new miss shader for the pipeline
+		void AddMissShader(const char* missShader);
+		// Define a new hit group for the raytracing pipeline
+		void AddHitShaderPipeline(HitShaderPipeline pipeline);
+		// Get all hit shader instances
+		std::vector<HitShaderPipeline>& GetHitShaderPipelines();
 
 		friend class UIManager;
 	private:
@@ -242,6 +257,8 @@ namespace ComponentEngine
 		void InitEnteeZ();
 		// DeInit EnteeZ
 		void DeInitEnteeZ();
+
+		void RebuildRaytracePipeline();
 
 		// Create the renderer instance and all required components
 		void InitRenderer();
@@ -305,6 +322,14 @@ namespace ComponentEngine
 
 		// Raytrace pipeline
 		VulkanRaytracePipeline* m_default_raytrace = nullptr;
+		VulkanDescriptorPool* standardRTConfigPool = nullptr;
+		VulkanDescriptorPool* RTModelPool = nullptr;
+		VulkanDescriptorPool* RTTextureDescriptorPool = nullptr;
+		VulkanDescriptorPool* RTModelInstancePool = nullptr;
+		// All hit groups
+		std::vector<HitShaderPipeline> m_pipelines;
+		// All mis groups
+		std::vector<std::pair<VkShaderStageFlagBits, const char*>> m_miss_groups;
 
 		Camera* m_default_camera;
 		// Main camera

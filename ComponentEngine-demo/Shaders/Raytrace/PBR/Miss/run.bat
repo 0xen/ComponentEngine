@@ -1,2 +1,2 @@
-C:/VulkanSDK/Bin32/glslangValidator.exe -V miss.rmiss
+C:/VulkanSDK/Bin32/glslangValidator.exe -V shadowMiss.rmiss
 pause

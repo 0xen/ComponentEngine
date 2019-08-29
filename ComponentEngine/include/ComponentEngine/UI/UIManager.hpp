@@ -200,7 +200,6 @@ namespace ComponentEngine
 	inline bool UIManager::DropBox(const char * lable, const char * payloadType, DropBoxInstance<T> & inst)
 	{
 		ImGui::Text(lable);
-		ImGui::SameLine();
 		ImGui::InputText("", (char*)inst.message.c_str(), inst.message.size(), ImGuiInputTextFlags_ReadOnly);
 
 

@@ -143,6 +143,6 @@ bool ComponentEngine::KeyboardMovment::DynamiclySized()
 enteez::BaseComponentWrapper* ComponentEngine::KeyboardMovment::EntityHookDefault(enteez::Entity& entity)
 {
 	enteez::ComponentWrapper<KeyboardMovment>* wrapper = entity.AddComponent<KeyboardMovment>(&entity);
-	wrapper->SetName("Keyboard Movment");
+	wrapper->SetName("Keyboard Movement");
 	return wrapper;
 }

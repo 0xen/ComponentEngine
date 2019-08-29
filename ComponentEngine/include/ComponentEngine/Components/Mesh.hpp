@@ -94,5 +94,6 @@ namespace ComponentEngine
 		enteez::Entity * m_entity;
 
 
+		std::string m_current_hitgroup;
 	};
 }

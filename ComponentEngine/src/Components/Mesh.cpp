@@ -33,7 +33,7 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 	m_loaded = false;
 	m_vertex_count = 0;
 
-
+	m_current_hitgroup = "";
 }
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
@@ -41,6 +41,7 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSen
 	m_loaded = false;
 	m_vertex_count = 0;
 	ChangePath(path);
+	m_current_hitgroup = "";
 	LoadModel();
 
 }
@@ -106,6 +107,33 @@ void ComponentEngine::Mesh::Display()
 	if (m_loaded)
 	{
 		ImGui::Text("Vertex Count: %d", m_vertex_count);
+
+		std::vector<HitShaderPipeline>& hitgroups = Engine::Singlton()->GetHitShaderPipelines();
+
+		// Define what is the current selected item
+		if (m_current_hitgroup.size() == 0 && hitgroups.size() > 0)
+		{
+			m_current_hitgroup = hitgroups[0].name;
+		}
+
+		ImGui::Text("Hitgroup");
+
+		if (ImGui::BeginCombo("##HitgroupSelection", m_current_hitgroup.c_str()))
+		{
+			for (auto it : hitgroups)
+			{
+				if (!it.primaryHitgroup) continue;
+				bool is_selected = (m_current_hitgroup == it.name);
+				if (ImGui::Selectable(it.name.c_str(), is_selected))
+				{
+					m_current_hitgroup = it.name;
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
 	}
 
 	DropBoxInstance<FileForms> tempFilePath = m_file_path;
@@ -275,19 +303,6 @@ void ComponentEngine::Mesh::LoadModel()
 
 			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
-			/*std::vector<unsigned char> image; //the raw pixels
-			unsigned width;
-			unsigned height;
-
-			unsigned error = lodepng::decode(image, width, height, ss.str());
-			if (error) std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
-
-			VulkanTextureBuffer* texture = engine->GetRenderer()->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
-			texture->SetData(BufferSlot::Primary);
-			textures.push_back(texture);
-
-			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));*/
-
 		}
 
 		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
@@ -301,11 +316,12 @@ void ComponentEngine::Mesh::LoadModel()
 
 	
 	
-
 	
 
 	// Create a instance of the model
 	m_model = m_mesh_instances[m_file_path.data.longForm]->CreateModel();
+	
+	m_vertex_count = m_mesh_instances[m_file_path.data.longForm]->GetVertexSize();
 
 	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
 

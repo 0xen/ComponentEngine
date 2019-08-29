@@ -1028,6 +1028,25 @@ VulkanUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
 	return m_model_position_buffer;
 }
 
+// Define a new miss shader for the pipeline
+void ComponentEngine::Engine::AddMissShader(const char * missShader)
+{
+	// Pre construct the renderer shader input format
+	m_miss_groups.push_back({ VK_SHADER_STAGE_MISS_BIT_NV, missShader });
+}
+
+// Define a new hit group for the raytracing pipeline
+void ComponentEngine::Engine::AddHitShaderPipeline(HitShaderPipeline pipeline)
+{
+	m_pipelines.push_back(pipeline);
+}
+
+// Get all hit shader instances
+std::vector<HitShaderPipeline>& ComponentEngine::Engine::GetHitShaderPipelines()
+{
+	return m_pipelines;
+}
+
 // Create a SDL window instance
 void ComponentEngine::Engine::InitWindow()
 {
@@ -1182,6 +1201,91 @@ void ComponentEngine::Engine::DeInitEnteeZ()
 
 }
 
+void ComponentEngine::Engine::RebuildRaytracePipeline()
+{
+	if (m_default_raytrace != nullptr)
+	{
+		m_render_pass->RemoveGraphicsPipeline(m_default_raytrace);
+		delete m_default_raytrace;
+	}
+
+	// Shaders such as miss and ray gen
+	std::vector<std::pair<VkShaderStageFlagBits, const char*>> primaryShaders;
+	// Resize to fir all miss shader + the ray gen shader
+	primaryShaders.resize(1 + m_miss_groups.size());
+	// Bind the ray gen shader
+	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/rgen.spv" };
+	// Copy over the miss shaders
+	memcpy(primaryShaders.data() + 1, m_miss_groups.data(), m_miss_groups.size() * sizeof(std::pair<VkShaderStageFlagBits, const char*>));
+	
+	std::vector<std::map<VkShaderStageFlagBits, const char*>> hitgroups;
+	hitgroups.resize(m_pipelines.size());
+	for (int i = 0; i < hitgroups.size(); i++)
+	{
+		hitgroups[i] = m_pipelines[i].hitgroup;
+	}
+
+
+	// Create the raytracing pipeline
+	m_default_raytrace = m_renderer->CreateRaytracePipeline(
+		m_render_pass, // Current render pass
+		primaryShaders, // Ray gen + miss shaders
+		hitgroups // All defined hit groups
+	);
+
+
+
+
+
+	int groupID = 0;
+	// Ray generation entry point
+	m_default_raytrace->AddRayGenerationProgram(groupID++, {});
+
+	// Define all miss shaders
+	for (int i = 1; i < primaryShaders.size(); i++)
+	{
+		m_default_raytrace->AddMissProgram(groupID++, {});
+	}
+	// Define all hit groups
+	for (int i = 0; i < hitgroups.size(); i++)
+	{
+		m_default_raytrace->AddHitGroup(groupID++, {});
+	}
+
+
+	m_default_raytrace->SetMaxRecursionDepth(5);
+
+	m_default_raytrace->AttachVertexBinding({
+		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
+		{
+			{ 0, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,pos) },
+			{ 1, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(MeshVertex,texCoord) },
+			{ 2, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,nrm) },
+			{ 3, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,color) },
+		},
+		sizeof(MeshVertex),
+		0
+		});
+
+	{ // Descriptor sets and pools
+
+		m_default_raytrace->AttachDescriptorPool(0, standardRTConfigPool);
+		m_default_raytrace->AttachDescriptorSet(0, m_standardRTConfigSet);
+
+		m_default_raytrace->AttachDescriptorPool(1, RTModelPool);
+		m_default_raytrace->AttachDescriptorSet(1, m_RTModelPoolSet);
+
+		m_default_raytrace->AttachDescriptorPool(2, RTTextureDescriptorPool);
+		m_default_raytrace->AttachDescriptorSet(2, m_RTTexturePoolSet);
+
+		m_default_raytrace->AttachDescriptorPool(3, RTModelInstancePool);
+		m_default_raytrace->AttachDescriptorSet(3, m_RTModelInstanceSet);
+	}
+	m_default_raytrace->Build();
+	m_render_pass->AttachGraphicsPipeline(m_default_raytrace);
+
+}
+
 // Create the renderer instance and all required components
 void ComponentEngine::Engine::InitRenderer()
 {
@@ -1230,43 +1334,8 @@ void ComponentEngine::Engine::InitRenderer()
 	}
 
 	{
-		// Create the raytracing pipeline
-		m_default_raytrace = m_renderer->CreateRaytracePipeline(m_render_pass,
-			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/PBR/Gen/rgen.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/Default/rmiss.spv" },
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_MISS_BIT_NV,		"../Shaders/Raytrace/PBR/Miss/ShadowMiss/rmiss.spv" },
-			},
-			{
-				{ // Involved 
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
-				},
-				{}, // Fall through hit group for shadow's, etc
-			});
-
-		int groupID = 0;
-		// Ray generation entry point
-		m_default_raytrace->AddRayGenerationProgram(groupID++, {});
-
-		m_default_raytrace->AddMissProgram(groupID++, {});
-		m_default_raytrace->AddMissProgram(groupID++, {});
-		m_default_raytrace->AddHitGroup(groupID++, {});
-		m_default_raytrace->AddHitGroup(groupID++, {});
-
-
-		m_default_raytrace->SetMaxRecursionDepth(5);
 		
-		m_default_raytrace->AttachVertexBinding({
-			VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
-			{
-				{ 0, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,pos) },
-				{ 1, VkFormat::VK_FORMAT_R32G32_SFLOAT,offsetof(MeshVertex,texCoord) },
-				{ 2, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,nrm) },
-				{ 3, VkFormat::VK_FORMAT_R32G32B32_SFLOAT,offsetof(MeshVertex,color) },
-			},
-			sizeof(MeshVertex),
-			0
-			});
+
 
 
 		m_top_level_acceleration = m_renderer->CreateAcceleration();
@@ -1275,27 +1344,25 @@ void ComponentEngine::Engine::InitRenderer()
 		m_top_level_acceleration->Build();
 
 
-		
-		
+
+
 		{
-			VulkanDescriptorPool* standardRTConfigPool = m_renderer->CreateDescriptorPool({
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
-				});
-			m_default_raytrace->AttachDescriptorPool(0,standardRTConfigPool);
+		standardRTConfigPool = m_renderer->CreateDescriptorPool({
+			m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
+			m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
+			m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
+			});
 
-			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
+		m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
 
-			m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
-			m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
-			m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
-			m_standardRTConfigSet->UpdateSet();
+		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
+		m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
+		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->UpdateSet();
 
-			m_default_raytrace->AttachDescriptorSet(0, m_standardRTConfigSet);
 		}
 
-		
+
 		// Create all needed buffers for vertex, index, lighting and materials
 		m_vertexBuffer = m_renderer->CreateVertexBuffer(m_all_vertexs.data(), sizeof(MeshVertex), m_all_vertexs.size());
 		m_indexBuffer = m_renderer->CreateIndexBuffer(m_all_indexs.data(), sizeof(uint32_t), m_all_indexs.size());
@@ -1315,13 +1382,12 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		{
-			VulkanDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
+			RTModelPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3),
-			});
-			m_default_raytrace->AttachDescriptorPool(1,RTModelPool);
+				});
 
 			m_RTModelPoolSet = RTModelPool->CreateDescriptorSet();
 
@@ -1332,27 +1398,20 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 			m_RTModelPoolSet->UpdateSet();
-
-			m_default_raytrace->AttachDescriptorSet(1, m_RTModelPoolSet);
 		}
 
 		{
-			VulkanDescriptorPool* RTModelPool = m_renderer->CreateDescriptorPool({
+			RTTextureDescriptorPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0, m_max_texture_descriptors),
 				});
-			m_default_raytrace->AttachDescriptorPool(2,RTModelPool);
 
-			m_RTTexturePoolSet = RTModelPool->CreateDescriptorSet();
+			m_RTTexturePoolSet = RTTextureDescriptorPool->CreateDescriptorSet();
 
 			if (m_texture_descriptors.size() > 0)
 			{
 				m_RTTexturePoolSet->AttachBuffer(0, m_texture_descriptors);
 				m_RTTexturePoolSet->UpdateSet();
 			}
-
-
-
-			m_default_raytrace->AttachDescriptorSet(2, m_RTTexturePoolSet);
 		}
 
 		// Create buffers for model positions, position allocation pool and offsets
@@ -1361,18 +1420,17 @@ void ComponentEngine::Engine::InitRenderer()
 
 		m_position_buffer_pool = new VulkanBufferPool(m_model_position_buffer);
 
-		
+
 
 		m_offset_allocation_array = new ModelOffsets[1000];
 		m_offset_allocation_array_buffer = m_renderer->CreateUniformBuffer(m_offset_allocation_array, BufferChain::Single, sizeof(ModelOffsets), 1000, true);
 
 
 		{
-			VulkanDescriptorPool* RTModelInstancePool = m_renderer->CreateDescriptorPool({
+			RTModelInstancePool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
-			});
-			m_default_raytrace->AttachDescriptorPool(3,RTModelInstancePool);
+				});
 
 
 			m_RTModelInstanceSet = static_cast<VulkanDescriptorSet*>(RTModelInstancePool->CreateDescriptorSet());
@@ -1383,15 +1441,47 @@ void ComponentEngine::Engine::InitRenderer()
 
 			m_RTModelInstanceSet->UpdateSet();
 
-			m_default_raytrace->AttachDescriptorSet(3, m_RTModelInstanceSet);
 		}
-
-		m_default_raytrace->Build();
-
-
-		m_render_pass->AttachGraphicsPipeline(m_default_raytrace);
-
 	}
+	{// Define default hit and miss groups
+
+		
+		AddMissShader("../Shaders/Raytrace/Default/Miss/rmiss.spv");
+
+		/*{ // Default Textured PBR
+			{ // Primary PBR hitgroup
+				HitShaderPipeline defaultHitgroup{ "PBR",
+				{
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
+				},
+				true
+				};
+				AddHitShaderPipeline(defaultHitgroup);
+			}
+			{ // Add the PBR shadow miss shader
+				AddMissShader("../Shaders/Raytrace/PBR/Miss/rmiss.spv");
+			}
+			{ // Secondary shadow fall through hitgroup 
+				HitShaderPipeline defaultHitgroup{ "Default Textured PBR Shadow Fall through",
+				{
+				},
+				false
+				};
+				AddHitShaderPipeline(defaultHitgroup);
+			}
+		}*/
+
+		{ // Default Textured PBR - No lights
+			HitShaderPipeline defaultHitgroup{ "PBR - No Light",
+			{
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Textured/rchit.spv" },
+			},
+			true
+			};
+			AddHitShaderPipeline(defaultHitgroup);
+		}
+	}
+	RebuildRaytracePipeline();
 }
 
 // Destroy the current renderer instance

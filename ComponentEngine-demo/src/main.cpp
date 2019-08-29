@@ -22,7 +22,7 @@ VulkanRaytracePipeline* ray_pipeline = nullptr;
 
 void RegisterCustomComponents()
 {
-	engine->RegisterComponentBase("Keyboard Movment", KeyboardMovment::EntityHookDefault);
+	engine->RegisterComponentBase("Keyboard Movement", KeyboardMovment::EntityHookDefault);
 
 	engine->RegisterBase<KeyboardMovment, Logic, UI, IO>();
 }
@@ -36,23 +36,6 @@ int main(int argc, char **argv)
 
 	engine->Start();
 	RegisterCustomComponents();
-
-	engine->GetUIManager()->AddMenuElement(new MenuElement("Debugging", {
-		new MenuElement("Add Mesh", [&] {
-			if (engine->GetUIManager()->GetCurrentSceneFocus().entity == nullptr)return;
-			engine->GetThreadManager()->AddTask([&](float frameTime) {
-				engine->GetLogicMutex().lock();
-				engine->GetRendererMutex().lock();
-
-				Mesh::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
-				RendererComponent::EntityHookDefault(*engine->GetUIManager()->GetCurrentSceneFocus().entity);
-
-				engine->GetRendererMutex().unlock();
-				engine->GetLogicMutex().unlock();
-			});
-
-		})
-	}));
 
 	if ((flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild)
 	{
