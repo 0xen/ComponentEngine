@@ -41,6 +41,9 @@ offsets;
 
 
 
+layout (constant_id = 0) const uint MISS_SHADER_INDEX = 0;
+layout (constant_id = 1) const uint SHADOW_SHADER_INDEX = 0;
+
 
 struct Light
 {
@@ -235,19 +238,19 @@ void main()
     uint missIndex = 0;
     isShadowed = true;
 
-  vec3 tempCurrentPayloadColor = rayPayload.color;
+  RayPayload tempCurrentPayload = rayPayload;
 
     /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, sbtRecordOffset, sbtRecordStride,
             missIndex, origin, tmin, normal, tmax, 0);*/
-  vec3 globalIll = vec3(0.4f,0.4f,0.4f);//rayPayload.color;
+  vec3 globalIll = vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
     /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, sbtRecordOffset, sbtRecordStride,
             missIndex, origin, tmin, reflectVec, tmax, 0);*/
-  vec3 globalIll2 = vec3(0.4f,0.4f,0.4f);//rayPayload.color;
+  vec3 globalIll2 = vec3(0.2f,0.2f,0.2f);//rayPayload.color;
   
- rayPayload.color = tempCurrentPayloadColor;
+ rayPayload = tempCurrentPayload;
 
   //////////////////////////////////////
 
@@ -281,14 +284,13 @@ void main()
 
     uint sbtRecordOffset = 0;
     uint sbtRecordStride = 0;
-    uint missIndex = 1;
     isShadowed = true;
 
     float tmax = 0.001;
 
     traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-            0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, l, rdist + 1.0f, 2);
+            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
+            MISS_SHADER_INDEX, origin, tmin, l, rdist + 1.0f, 2);
     if (!isShadowed)
     {
     

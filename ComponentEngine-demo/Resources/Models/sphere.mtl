@@ -10,7 +10,4 @@ Ke 0.0 0.0 0.0
 Ni 1.450000
 d 1.000000
 illum 1
-map_Kd white.png
-map_Ns white.png
-refl white.png
-
+refl reflection.png

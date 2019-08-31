@@ -21,6 +21,9 @@ struct RayPayload {
 
 layout(location = 0) rayPayloadNV RayPayload rayPayload;
 
+layout (constant_id = 0) const int MAX_RECURSION = 0;
+layout (constant_id = 1) const int MISS_SHADER_INDEX = 0;
+
 
 
 
@@ -57,10 +60,9 @@ void TraceRay(Ray ray)
 
     uint sbtRecordOffset = 0;
     uint sbtRecordStride = 0;
-    uint missIndex = 0;
 
     traceNV(topLevelAS, rayFlags, cullMask, sbtRecordOffset, sbtRecordStride,
-        missIndex, ray.origin, ray.tmin, ray.direction, ray.tmax, 0 /*payload*/);
+        MISS_SHADER_INDEX, ray.origin, ray.tmin, ray.direction, ray.tmax, 0 /*payload*/);
 }
 
 
@@ -71,7 +73,6 @@ Ray CalculateReflection(Ray ray)
     ray.direction.xyz = reflect(ray.direction.xyz, rayPayload.normal);
     return ray;
 }
-
 
 void main() 
 {
@@ -90,7 +91,7 @@ void main()
 
     rayPayload.reflector = 1.0f;
 
-    for(int i = 0 ; i < 10; i ++)
+    for(int i = 0 ; i < MAX_RECURSION; i ++)
     {
         TraceRay(ray);
 

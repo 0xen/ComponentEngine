@@ -79,7 +79,11 @@ namespace ComponentEngine
 		static std::map<std::string, VulkanModelPool*> m_mesh_instances;
 
 		DropBoxInstance<FileForms> m_file_path;
+
+		unsigned int m_hit_group;
+
 		std::string m_dir;
+		VulkanModelPool* m_model_pool;
 		VulkanModel* m_model;
 		unsigned int m_vertex_count;
 		// Index for the current mesh in the position array
@@ -92,8 +96,5 @@ namespace ComponentEngine
 		static ordered_lock m_transformation_lock;
 
 		enteez::Entity * m_entity;
-
-
-		std::string m_current_hitgroup;
 	};
 }

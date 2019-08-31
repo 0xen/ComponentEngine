@@ -11,6 +11,7 @@
 #include <renderer\vulkan\VulkanAcceleration.hpp>
 #include <renderer\vulkan\VulkanModelPool.hpp>
 #include <renderer\vulkan\VulkanModel.hpp>
+#include <renderer\vulkan\VulkanRenderPass.hpp>
 
 #include <imgui.h>
 
@@ -32,16 +33,15 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 {
 	m_loaded = false;
 	m_vertex_count = 0;
-
-	m_current_hitgroup = "";
+	m_hit_group = 0;
 }
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
 {
 	m_loaded = false;
 	m_vertex_count = 0;
+	m_hit_group = 0;
 	ChangePath(path);
-	m_current_hitgroup = "";
 	LoadModel();
 
 }
@@ -110,23 +110,25 @@ void ComponentEngine::Mesh::Display()
 
 		std::vector<HitShaderPipeline>& hitgroups = Engine::Singlton()->GetHitShaderPipelines();
 
-		// Define what is the current selected item
-		if (m_current_hitgroup.size() == 0 && hitgroups.size() > 0)
-		{
-			m_current_hitgroup = hitgroups[0].name;
-		}
-
 		ImGui::Text("Hitgroup");
 
-		if (ImGui::BeginCombo("##HitgroupSelection", m_current_hitgroup.c_str()))
+		Engine* engine = Engine::Singlton();
+		VulkanAcceleration* as = engine->GetTopLevelAS();
+
+		m_hit_group = as->GetModelPoolHitGroupOffset(m_model_pool);
+		std::string hitgroup_name = hitgroups[m_hit_group].name;
+
+		if (ImGui::BeginCombo("##HitgroupSelection", hitgroup_name.c_str()))
 		{
-			for (auto it : hitgroups)
+			for (int i = 0 ; i < hitgroups.size(); i ++)
 			{
-				if (!it.primaryHitgroup) continue;
-				bool is_selected = (m_current_hitgroup == it.name);
-				if (ImGui::Selectable(it.name.c_str(), is_selected))
+				HitShaderPipeline& hitgroup = hitgroups[i];
+				if (!hitgroup.primaryHitgroup) continue;
+				bool is_selected = (hitgroup_name == hitgroup.name);
+				if (ImGui::Selectable(hitgroup.name.c_str(), is_selected))
 				{
-					m_current_hitgroup = it.name;
+					as->SetModelPoolHitGroupOffset(m_model_pool, i);
+					engine->GetRenderPass()->Rebuild();
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();
@@ -161,6 +163,7 @@ void ComponentEngine::Mesh::Display()
 
 void ComponentEngine::Mesh::Load(std::ifstream & in)
 {
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Mesh, m_hit_group), SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group));
 	std::string path = Common::ReadString(in);
 	if (path.size()> 0)
 	{
@@ -171,12 +174,14 @@ void ComponentEngine::Mesh::Load(std::ifstream & in)
 
 void ComponentEngine::Mesh::Save(std::ofstream & out)
 {
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Mesh, m_hit_group), SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group));
+
 	Common::Write(out, m_file_path.data.longForm);
 }
 
 unsigned int ComponentEngine::Mesh::PayloadSize()
 {
-	return Common::StreamStringSize(m_file_path.data.longForm);
+	return SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group) + Common::StreamStringSize(m_file_path.data.longForm);
 }
 
 bool ComponentEngine::Mesh::DynamiclySized()
@@ -311,17 +316,17 @@ void ComponentEngine::Mesh::LoadModel()
 
 
 
-		as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm]);
+		as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm], m_hit_group);
 	}
 
 	
 	
-	
+	m_model_pool = m_mesh_instances[m_file_path.data.longForm];
 
 	// Create a instance of the model
-	m_model = m_mesh_instances[m_file_path.data.longForm]->CreateModel();
+	m_model = m_model_pool->CreateModel();
 	
-	m_vertex_count = m_mesh_instances[m_file_path.data.longForm]->GetVertexSize();
+	m_vertex_count = m_model_pool->GetVertexSize();
 
 	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
 

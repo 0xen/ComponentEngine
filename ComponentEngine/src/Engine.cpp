@@ -64,6 +64,8 @@ ComponentEngine::Engine::Engine()
 
 	m_flags = 0;
 
+	m_max_recursions = 10;
+
 	m_all_vertexs.resize(m_vertex_max);
 	m_all_indexs.resize(m_index_max);
 }
@@ -926,6 +928,11 @@ VulkanAcceleration * ComponentEngine::Engine::GetTopLevelAS()
 	return m_top_level_acceleration;
 }
 
+VulkanRenderPass * ComponentEngine::Engine::GetRenderPass()
+{
+	return m_render_pass;
+}
+
 // Get the total used vertex size
 unsigned int & ComponentEngine::Engine::GetUsedVertex()
 {
@@ -1029,18 +1036,19 @@ VulkanUniformBuffer * ComponentEngine::Engine::GetModelPositionBuffer()
 }
 
 // Define a new miss shader for the pipeline
-unsigned int ComponentEngine::Engine::AddMissShader(const char * missShader)
+unsigned int ComponentEngine::Engine::AddMissShader(const char * missShader, const std::vector<unsigned int>& constants)
 {
 	// Pre construct the renderer shader input format
 	m_miss_groups.push_back({ VK_SHADER_STAGE_MISS_BIT_NV, missShader });
+	m_miss_groups_constants.push_back(constants);
 	return m_miss_groups.size() - 1;
 }
 
 // Define a new hit group for the raytracing pipeline
-unsigned int ComponentEngine::Engine::AddHitShaderPipeline(HitShaderPipeline pipeline)
+unsigned int ComponentEngine::Engine::AddHitShaderPipeline(HitShaderPipeline pipeline, const std::vector<unsigned int>& constants)
 {
 	m_pipelines.push_back(pipeline);
-
+	m_pipelines_constants.push_back(constants);
 	return m_pipelines.size() - 1;
 }
 
@@ -1242,21 +1250,21 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 
 	int groupID = 0;
 	// Ray generation entry point
-	m_default_raytrace->AddRayGenerationProgram(groupID++, {});
+	m_default_raytrace->AddRayGenerationProgram(groupID++, {}, { m_max_recursions, m_general_miss_shader });
 
 	// Define all miss shaders
 	for (int i = 1; i < primaryShaders.size(); i++)
 	{
-		m_default_raytrace->AddMissProgram(groupID++, {});
+		m_default_raytrace->AddMissProgram(groupID++, {}, m_miss_groups_constants[i-1]);
 	}
 	// Define all hit groups
 	for (int i = 0; i < hitgroups.size(); i++)
 	{
-		m_default_raytrace->AddHitGroup(groupID++, {});
+		m_default_raytrace->AddHitGroup(groupID++, {}, m_pipelines_constants[i]);
 	}
 
 
-	m_default_raytrace->SetMaxRecursionDepth(5);
+	m_default_raytrace->SetMaxRecursionDepth(m_max_recursions);
 
 	m_default_raytrace->AttachVertexBinding({
 		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
@@ -1349,18 +1357,18 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		{
-		standardRTConfigPool = m_renderer->CreateDescriptorPool({
-			m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
-			m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
-			m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
-			});
+			standardRTConfigPool = m_renderer->CreateDescriptorPool({
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
+				});
 
-		m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
+			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
 
-		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
-		m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
-		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
-		m_standardRTConfigSet->UpdateSet();
+			m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
+			m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
+			m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+			m_standardRTConfigSet->UpdateSet();
 
 		}
 
@@ -1448,30 +1456,8 @@ void ComponentEngine::Engine::InitRenderer()
 	{// Define default hit and miss groups
 
 		
-		unsigned int generalMissShader = AddMissShader("../Shaders/Raytrace/Default/Miss/rmiss.spv");
+		m_general_miss_shader = AddMissShader("../Shaders/Raytrace/Default/Miss/rmiss.spv", {});
 
-		/*{ // Default Textured PBR
-			{ // Primary PBR hitgroup
-				HitShaderPipeline defaultHitgroup{ "PBR",
-				{
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
-				},
-				true
-				};
-				AddHitShaderPipeline(defaultHitgroup);
-			}
-			{ // Add the PBR shadow miss shader
-				AddMissShader("../Shaders/Raytrace/PBR/Miss/rmiss.spv");
-			}
-			{ // Secondary shadow fall through hitgroup 
-				HitShaderPipeline defaultHitgroup{ "Default Textured PBR Shadow Fall through",
-				{
-				},
-				false
-				};
-				AddHitShaderPipeline(defaultHitgroup);
-			}
-		}*/
 
 		{ // Default Textured PBR - No lights
 			HitShaderPipeline defaultHitgroup{ "PBR - No Light",
@@ -1480,7 +1466,40 @@ void ComponentEngine::Engine::InitRenderer()
 			},
 			true
 			};
-			unsigned int defaultTexturedPBRShdaer = AddHitShaderPipeline(defaultHitgroup);
+			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, {});
+		}
+
+		{ // Default Textured PBR
+
+
+
+
+			// Add the PBR shadow miss shader
+			unsigned int missShader = AddMissShader("../Shaders/Raytrace/PBR/Miss/rmiss.spv", {});
+
+
+
+			{ // Primary PBR hitgroup
+				HitShaderPipeline defaultHitgroup{ "PBR",
+				{
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
+				},
+				true
+				};
+				AddHitShaderPipeline(defaultHitgroup, { missShader, 0 });
+			}
+
+
+			{
+
+				// Secondary shadow fall through hitgroup 
+				HitShaderPipeline shadowHitHitgroup{ "Default Textured PBR Shadow Fall through",
+				{
+				},
+				false
+				};
+				AddHitShaderPipeline(shadowHitHitgroup, {});
+			}
 		}
 	}
 	RebuildRaytracePipeline();

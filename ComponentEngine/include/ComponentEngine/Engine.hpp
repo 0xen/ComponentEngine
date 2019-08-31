@@ -223,6 +223,8 @@ namespace ComponentEngine
 		VulkanBufferPool* GetLightBufferPool();
 		// Get the raytracing top level acceleration structure
 		VulkanAcceleration* GetTopLevelAS();
+		// Get the engines render pass instance
+		VulkanRenderPass* GetRenderPass();
 		// Get the total used vertex size
 		unsigned int& GetUsedVertex();
 		// Get the total used index size
@@ -236,9 +238,9 @@ namespace ComponentEngine
 		// Get the uniform buffer that stores all position buffers
 		VulkanUniformBuffer* GetModelPositionBuffer();
 		// Define a new miss shader for the pipeline
-		unsigned int AddMissShader(const char* missShader);
+		unsigned int AddMissShader(const char* missShader, const std::vector<unsigned int>& constants);
 		// Define a new hit group for the raytracing pipeline
-		unsigned int AddHitShaderPipeline(HitShaderPipeline pipeline);
+		unsigned int AddHitShaderPipeline(HitShaderPipeline pipeline, const std::vector<unsigned int>& constants);
 		// Get all hit shader instances
 		std::vector<HitShaderPipeline>& GetHitShaderPipelines();
 
@@ -328,8 +330,10 @@ namespace ComponentEngine
 		VulkanDescriptorPool* RTModelInstancePool = nullptr;
 		// All hit groups
 		std::vector<HitShaderPipeline> m_pipelines;
+		std::vector<std::vector<unsigned int>> m_pipelines_constants;
 		// All mis groups
 		std::vector<std::pair<VkShaderStageFlagBits, const char*>> m_miss_groups;
+		std::vector<std::vector<unsigned int>> m_miss_groups_constants;
 
 		Camera* m_default_camera;
 		// Main camera
@@ -470,6 +474,14 @@ namespace ComponentEngine
 		std::vector<LightData> m_lights;
 		VulkanUniformBuffer* m_light_buffer;
 		VulkanBufferPool* m_light_buffer_pool;
+
+		unsigned int m_max_recursions;
+		// Miss shader index. Create a gradient effect when the ray misses
+		unsigned int m_general_miss_shader;
+		// Default textured PBR shader
+		unsigned int m_default_textured_pbr_shader;
+
+
 
 	};
 	
