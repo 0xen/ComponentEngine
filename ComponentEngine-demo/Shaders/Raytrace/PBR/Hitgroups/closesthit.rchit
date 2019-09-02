@@ -2,17 +2,11 @@
 #extension GL_NV_ray_tracing : require
 #extension GL_EXT_nonuniform_qualifier : enable
 
-struct RayPayload {
-  vec3 color;
-  float distance;
-  vec3 normal;
-  float reflector;
-};
+layout(location = 0) rayPayloadInNV float[4] inRayPayload;
 
-layout(location = 0) rayPayloadInNV RayPayload rayPayload;
+//layout(location = 1) rayPayloadNV bool isShadowed;
 
-
-layout(location = 2) rayPayloadNV bool isShadowed;
+layout(location = 1) rayPayloadNV float[4] rayPayload;
 
 
 
@@ -162,6 +156,7 @@ WaveFrontMaterial unpackMaterial(int matIndex)
 void main()
 {
   float PI = 3.14159265359f;
+  float GAMMA = 2.2f;
 
 
   Offsets o = unpackOffsets(gl_InstanceID);
@@ -188,7 +183,7 @@ void main()
   normalMatrix = transpose(normalMatrix);
   vec3 normal = normalize(f_normal * normalMatrix);
 
-  rayPayload.normal = normal;
+  //inRayPayload.normal = normal;
 
   vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
                             v2.texCoord * barycentrics.z; 
@@ -201,6 +196,7 @@ void main()
 
   // Texture maps             
   vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
+  //albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
   float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
   float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
   float cavity = 1.0f; // Temp
@@ -209,20 +205,18 @@ void main()
 
 
   
-  rayPayload.distance = gl_RayTmaxNV;
+  //inRayPayload.distance = gl_RayTmaxNV;
 
 
   float nDotV = max(dot(normal,viewVector), 0.001f);
   // Calculate how reflective the surface from 4% (Min) to 100%
-  float reflectivness = mix(0.04f, 1.0f, metalness);
-
   // Mix the minimum reflectiveness (4%) with the current albedo based on the range of 0-1
-  vec3 specularColour = mix(vec3(0.0f, 0.0f, 0.0f), albedo, reflectivness);
+  vec3 specularColour = mix(vec3(0.04f,0.04f,0.04f), albedo, metalness);
 
-  rayPayload.reflector *= metalness;
+  //inRayPayload.reflector *= metalness;
 
   // Calculate the reflection angle
-  vec3 reflectVec = reflect(-viewVector, normal);
+  vec3 reflectVec = reflect(-viewVector, normal);//mix(normal,roughness);
 
 
 
@@ -231,27 +225,39 @@ void main()
 
 
     float tmin = 0.001;
-  float tmax = 100.0;
+    float tmax = 1000.0;
 
-    uint sbtRecordOffset = -1;
+    uint sbtRecordOffset = 0;
     uint sbtRecordStride = 0;
     uint missIndex = 0;
-    isShadowed = true;
 
-  RayPayload tempCurrentPayload = rayPayload;
 
-    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-            0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, normal, tmax, 0);*/
-  vec3 globalIll = vec3(0.2f,0.2f,0.2f);//rayPayload.color;
+    vec3 globalIll = vec3(0.0f,0.0f,0.0f);
+    vec3 globalIll2 = vec3(0.0f,0.0f,0.0f);
 
-    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-            0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, reflectVec, tmax, 0);*/
-  vec3 globalIll2 = vec3(0.2f,0.2f,0.2f);//rayPayload.color;
+
+
+    if(inRayPayload[3]>0.0f)
+    {
+      inRayPayload[3] -= 1.0f;
+      rayPayload[3] = inRayPayload[3];
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, tmin, normal, tmax, 1);
+
+      globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
+
+
+      rayPayload[3] = inRayPayload[3];
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, tmin, reflectVec, tmax, 1);
+
+      globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
+
+
+      globalIll2.x = pow(globalIll2.x, 2) * 2;
+      globalIll2.y = pow(globalIll2.y, 2) * 2;
+      globalIll2.z = pow(globalIll2.z, 2) * 2;
+    }
+
   
- rayPayload = tempCurrentPayload;
-
   //////////////////////////////////////
 
 
@@ -262,7 +268,10 @@ void main()
 
   
   // DIFFRENT - We use globalIll for both
-  vec3 colour = ((albedo  * (globalIll*(1 - F * (1 - roughness)))) + (F * (1 - roughness) * globalIll2)) * ao;
+  vec3 colour = ((albedo  * (globalIll * ((1 - F) * (1 - roughness)))
+    ) + (F * (1 - roughness) * globalIll2)
+
+  ) * ao;
 
 
 
@@ -284,14 +293,14 @@ void main()
 
     uint sbtRecordOffset = 0;
     uint sbtRecordStride = 0;
-    isShadowed = true;
+    rayPayload[0] = 1.0f;
 
     float tmax = 0.001;
 
     traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
             0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-            MISS_SHADER_INDEX, origin, tmin, l, rdist + 1.0f, 2);
-    if (!isShadowed)
+            MISS_SHADER_INDEX, origin, tmin, l, rdist + 1.0f, 1);
+    if (rayPayload[0] < 0.5f)
     {
     
 
@@ -339,31 +348,11 @@ void main()
   }
 
 
+  //colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-  
-
-  
-  rayPayload.color = colour;
+  inRayPayload[0] = colour.x;
+  inRayPayload[1] = colour.y;
+  inRayPayload[2] = colour.z;
 
 
 }

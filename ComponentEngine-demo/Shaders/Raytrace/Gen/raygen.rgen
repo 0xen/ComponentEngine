@@ -12,14 +12,7 @@ layout(binding=2, set = 0) uniform CameraProperties
     mat4 projInverse;
 } cam;
 
-struct RayPayload {
-    vec3 color;
-    float distance;
-    vec3 normal;
-    float reflector;
-};
-
-layout(location = 0) rayPayloadNV RayPayload rayPayload;
+layout(location = 0) rayPayloadNV float[4] rayPayload;
 
 layout (constant_id = 0) const int MAX_RECURSION = 0;
 layout (constant_id = 1) const int MISS_SHADER_INDEX = 0;
@@ -66,13 +59,13 @@ void TraceRay(Ray ray)
 }
 
 
-Ray CalculateReflection(Ray ray)
+/*Ray CalculateReflection(Ray ray)
 {
     const vec3 hitPos = ray.origin + ray.direction * rayPayload.distance;
     ray.origin.xyz = hitPos + rayPayload.normal * 0.001f;
     ray.direction.xyz = reflect(ray.direction.xyz, rayPayload.normal);
     return ray;
-}
+}*/
 
 void main() 
 {
@@ -80,7 +73,7 @@ void main()
     const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
     vec2 screen_coordinate = inUV * 2.0 - 1.0;
 
-    
+    rayPayload[3] = 3.0f;
 
     vec3 color = vec3(0.0);
     // Create a basic ray payload
@@ -89,9 +82,15 @@ void main()
 
 
 
-    rayPayload.reflector = 1.0f;
+    //rayPayload.reflector = 1.0f;
 
-    for(int i = 0 ; i < MAX_RECURSION; i ++)
+
+    TraceRay(ray);
+    color = vec3(rayPayload[0],rayPayload[1],rayPayload[2]);
+
+
+
+    /*for(int i = 0 ; i < MAX_RECURSION; i ++)
     {
         TraceRay(ray);
 
@@ -116,7 +115,7 @@ void main()
             break;
         }
 
-    }
+    }*/
 
 
 
