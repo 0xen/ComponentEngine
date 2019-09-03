@@ -45,20 +45,25 @@ struct Light
   float intensity;
   vec3 color;
   float alive;
+  int type;
+  vec3 dir;
 };
 
 Light unpackLight(uint index)
 {
-  uint startingIndex = index * 2;
+  uint startingIndex = index * 3;
 
-  vec4 d0 = lights.l[index];
-  vec4 d1 = lights.l[index + 1];
+  vec4 d0 = lights.l[startingIndex];
+  vec4 d1 = lights.l[startingIndex + 1];
+  vec4 d2 = lights.l[startingIndex + 2];
 
   Light l;
   l.position = vec3(d0.x,d0.y,d0.z);
   l.intensity = d0.w;
   l.color = vec3(d1.x,d1.y,d1.z);
   l.alive = d1.w;
+  l.type = int(d2.x);
+  l.dir = vec3(d2.y,d2.z,d2.w);
 
   return l;
 }
@@ -200,7 +205,7 @@ void main()
   float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
   float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
   float cavity = 1.0f; // Temp
-  float ao = cavity; // Temp
+  float ao = 1.0f; // Temp
 
 
 
@@ -216,20 +221,13 @@ void main()
   //inRayPayload.reflector *= metalness;
 
   // Calculate the reflection angle
+  //vec3 reflectVec = reflect(-viewVector, normal);//mix(normal,roughness);
   vec3 reflectVec = reflect(-viewVector, normal);//mix(normal,roughness);
 
 
 
 
   // To do, global illumination /////////
-
-
-    float tmin = 0.001;
-    float tmax = 1000.0;
-
-    uint sbtRecordOffset = 0;
-    uint sbtRecordStride = 0;
-    uint missIndex = 0;
 
 
     vec3 globalIll = vec3(0.0f,0.0f,0.0f);
@@ -241,13 +239,13 @@ void main()
     {
       inRayPayload[3] -= 1.0f;
       rayPayload[3] = inRayPayload[3];
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, tmin, normal, tmax, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
 
       globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
       rayPayload[3] = inRayPayload[3];
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, tmin, reflectVec, tmax, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
 
       globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
@@ -267,7 +265,6 @@ void main()
   vec3 F = specularColour + (1 - specularColour) * pow(max(1.0f - nDotV, 0.0f), 5.0f);
 
   
-  // DIFFRENT - We use globalIll for both
   vec3 colour = ((albedo  * (globalIll * ((1 - F) * (1 - roughness)))
     ) + (F * (1 - roughness) * globalIll2)
 
@@ -275,76 +272,147 @@ void main()
 
 
 
-
-   for(uint i = 0 ; i < 100; i ++)
+  for(uint i = 0 ; i < 100; i ++)
   {
     // Lighting Calc
     Light light = unpackLight(i);
+
     if(light.alive<0.1f)
     {
         continue;
     }
-    vec3 l = light.position - origin;
-    
-    float rdist = 1 / length(l);
-    // Normalise the light vector
-    l *= rdist;
     
 
+    
+  
     uint sbtRecordOffset = 0;
     uint sbtRecordStride = 0;
     rayPayload[0] = 1.0f;
 
-    float tmax = 0.001;
-
-    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-            MISS_SHADER_INDEX, origin, tmin, l, rdist + 1.0f, 1);
-    if (rayPayload[0] < 0.5f)
+ 
+    if(light.type == 0)
     {
-    
+        vec3 l = light.position - origin;
 
 
-    float  li = light.intensity * rdist * rdist;
-      vec3 lc = light.color;
+        float rdist = 1 / length(l);
+        // Normalise the light vector
+        l *= rdist;
+
+        traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
+                0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
+                MISS_SHADER_INDEX, origin, 0.001, l, rdist + 1.0f, 1);
 
 
-      // Vector that is half way between the view and the light
-      vec3 h = normalize(l + viewVector);
+        if (rayPayload[0] < 0.5f)
+        {
+            float  li = light.intensity * rdist * rdist;
+            vec3 lc = light.color;
+        
+        
+            // Vector that is half way between the view and the light
+            vec3 h = normalize(l + viewVector);
+        
+            float nDotL = max(dot(normal,l), 0.001f);
+            float nDotH = max(dot(normal,h), 0.001f);
+        
+        
+            // Lambert diffuse - Slide 13
+            vec3 lambert = albedo / PI; // PI used for conservation of energy
+        
+        
+            // Reflected light - Microfacet
+            // Microfacet specular - normal distribution term - Slide 15-17
+            float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
+            float alpha2 = alpha * alpha;
+            float nDotH2 = nDotH * nDotH;
+            float dn = nDotH2 * (alpha2 - 1) + 1;
+            float D = alpha2 / (PI * dn * dn);
+        
+        
+            // Microfacet specular - geometry term - Slide 23
+            float k = (roughness + 1);
+            k = k * k / 8;
+            float gV = nDotV / (nDotV * (1 - k) + k);
+            float gL = nDotL / (nDotL * (1 - k) + k);
+            float G = gV * gL;
+        
+            // BRDF - Slide 14 & 24 - Lambert is the diffuse term
+            vec3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
+        
+            colour += PI * li * lc * cavity * brdf * nDotL;
+        
+        }
 
-      float nDotL = max(dot(normal,l), 0.001f);
-      float nDotH = max(dot(normal,h), 0.001f);
 
-
-      // Lambert diffuse - Slide 13
-      vec3 lambert = albedo / PI; // PI used for conservation of energy
-
-
-      // Reflected light - Microfacet
-      // Microfacet specular - normal distribution term - Slide 15-17
-      float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
-      float alpha2 = alpha * alpha;
-      float nDotH2 = nDotH * nDotH;
-      float dn = nDotH2 * (alpha2 - 1) + 1;
-      float D = alpha2 / (PI * dn * dn);
-
-
-      // Microfacet specular - geometry term - Slide 23
-      float k = (roughness + 1);
-      k = k * k / 8;
-      float gV = nDotV / (nDotV * (1 - k) + k);
-      float gL = nDotL / (nDotL * (1 - k) + k);
-      float G = gV * gL;
-
-      // BRDF - Slide 14 & 24 - Lambert is the diffuse term
-      vec3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
-
-      colour += PI * li * lc * cavity * brdf * nDotL;
 
 
 
 
     }
+    else if(light.type == 1)
+    {
+        vec3 l = normalize(light.dir);
+
+
+      
+        float rdist = 1 / length(l);
+        // Normalise the light vector
+        //l *= rdist;
+
+        traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
+                0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
+                MISS_SHADER_INDEX, origin, 0.001, l, 1000.0, 1);
+
+
+
+        if (rayPayload[0] < 0.5f)
+        {
+            float  li = light.intensity * rdist * rdist;
+            vec3 lc = light.color;
+        
+        
+            // Vector that is half way between the view and the light
+            vec3 h = normalize(l + viewVector);
+        
+            float nDotL = max(dot(normal,l), 0.001f);
+            float nDotH = max(dot(normal,h), 0.001f);
+        
+        
+            // Lambert diffuse - Slide 13
+            vec3 lambert = albedo / PI; // PI used for conservation of energy
+        
+        
+            // Reflected light - Microfacet
+            // Microfacet specular - normal distribution term - Slide 15-17
+            float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
+            float alpha2 = alpha * alpha;
+            float nDotH2 = nDotH * nDotH;
+            float dn = nDotH2 * (alpha2 - 1) + 1;
+            float D = alpha2 / (PI * dn * dn);
+        
+        
+            // Microfacet specular - geometry term - Slide 23
+            float k = (roughness + 1);
+            k = k * k / 8;
+            float gV = nDotV / (nDotV * (1 - k) + k);
+            float gL = nDotL / (nDotL * (1 - k) + k);
+            float G = gV * gL;
+        
+            // BRDF - Slide 14 & 24 - Lambert is the diffuse term
+            vec3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
+        
+            colour += PI * li * lc * cavity * brdf * nDotL;
+        
+        }
+    }
+
+
+
+
+
+    
+
   }
 
 

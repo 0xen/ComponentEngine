@@ -28,6 +28,8 @@ namespace ComponentEngine
 		float intensity;
 		glm::vec3 color;
 		float alive;
+		int lightType;
+		glm::vec3 dir;
 	};
 	class Light : public Logic, public IO, public UI
 	{
@@ -49,6 +51,9 @@ namespace ComponentEngine
 		glm::vec3 m_offset;
 		float m_intensity;
 		glm::vec3 m_color;
+		glm::vec3 m_dir;
+		int m_type;
+		const char* m_light_types[2] = { "Point Light", "Directional Light" };
 
 		unsigned int m_light_allocation;
 		//VulkanBufferPool* m_light_pool;
