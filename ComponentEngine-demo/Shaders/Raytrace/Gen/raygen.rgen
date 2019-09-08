@@ -73,7 +73,7 @@ void main()
     const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
     vec2 screen_coordinate = inUV * 2.0 - 1.0;
 
-    rayPayload[3] = 3.0f;
+    rayPayload[3] = intBitsToFloat(3);
 
     vec3 color = vec3(0.0);
     // Create a basic ray payload

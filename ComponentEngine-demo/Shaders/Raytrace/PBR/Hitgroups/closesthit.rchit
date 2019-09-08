@@ -44,7 +44,7 @@ struct Light
   vec3 position;
   float intensity;
   vec3 color;
-  float alive;
+  int alive;
   int type;
   vec3 dir;
 };
@@ -60,9 +60,9 @@ Light unpackLight(uint index)
   Light l;
   l.position = vec3(d0.x,d0.y,d0.z);
   l.intensity = d0.w;
-  l.color = vec3(d1.x,d1.y,d1.z);
-  l.alive = d1.w;
-  l.type = int(d2.x);
+  l.color = vec3(d1.z,d1.y,d1.x);
+  l.alive = floatBitsToInt(d1.w);
+  l.type = floatBitsToInt(d2.x);
   l.dir = vec3(d2.y,d2.z,d2.w);
 
   return l;
@@ -233,18 +233,18 @@ void main()
     vec3 globalIll = vec3(0.0f,0.0f,0.0f);
     vec3 globalIll2 = vec3(0.0f,0.0f,0.0f);
 
+    int currentResursion = floatBitsToInt(inRayPayload[3]);
 
-
-    if(inRayPayload[3]>0.0f)
+    if(currentResursion>0)
     {
-      inRayPayload[3] -= 1.0f;
-      rayPayload[3] = inRayPayload[3];
+      currentResursion -= 1;
+      rayPayload[3] = intBitsToFloat(currentResursion);
       traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
 
       globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
-      rayPayload[3] = inRayPayload[3];
+      rayPayload[3] = intBitsToFloat(currentResursion);
       traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
 
       globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
@@ -254,8 +254,8 @@ void main()
       globalIll2.y = pow(globalIll2.y, 2) * 2;
       globalIll2.z = pow(globalIll2.z, 2) * 2;
     }
+    inRayPayload[3] = intBitsToFloat(currentResursion);
 
-  
   //////////////////////////////////////
 
 
@@ -277,7 +277,7 @@ void main()
     // Lighting Calc
     Light light = unpackLight(i);
 
-    if(light.alive<0.1f)
+    if(light.alive==0)
     {
         continue;
     }
@@ -352,17 +352,17 @@ void main()
     }
     else if(light.type == 1)
     {
-        vec3 l = normalize(light.dir);
+        vec3 l = light.dir;
 
 
       
         float rdist = 1 / length(l);
         // Normalise the light vector
-        //l *= rdist;
+        l *= rdist;
 
         traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
                 0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-                MISS_SHADER_INDEX, origin, 0.001, l, 1000.0, 1);
+                MISS_SHADER_INDEX, origin, 0.001, l, 1000.0f, 1);
 
 
 

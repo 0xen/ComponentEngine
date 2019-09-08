@@ -1472,8 +1472,6 @@ void ComponentEngine::Engine::InitRenderer()
 		{ // Default Textured PBR
 
 
-
-
 			// Add the PBR shadow miss shader
 			unsigned int missShader = AddMissShader("../Shaders/Raytrace/PBR/Miss/rmiss.spv", {});
 

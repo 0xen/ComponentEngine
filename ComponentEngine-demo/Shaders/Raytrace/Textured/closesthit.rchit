@@ -2,14 +2,7 @@
 #extension GL_NV_ray_tracing : require
 #extension GL_EXT_nonuniform_qualifier : enable
 
-struct RayPayload {
-  vec3 color;
-  float distance;
-  vec3 normal;
-  float reflector;
-};
-
-layout(location = 0) rayPayloadInNV RayPayload rayPayload;
+layout(location = 0) rayPayloadInNV float[4] inRayPayload;
 
 
 layout(location = 2) rayPayloadNV bool isShadowed;
@@ -154,8 +147,6 @@ void main()
   normalMatrix = transpose(normalMatrix);
   vec3 normal = normalize(f_normal * normalMatrix);
 
-  rayPayload.normal = normal;
-
   vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
                             v2.texCoord * barycentrics.z; 
               
@@ -167,72 +158,16 @@ void main()
 
   // Texture maps             
   vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
-  float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
-  float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
-  float cavity = 1.0f; // Temp
-  float ao = cavity; // Temp
+
+
+  vec3 colour = albedo;
 
 
 
-  
-  rayPayload.distance = gl_RayTmaxNV;
+  inRayPayload[0] = colour.x;
+  inRayPayload[1] = colour.y;
+  inRayPayload[2] = colour.z;
 
-
-  float nDotV = max(dot(normal,viewVector), 0.001f);
-  // Calculate how reflective the surface from 4% (Min) to 100%
-  float reflectivness = mix(0.04f, 1.0f, metalness);
-
-  // Mix the minimum reflectiveness (4%) with the current albedo based on the range of 0-1
-  vec3 specularColour = mix(vec3(0.0f, 0.0f, 0.0f), albedo, reflectivness);
-
-  rayPayload.reflector *= metalness;
-
-  // Calculate the reflection angle
-  vec3 reflectVec = reflect(-viewVector, normal);
-
-
-
-
-  // To do, global illumination /////////
-
-
-    float tmin = 0.001;
-  float tmax = 100.0;
-
-    uint sbtRecordOffset = -1;
-    uint sbtRecordStride = 0;
-    uint missIndex = 0;
-    isShadowed = true;
-
-  vec3 tempCurrentPayloadColor = rayPayload.color;
-
-    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-            0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, normal, tmax, 0);*/
-  vec3 globalIll = vec3(0.4f,0.4f,0.4f);//rayPayload.color;
-
-    /*traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-            0xFF, sbtRecordOffset, sbtRecordStride,
-            missIndex, origin, tmin, reflectVec, tmax, 0);*/
-  vec3 globalIll2 = vec3(0.4f,0.4f,0.4f);//rayPayload.color;
-  
- rayPayload.color = tempCurrentPayloadColor;
-
-  //////////////////////////////////////
-
-
-
-  // At a glancing angle, how much should we increase the reflection
-  // Microfacet specular - fresnel term - Slide 21
-  vec3 F = specularColour + (1 - specularColour) * pow(max(1.0f - nDotV, 0.0f), 5.0f);
-
-  
-  // DIFFRENT - We use globalIll for both
-  vec3 colour = ((albedo  * (globalIll*(1 - F * (1 - roughness)))) + (F * (1 - roughness) * globalIll2)) * ao;
-
-
-
-  rayPayload.color = colour;
 
 
 }
