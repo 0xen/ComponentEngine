@@ -1560,11 +1560,11 @@ void ComponentEngine::Engine::InitImGUI()
 	if (editor)
 	{
 		// Define all the ui windows
-		m_ui->AddElement(new Console("Console", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-		m_ui->AddElement(new ThreadingWindow("Threading", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-		m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-		m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
-		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
+		m_ui->AddElement(new Console("Console", ImGuiWindowFlags_NoCollapse, PlayState::Editor));
+		m_ui->AddElement(new ThreadingWindow("Threading", ImGuiWindowFlags_NoCollapse, PlayState::Editor));
+		m_ui->AddElement(new ComponentHierarchy("ComponentHierarchy", ImGuiWindowFlags_NoCollapse, PlayState::Editor));
+		m_ui->AddElement(new Explorer("Explorer", ImGuiWindowFlags_NoCollapse, PlayState::Editor));
+		m_ui->AddElement(new SceneHierarchy("SceneHierarchy", ImGuiWindowFlags_NoCollapse, PlayState::Editor));
 		m_ui->AddElement(new EditorState("EditorState", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Editor | PlayState::Play));
 
 		m_ui->AddElement(new SceneWindow("SceneWindow", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
@@ -2075,18 +2075,51 @@ void ComponentEngine::Engine::UpdateImGUI()
 			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
 
 
-			if (drawGroup >= m_imgui.draw_group.size())
+			
+			// Generate the clip area
+			ImVec4 clip_rect;
+			clip_rect.x = (pcmd->ClipRect.x - clip_off.x) * clip_scale.x;
+			clip_rect.y = (pcmd->ClipRect.y - clip_off.y) * clip_scale.y;
+			clip_rect.z = (pcmd->ClipRect.z - clip_off.x) * clip_scale.x;
+			clip_rect.w = (pcmd->ClipRect.w - clip_off.y) * clip_scale.y;
+
+			// If the object is out of the scissor, ignore it
+			if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
 			{
-				m_imgui.draw_group.push_back(m_imgui.model_pool->CreateModel(pcmd->VtxOffset + vertex_count, pcmd->IdxOffset + index_count, pcmd->ElemCount));
+				// Negative offsets are illegal for vkCmdSetScissor
+				if (clip_rect.x < 0.0f)
+					clip_rect.x = 0.0f;
+				if (clip_rect.y < 0.0f)
+					clip_rect.y = 0.0f;
+
+
+				// If we do not have enough reserved models for imGui, create a new one
+				if (drawGroup >= m_imgui.draw_group.size())
+				{
+					m_imgui.draw_group.push_back(m_imgui.model_pool->CreateModel(pcmd->VtxOffset + vertex_count, pcmd->IdxOffset + index_count, pcmd->ElemCount));
+				}
+				else
+				{
+					m_imgui.draw_group[drawGroup]->SetIndexOffset(pcmd->IdxOffset + index_count);
+					m_imgui.draw_group[drawGroup]->SetVertexOffset(pcmd->VtxOffset + vertex_count);
+					m_imgui.draw_group[drawGroup]->SetIndexSize(pcmd->ElemCount);
+				}
+				// Define the texture for the imgui render call
+				m_imgui.draw_group[drawGroup]->SetData(0, (int)pcmd->TextureId);
+
+
+				// Generate a vulkan friendly scissor area
+				VkRect2D scissor;
+				scissor.offset.x = (int32_t)(clip_rect.x);
+				scissor.offset.y = (int32_t)(clip_rect.y);
+				scissor.extent.width = (uint32_t)(clip_rect.z - clip_rect.x);
+				scissor.extent.height = (uint32_t)(clip_rect.w - clip_rect.y);
+				// Add the scissor to the model
+				m_imgui.draw_group[drawGroup]->SetScissor(scissor);
+				drawGroup++;
 			}
-			else
-			{
-				m_imgui.draw_group[drawGroup]->SetIndexOffset(pcmd->IdxOffset + index_count);
-				m_imgui.draw_group[drawGroup]->SetVertexOffset(pcmd->VtxOffset + vertex_count);
-				m_imgui.draw_group[drawGroup]->SetIndexSize(pcmd->ElemCount);
-			}
-			m_imgui.draw_group[drawGroup]->SetData(0, (int)pcmd->TextureId);
-			drawGroup++;
+
+
 		}
 
 
@@ -2102,6 +2135,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.draw_group[i]->SetIndexOffset(0);
 		m_imgui.draw_group[i]->SetVertexOffset(0);
 		m_imgui.draw_group[i]->SetIndexSize(0);
+		m_imgui.draw_group[i]->ResetScissor();
 	}
 
 	m_imgui.draw_group_textures_buffer->SetData(BufferSlot::Primary);
@@ -2112,61 +2146,11 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
 		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
 	}
+
+	m_render_pass->RebuildCommandBuffers();
+
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();
-
-
-	/*ImDrawData* imDrawData = ImGui::GetDrawData();
-
-	if (imDrawData == nullptr)return;
-
-	if (m_imgui.m_vertex_buffer->GetElementCount(BufferSlot::Primary) < imDrawData->TotalVtxCount ||
-		m_imgui.m_index_buffer->GetElementCount(BufferSlot::Primary) < imDrawData->TotalIdxCount)
-	{
-		throw "Dynamic GUI buffers not handled";
-	}
-
-	ImDrawVert* temp_vertex_data = m_imgui.m_vertex_data;
-	uint32_t* temp_index_data = m_imgui.m_index_data;
-	unsigned int index_count = 0;
-	unsigned int vertex_count = 0;
-	for (int n = 0; n < imDrawData->CmdListsCount; n++)
-	{
-		const ImDrawList* cmd_list = imDrawData->CmdLists[n];
-		memcpy(temp_vertex_data, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-		// Loop through and manually add a offset to the index's so they can all be rendered in one render pass
-		for (int i = 0; i < cmd_list->IdxBuffer.Size; i++)
-		{
-			temp_index_data[i] = cmd_list->IdxBuffer.Data[i] + vertex_count;
-		}
-
-		temp_vertex_data += cmd_list->VtxBuffer.Size;
-		temp_index_data += cmd_list->IdxBuffer.Size;
-
-		vertex_count += cmd_list->VtxBuffer.Size;
-		index_count += cmd_list->IdxBuffer.Size;
-	}
-
-	// Submit the payload to the GPU
-
-	if (imDrawData->TotalVtxCount != m_imgui.model_pool->GetVertexSize() ||
-		imDrawData->TotalIdxCount != m_imgui.model_pool->GetIndexSize())
-	{
-		m_imgui.model_pool->SetVertexSize(imDrawData->TotalVtxCount);
-		m_imgui.model_pool->SetIndexSize(imDrawData->TotalIdxCount);
-		m_imgui.model_pool->Update();
-	}
-
-
-	m_logic_lock.lock();
-	GetRendererMutex().lock();
-	if (IsRunning())
-	{
-		m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
-		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
-	}
-	GetRendererMutex().unlock();
-	m_logic_lock.unlock();*/
 }
 
 // Destroy the instance of imgui
