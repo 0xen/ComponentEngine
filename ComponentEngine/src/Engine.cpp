@@ -1812,7 +1812,7 @@ void ComponentEngine::Engine::InitImGUI()
 		{
 			m_window_dropdown->AddChild(new MenuElement(window->GetTitle(), [&]
 			{
-				window->Open(true);
+				window->Open(!window->IsOpen());
 			}));
 		}
 
