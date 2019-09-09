@@ -225,7 +225,7 @@ void ComponentEngine::UIManager::AddMenuElement(MenuElement * element)
 void ComponentEngine::UIManager::Render()
 {
 	ImGui::NewFrame();
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 	PlayState state = m_engine->GetPlayState();
 	DockSpace();
 	RenderMainMenu();
