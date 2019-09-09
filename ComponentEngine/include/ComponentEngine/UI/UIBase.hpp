@@ -15,6 +15,9 @@ namespace ComponentEngine
 		virtual void PreDraw();
 		virtual void Contents() = 0;
 		UIDisplayFlags GetDisplayFlags();
+		bool IsOpen();
+		void Open(bool open);
+		const char* GetTitle();
 		friend class UIManager;
 	private:
 		ImGuiWindowFlags m_flags;

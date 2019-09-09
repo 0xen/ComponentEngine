@@ -104,6 +104,7 @@ namespace ComponentEngine
 	};
 
 	class UIManager;
+	class MenuElement;
 	// Found in Components/Light.hpp
 	struct LightData;
 
@@ -311,6 +312,8 @@ namespace ComponentEngine
 		PlayState m_play_state;
 
 		UIManager* m_ui;
+
+		MenuElement* m_window_dropdown;
 
 		// Rendering Data
 		VulkanRenderer* m_renderer = nullptr;

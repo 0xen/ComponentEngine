@@ -255,6 +255,11 @@ void ComponentEngine::UIManager::ResetSceneFocus()
 	}
 }
 
+std::vector<UIBase*>& ComponentEngine::UIManager::GetWindowBases()
+{
+	return m_bases;
+}
+
 void ComponentEngine::UIManager::DockSpace()
 {
 	//ImGui::ShowDemoWindow();

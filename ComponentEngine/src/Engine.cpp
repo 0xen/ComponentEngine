@@ -348,9 +348,8 @@ void ComponentEngine::Engine::RenderFrame()
 	GetRendererMutex().lock();
 	// Update all renderer's via there Update function
 	m_top_level_acceleration->Update();
-	//m_renderer->Update();
+	// Call the main engines render pass
 	m_render_pass->Render();
-
 	GetRendererMutex().unlock();
 }
 
@@ -1555,6 +1554,7 @@ void ComponentEngine::Engine::InitImGUI()
 {
 	// Create the ui manager instance
 	m_ui = new UIManager(this);
+
 	// Are we in the editor?
 	bool editor = !(m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild;
 	if (editor)
@@ -1570,6 +1570,9 @@ void ComponentEngine::Engine::InitImGUI()
 		m_ui->AddElement(new SceneWindow("SceneWindow", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar, PlayState::Editor));
 
 		m_ui->AddElement(new PlayWindow("PlayWindow", ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus, PlayState::Play | PlayState::Release));
+
+
+
 
 		// Define the autofills
 		static std::string filenameAutofill = "Scene.bin";
@@ -1588,22 +1591,6 @@ void ComponentEngine::Engine::InitImGUI()
 
 					Transformation& transformation = entity->GetComponent<Transformation>();
 					transformation.SetParent(m_ui->GetCurrentSceneFocus().entity);
-				});
-			}),
-			new MenuElement("Reload Scene",[&] {
-				m_engine->GetThreadManager()->AddTask([&](float frameTime) {
-
-					m_logic_lock.lock();
-					GetRendererMutex().lock();
-
-					GetEntityManager().Clear();
-					// Load in the scene
-					LoadScene(m_engine->GetCurrentScene().c_str());
-					UpdateScene();
-
-					GetRendererMutex().unlock();
-					m_logic_lock.unlock();
-
 				});
 			}),
 
@@ -1816,8 +1803,25 @@ void ComponentEngine::Engine::InitImGUI()
 			})
 			}
 		));
+
+
+		m_window_dropdown = new MenuElement("Window", std::vector<MenuElement*>{});
+
+
+		for (auto& window : m_ui->GetWindowBases())
+		{
+			m_window_dropdown->AddChild(new MenuElement(window->GetTitle(), [&]
+			{
+				window->Open(true);
+			}));
+		}
+
+
+		m_ui->AddMenuElement(m_window_dropdown);
+
+
 	}
-	
+
 
 	
 	// Init ImGUI

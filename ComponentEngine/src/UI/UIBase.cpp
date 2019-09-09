@@ -10,6 +10,7 @@ ComponentEngine::UIBase::UIBase(const char * title, ImGuiWindowFlags flags, UIDi
 
 void ComponentEngine::UIBase::Render()
 {
+	if (!m_open) return;
 	PreDraw();
 	if (ImGui::Begin(m_title, &m_open, m_flags))
 	{
@@ -25,4 +26,19 @@ void ComponentEngine::UIBase::PreDraw()
 UIDisplayFlags ComponentEngine::UIBase::GetDisplayFlags()
 {
 	return m_displayFlags;
+}
+
+bool ComponentEngine::UIBase::IsOpen()
+{
+	return m_open;
+}
+
+void ComponentEngine::UIBase::Open(bool open)
+{
+	m_open = open;
+}
+
+const char * ComponentEngine::UIBase::GetTitle()
+{
+	return m_title;
 }

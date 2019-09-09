@@ -158,6 +158,7 @@ namespace ComponentEngine
 		CurrentSceneFocus& GetCurrentSceneFocus();
 		void ResetSceneFocus();
 
+		std::vector<UIBase*>& GetWindowBases();
 	private:
 		static void DockSpace();
 		void RenderMainMenu();
