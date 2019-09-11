@@ -2027,6 +2027,8 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.model_pool->AttachBufferPool(0, m_imgui.draw_group_textures_buffer_pool);
 
 	m_imgui.m_imgui_pipeline->AttachModelPool(m_imgui.model_pool);
+
+	m_imgui.model_pool->AllowCustomScissors(true);
 }
 
 // Update the ui manager
