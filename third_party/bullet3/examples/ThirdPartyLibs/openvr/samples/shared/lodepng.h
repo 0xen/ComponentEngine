@@ -249,7 +249,7 @@ const char* lodepng_error_text(unsigned code);
 typedef struct LodePNGDecompressSettings LodePNGDecompressSettings;
 struct LodePNGDecompressSettings
 {
-	unsigned ignore_adler32; /*if 1, continue and don't give an error message if the Adler32 checksum is corrupted*/
+	unsigned ignore_adler32 = 1; /*if 1, continue and don't give an error message if the Adler32 checksum is corrupted*/
 
 	/*use custom zlib decoder instead of built in one (default: null)*/
 	unsigned (*custom_zlib)(unsigned char**, size_t*,

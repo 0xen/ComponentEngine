@@ -127,6 +127,7 @@ struct WaveFrontMaterial
   int textureId;
   int metalicTextureId;
   int roughnessTextureId;
+  int normalTextureId;
 };
 // Number of vec4 values used to represent a material
 const int sizeofMat = 6;
@@ -154,6 +155,7 @@ WaveFrontMaterial unpackMaterial(int matIndex)
 
   m.metalicTextureId = floatBitsToInt(d5.r);
   m.roughnessTextureId = floatBitsToInt(d5.g);
+  m.normalTextureId = floatBitsToInt(d5.b);
 
   return m;
 }
@@ -193,6 +195,8 @@ void main()
   vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
                             v2.texCoord * barycentrics.z; 
               
+	normal = normalize(normal * texture(textureSamplers[mat.normalTextureId], texCoord).xyz);
+  
   // World position
   vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
   
@@ -239,19 +243,20 @@ void main()
     {
       currentResursion -= 1;
       rayPayload[3] = intBitsToFloat(currentResursion);
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 100.0, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
 
       globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
       rayPayload[3] = intBitsToFloat(currentResursion);
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 100.0, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
 
       globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
-      globalIll2 = pow(globalIll2, vec3(2.0f,2.0f,2.0f)) * 2;    
-      
+      globalIll2.x = pow(globalIll2.x, 2) * 2;
+      globalIll2.y = pow(globalIll2.y, 2) * 2;
+      globalIll2.z = pow(globalIll2.z, 2) * 2;
     }
     inRayPayload[3] = intBitsToFloat(currentResursion);
 
@@ -266,7 +271,6 @@ void main()
   
   vec3 colour = ((albedo  * (globalIll * ((1 - F) * (1 - roughness)))
     ) + (F * (1 - roughness) * globalIll2)
-
   ) * ao;
 
 
@@ -278,8 +282,7 @@ void main()
 
     if(light.alive==0)
     {
-    	// We must assume that the lights are sorted and that if we hit a dead one, we break out 
-        break;
+        continue;
     }
     
 

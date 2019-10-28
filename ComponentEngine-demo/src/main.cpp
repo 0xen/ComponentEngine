@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 {
 	engine = Engine::Singlton();
 	
-	int flags = 0;// EngineFlags::ReleaseBuild;
+	int flags = 0;//EngineFlags::ReleaseBuild;
 	engine->SetFlag(flags);
 
 	engine->Start();
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 	{
 		// Load the scene
 		engine->GetThreadManager()->AddTask([&](float frameTime) {
-			engine->LoadScene("../Scene.bin");
+			engine->LoadScene("../Room.obj");
 		});
 	}
 
