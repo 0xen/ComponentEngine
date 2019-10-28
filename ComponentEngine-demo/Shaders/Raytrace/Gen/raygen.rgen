@@ -73,7 +73,7 @@ void main()
     const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
     vec2 screen_coordinate = inUV * 2.0 - 1.0;
 
-    rayPayload[3] = intBitsToFloat(3);
+    rayPayload[3] = intBitsToFloat(1);
 
     vec3 color = vec3(0.0);
     // Create a basic ray payload
@@ -86,42 +86,6 @@ void main()
 
 
     TraceRay(ray);
-    color = vec3(rayPayload[0],rayPayload[1],rayPayload[2]);
 
-
-
-    /*for(int i = 0 ; i < MAX_RECURSION; i ++)
-    {
-        TraceRay(ray);
-
-        float max = ((rayPayload.reflector - 1.0f) * -1.0f);
-        vec3 hitColor = rayPayload.color * max;
-        //vec3 hitColor = rayPayload.color;
-
-
-        if (rayPayload.distance < 0.0f)// Missed
-        { 
-            color += hitColor;//rayPayload.color;
-            break;
-        }
-        else if (rayPayload.reflector > 0.01f) // Reflected
-        {
-            ray = CalculateReflection(ray);
-            color += hitColor;// * (rayPayload.reflector * 0.01f);
-        }
-        else // Hit normaly, but not reflective enough
-        {
-            color += hitColor;
-            break;
-        }
-
-    }*/
-
-
-
-
-
-
-
-    imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(color, 1.0));
+    imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(rayPayload[2],rayPayload[1],rayPayload[0], 1.0));
 }

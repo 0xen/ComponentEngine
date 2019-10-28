@@ -28,7 +28,8 @@ struct MatrialObj
   int textureID = -1;
   int metalicTextureID = -1;
   int roughnessTextureID = -1;
-  int n[2];//Padding
+  int normalTextureID = -1;
+  int n;//Padding
 };
 
 template <class TVert>
@@ -108,6 +109,11 @@ void ObjLoader<TVert>::loadModel(const std::string& filename)
 	{
 		m_textures.push_back(material.reflection_texname);
 		m.metalicTextureID = static_cast<int>(m_textures.size()) - 1;
+	}
+	if (!material.normal_texname.empty())
+	{
+		m_textures.push_back(material.normal_texname);
+		m.normalTextureID = static_cast<int>(m_textures.size()) - 1;
 	}
 	if (!material.specular_highlight_texname.empty())
 	{

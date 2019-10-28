@@ -292,6 +292,11 @@ void ComponentEngine::Mesh::LoadModel()
 			else
 				material.roughnessTextureID = 0; // Set to default white texture
 
+			if (material.normalTextureID >= 0)
+				material.normalTextureID += offset;
+			else
+				material.normalTextureID = 0; // Set to default white texture
+
 			materials[used_materials] = material;
 
 			used_materials++;

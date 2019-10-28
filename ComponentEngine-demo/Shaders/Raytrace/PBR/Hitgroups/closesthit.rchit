@@ -201,7 +201,7 @@ void main()
 
   // Texture maps             
   vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
-  //albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
+  albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
   float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
   float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
   float cavity = 1.0f; // Temp
@@ -239,20 +239,19 @@ void main()
     {
       currentResursion -= 1;
       rayPayload[3] = intBitsToFloat(currentResursion);
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 100.0, 1);
 
       globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
       rayPayload[3] = intBitsToFloat(currentResursion);
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 100.0, 1);
 
       globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
-      globalIll2.x = pow(globalIll2.x, 2) * 2;
-      globalIll2.y = pow(globalIll2.y, 2) * 2;
-      globalIll2.z = pow(globalIll2.z, 2) * 2;
+      globalIll2 = pow(globalIll2, vec3(2.0f,2.0f,2.0f)) * 2;    
+      
     }
     inRayPayload[3] = intBitsToFloat(currentResursion);
 
@@ -279,7 +278,8 @@ void main()
 
     if(light.alive==0)
     {
-        continue;
+    	// We must assume that the lights are sorted and that if we hit a dead one, we break out 
+        break;
     }
     
 
@@ -416,7 +416,7 @@ void main()
   }
 
 
-  //colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
+  colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
 
   inRayPayload[0] = colour.x;
   inRayPayload[1] = colour.y;
