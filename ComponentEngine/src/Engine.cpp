@@ -1305,7 +1305,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
-	m_render_pass = m_renderer->CreateRenderPass(2);
+	m_render_pass = m_renderer->CreateRenderPass((m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild ? 1 : 2);
 
 
 	// If the rendering was not fully created, error out
@@ -1959,7 +1959,7 @@ void ComponentEngine::Engine::InitImGUI()
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
 		config.input = COMBINED_IMAGE_SAMPLER;
-		config.subpass = 1;
+		config.subpass = (m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild ? 0 : 1;
 		config.culling = VK_CULL_MODE_NONE;
 		config.use_depth_stencil = false;
 	}
