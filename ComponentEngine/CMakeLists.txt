@@ -96,6 +96,7 @@ set(ui_headers
     include/ComponentEngine/UI/EditorState.hpp
     include/ComponentEngine/UI/SceneWindow.hpp
     include/ComponentEngine/UI/PlayWindow.hpp
+    include/ComponentEngine/UI/UITemplate.hpp
 )
 
 set(ui_source
@@ -111,6 +112,7 @@ set(ui_source
     src/UI/EditorState.cpp
     src/UI/SceneWindow.cpp
     src/UI/PlayWindow.cpp
+    src/UI/UITemplate.cpp
 )
 
 
