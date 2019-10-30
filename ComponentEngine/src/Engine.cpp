@@ -415,16 +415,11 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 
 	EntityManager& em = GetEntityManager();
 
-	m_logic_lock.lock();
-	GetRendererMutex().lock();
 
 	// Check to see if the input stream is open, if not return
 	if (!in.is_open()) 
 	{
 		Log("Uable to load scene: Could not open", ConsoleState::Error);
-		// Return locks as we do not need them anymore
-		GetRendererMutex().unlock();
-		m_logic_lock.unlock();
 		return false;
 	}
 
@@ -453,9 +448,6 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		if (str != EngineName)
 		{
 			Log("Uable to load scene: Invalid Header", ConsoleState::Error);
-			// Return locks as we do not need them anymore
-			GetRendererMutex().unlock();
-			m_logic_lock.unlock();
 			return false;
 		}
 	}
@@ -470,6 +462,8 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	// Define a in-function, function for creating new entities using I/O stream
 	std::function<void(Entity* parent)> createEntity = [&](Entity* parent)
 	{
+		m_logic_lock.lock();
+		GetRendererMutex().lock();
 		// File format for Entities
 		/* - Entity Name
 		** - Component Count (0-*)
@@ -556,6 +550,8 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		unsigned int childrenCount;
 		Common::Read(in, &childrenCount, sizeof(unsigned int));
 
+		GetRendererMutex().unlock();
+		m_logic_lock.unlock();
 		// Loop through for all children and read them in
 		for (int i = 0; i < childrenCount; i++)
 		{
@@ -567,8 +563,6 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	{
 		createEntity(nullptr);
 	}
-	GetRendererMutex().unlock();
-	m_logic_lock.unlock();
 
 	return true;
 }
