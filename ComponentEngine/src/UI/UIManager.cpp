@@ -267,7 +267,10 @@ void ComponentEngine::UIManager::DockSpace()
 
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
 	// because it would be confusing to have two docking targets within each others.
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	ImGuiWindowFlags window_flags =  ImGuiWindowFlags_NoDocking;
+
+	if (m_menu_elements.size()>0)
+		window_flags |= ImGuiWindowFlags_MenuBar;
 
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->Pos);
@@ -313,7 +316,7 @@ void ComponentEngine::UIManager::DockSpace()
 
 void ComponentEngine::UIManager::RenderMainMenu()
 {
-
+	if (m_menu_elements.size() == 0)return;
 	if (ImGui::BeginMainMenuBar())
 	{
 		for (auto& e : m_menu_elements)

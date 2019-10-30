@@ -117,11 +117,6 @@ void ComponentEngine::Engine::Start()
 		// Define the play state to be in the editor
 		m_play_state = PlayState::Editor;
 
-		// Add UI task. Updates the UI manager
-		m_threadManager->AddTask([&](float frameTime) {
-			UpdateUI(frameTime);
-		}, 30, "UI");
-
 		// Add Update Scene task. Update all components attached to each entity that supports it
 		m_threadManager->AddTask([&, this](float frameTime) {
 			EntityManager& em = GetEntityManager();
@@ -191,6 +186,12 @@ void ComponentEngine::Engine::Start()
 			m_physicsWorld->Update(frameTime);
 		}, 60, "PhysicsWorld");
 	}
+
+	// Add UI task. Updates the UI manager
+	m_threadManager->AddTask([&](float frameTime)
+	{
+		UpdateUI(frameTime);
+	}, 30, "UI");
 
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime) {
@@ -1952,14 +1953,39 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.m_texture_descriptor_set->UpdateSet();
 
 	// Setup ImGUI Pipeline
-	m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass,{
-		{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
-		{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/frag.spv" }
-		});
+	if (editor)
+	{
+		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass, {
+			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
+			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/Editor/frag.spv" }
+			});
+		// Attach screen buffer
+		//
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_render_pass->GetCombinedImageSamplerReadPool());
+
+		// Attach font buffer
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(2, m_imgui.m_font_texture_pool);
+		m_imgui.m_imgui_pipeline->AttachDescriptorSet(2, m_imgui.m_texture_descriptor_set);
+	}
+	else
+	{
+		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass, {
+			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
+			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/Release/frag.spv" }
+			});
+		// Attach font buffer
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_imgui.m_font_texture_pool);
+		m_imgui.m_imgui_pipeline->AttachDescriptorSet(0, m_imgui.m_texture_descriptor_set);
+	}
+
+	// Attach screen buffer
+	m_imgui.m_imgui_pipeline->AttachDescriptorPool(1, m_imgui.m_screen_res_pool);
+	m_imgui.m_imgui_pipeline->AttachDescriptorSet(1, m_imgui.m_screen_res_set);
+
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
 		config.input = COMBINED_IMAGE_SAMPLER;
-		config.subpass = (m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild ? 0 : 1;
+		config.subpass = editor ? 1 : 0;
 		config.culling = VK_CULL_MODE_NONE;
 		config.use_depth_stencil = false;
 	}
@@ -1984,17 +2010,6 @@ void ComponentEngine::Engine::InitImGUI()
 		sizeof(glm::mat4),
 		1
 		});
-
-	// Attach screen buffer
-	m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_render_pass->GetCombinedImageSamplerReadPool());
-
-	// Attach screen buffer
-	m_imgui.m_imgui_pipeline->AttachDescriptorPool(1, m_imgui.m_screen_res_pool);
-	m_imgui.m_imgui_pipeline->AttachDescriptorSet(1, m_imgui.m_screen_res_set);
-
-	// Attach font buffer
-	m_imgui.m_imgui_pipeline->AttachDescriptorPool(2,m_imgui.m_font_texture_pool);
-	m_imgui.m_imgui_pipeline->AttachDescriptorSet(2, m_imgui.m_texture_descriptor_set);
 	
 
 	// Build Pipeline

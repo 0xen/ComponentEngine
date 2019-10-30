@@ -160,7 +160,7 @@ namespace ComponentEngine
 
 		std::vector<UIBase*>& GetWindowBases();
 	private:
-		static void DockSpace();
+		void DockSpace();
 		void RenderMainMenu();
 		void RenderMenuElement(MenuElement* element);
 
