@@ -87,5 +87,5 @@ void main()
 
     TraceRay(ray);
 
-    imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(rayPayload[2],rayPayload[1],rayPayload[0], 1.0));
+    imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(rayPayload[0],rayPayload[1],rayPayload[2], 1.0));
 }

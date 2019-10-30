@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 
 	engine = Engine::Singlton();
 	
-	int flags = 0;//EngineFlags::ReleaseBuild;
+	int flags = EngineFlags::ReleaseBuild;
 	engine->SetFlag(flags);
 
 	engine->Start();
