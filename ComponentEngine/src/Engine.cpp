@@ -1300,7 +1300,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
-	m_render_pass = m_renderer->CreateRenderPass((m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild ? 1 : 2);
+	m_render_pass = m_renderer->CreateRenderPass(((m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild) ? 1 : 2);
 
 
 	// If the rendering was not fully created, error out
