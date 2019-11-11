@@ -13,41 +13,24 @@ ComponentEngine::ThreadingWindow::ThreadingWindow(const char * title, ImGuiWindo
 
 void ComponentEngine::ThreadingWindow::Contents()
 {
-	if (Engine::Singlton()->GetThreadManager()->GetThreadMode() == ThreadMode::Threading)
+	/*
+	std::vector<WorkerThread*>& threads = Engine::Singlton()->GetThreadManager()->GetThreads();
+
+	for (int i = 0; i < threads.size(); i++)
 	{
-		std::vector<WorkerThread*>& threads = Engine::Singlton()->GetThreadManager()->GetThreads();
+		ImGui::PushID(i);
+		WorkerThread* thread = threads[i];
+		ImGui::Text("Worker #%i", i);
 
-		for (int i = 0; i < threads.size(); i++)
-		{
-			ImGui::PushID(i);
-			WorkerThread* thread = threads[i];
-			ImGui::Text("Worker #%i", i);
+		ImGui::PlotLines("", thread->GetThreadActivity().data(), thread->GetThreadActivity().size(), 0, "", 0.0f, 1.0f);
 
-			ImGui::PlotLines("", thread->GetThreadActivity().data(), thread->GetThreadActivity().size(), 0, "", 0.0f, 1.0f);
+		ImGui::SameLine();
 
-			ImGui::SameLine();
+		ImGui::Text("%i%%", (int)(thread->GetThreadActivity()[thread->GetThreadActivity().size() - 1] * 100));
 
-			ImGui::Text("%i%%", (int)(thread->GetThreadActivity()[thread->GetThreadActivity().size() - 1] * 100));
+		ImGui::PopID();
+	}*/
 
-			ImGui::PopID();
-		}
-	}
-	else
-	{
-
-		{
-			ImGui::Text("Main Thread");
-
-			std::vector<float> activity = Engine::Singlton()->GetThreadManager()->GetActivity();
-			ImGui::PlotLines("", activity.data(), activity.size(), 0, "", 0.0f, 1.0f);
-
-			ImGui::SameLine();
-
-			ImGui::Text("%i%%", (int)(activity[activity.size() - 1] * 100));
-
-		}
-
-	}
 
 	{
 		std::vector<WorkerTask*>& tasks = Engine::Singlton()->GetThreadManager()->GetSchedualedTasks();

@@ -122,8 +122,6 @@ namespace ComponentEngine
 		void Start();
 		// Stop the engine and kill all services
 		void Stop();
-		// Force all threads to join the main thread
-		void Join();
 		// Is the engine running
 		bool Running();
 		// To be used, update safe and dose not call the thread timing reset
@@ -283,12 +281,6 @@ namespace ComponentEngine
 		void DeInitImGUI();
 		// Request that the engine should stop
 		void RequestStop();
-		// Request that the engine should switch threading mode
-		void RequestToggleThreading();
-		// Are we currently threading
-		bool Threading();
-		// Request that the engine should switch threading mode
-		void ToggleThreading();
 		// Set the current scene path
 		void SetScenePath(const char* path);
 
@@ -304,8 +296,6 @@ namespace ComponentEngine
 
 		EngineStates m_running = EngineStates::Stopped;
 		bool m_request_stop = false;
-		bool m_request_toggle_threading = false;
-		bool m_threading = true;
 
 		std::thread::id m_main_thread;
 

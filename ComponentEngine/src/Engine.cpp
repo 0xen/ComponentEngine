@@ -106,7 +106,7 @@ void ComponentEngine::Engine::Start()
 	m_running = EngineStates::Running;
 
 	// Start the thread manager
-	m_threadManager = new ThreadManager(ThreadMode::Threading);
+	m_threadManager = new ThreadManager();
 
 	// Render a frame so you know it has not crashed xD
 	RenderFrame();
@@ -210,13 +210,11 @@ void ComponentEngine::Engine::Start()
 // Stop the engine and kill all services
 void ComponentEngine::Engine::Stop()
 {
-	// If we are already stopped, skio
+	// If we are already stopped, skip
 	if (m_running != EngineStates::Stoping)
 	{
 		return;
 	}
-	// Force all threads to join the primary one
-	m_threadManager->ChangeMode(ThreadMode::Joined);
 	// Set the engine to the stopped state
 	{
 		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
@@ -236,12 +234,6 @@ void ComponentEngine::Engine::Stop()
 	Log("Stopping Engine", Info);
 }
 
-// Force all threads to join the main thread
-void ComponentEngine::Engine::Join()
-{
-	m_threadManager->ChangeMode(Joined);
-}
-
 // Is the engine running
 bool ComponentEngine::Engine::Running()
 {
@@ -253,11 +245,6 @@ bool ComponentEngine::Engine::Running()
 		{
 			m_running = EngineStates::Stoping;
 			return false;
-		}
-		else if (m_request_toggle_threading) // Has a request to switch between threading ~ not threading been made
-		{
-			m_request_toggle_threading = false;
-			ToggleThreading();
 		}
 		std::lock_guard<std::mutex> guard(GetLock(IS_RUNNING));
 		// return the renderer state
@@ -2187,25 +2174,6 @@ void ComponentEngine::Engine::DeInitImGUI()
 void ComponentEngine::Engine::RequestStop()
 {
 	m_request_stop = true;
-}
-
-// Request that the engine should switch threading mode
-void ComponentEngine::Engine::RequestToggleThreading()
-{
-	m_request_toggle_threading = true;
-}
-
-// Are we currently threading
-bool ComponentEngine::Engine::Threading()
-{
-	return m_threading;
-}
-
-// Request that the engine should switch threading mode
-void ComponentEngine::Engine::ToggleThreading()
-{
-	m_threading = !m_threading;
-	m_threadManager->ChangeMode(m_threading ? ThreadMode::Threading : ThreadMode::Joined);
 }
 
 // Set the current scene path

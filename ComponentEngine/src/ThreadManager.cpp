@@ -4,7 +4,7 @@
 
 using namespace ComponentEngine;
 
-ThreadManager::ThreadManager(ThreadMode mode)
+ThreadManager::ThreadManager()
 {
 	m_seccond_delta = 0;
 	m_thread_activity.resize(20);
@@ -13,13 +13,17 @@ ThreadManager::ThreadManager(ThreadMode mode)
 	m_delta_time = SDL_GetPerformanceCounter();
 
 	unsigned int thread_count = (unsigned int)(((float)std::thread::hardware_concurrency() * 1.5f) + 0.5f);
+	m_workerCount = thread_count;
+	m_workerlockGuard = new std::mutex[m_workerCount];
+	m_workReady = new std::condition_variable[m_workerCount];
+	m_workerTask.resize(m_workerCount);
+	m_haveWork.resize(m_workerCount);
+
 
 	for (unsigned int i = 0; i < thread_count; i++)
 	{
-		m_threads.push_back(new WorkerThread(this, mode));
+		m_threads.push_back(std::thread(&ThreadManager::Worker, this, i));
 	}
-
-	m_mode = mode;
 
 }
 
@@ -39,21 +43,12 @@ bool ThreadManager::GetTask(WorkerTask*& task)
 	return true;
 }
 
-void ThreadManager::ChangeMode(ThreadMode mode)
-{
-	m_mode = mode;
-	for (auto thread : m_threads)
-	{
-		thread->ChangeMode(mode);
-	}
-}
-
 void ThreadManager::AddTask(std::function<void(float)> funcPtr, std::string name)
 {
 	WorkerTask* newTask = new WorkerTask();
 	newTask->funcPtr = funcPtr;
-	newTask->type = TaskType::Single;
 	newTask->name = name;
+	newTask->type = TaskType::Single;
 	std::unique_lock<std::mutex> acquire(m_task_pool_lock);
 	m_task_pool.push_back(newTask);
 }
@@ -98,27 +93,23 @@ void ThreadManager::Update()
 			}
 		}
 	}
-	if (m_mode == Joined)
+
+	// Push tasks
+	for (int i = 0; i < m_workerCount; ++i)
 	{
-		WorkerTask* task;
-
-		while (GetTask(task))
+		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
+		if(!m_haveWork[i])
 		{
-			task->funcPtr(delta);
-
-			{ // Cleanup
-				task->queued = false;
-				if (task->type == TaskType::Single)
-				{
-					delete task;
-				}
+			WorkerTask* task;
+			if(GetTask(task))
+			{
+				m_workerTask[i] = task;
+				m_haveWork[i] = true;
 			}
+			m_workReady[i].notify_one(); // Tell worker
 		}
-
-		float newDelta = GetDeltaTime();
-		m_active_time += newDelta;
-		m_delta_update += newDelta;
 	}
+
 	// Calculate how much preformance this thread is using
 	m_seccond_delta += delta;
 	if (m_seccond_delta > 1.0f)
@@ -137,20 +128,31 @@ void ThreadManager::Update()
 				task->taskActivity[19] = averageUPS;
 			}
 		}
-
-
-
 		memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
 		m_thread_activity[19] = m_active_time;
 		m_active_time = 0;
 		m_seccond_delta = 0;
 	}
 
+	// Wait for Workers
+	for (int i = 0; i < m_workerCount; ++i)
+	{
+		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
+		while (m_haveWork[i])
+		{
+			// Wait until work is done
+			m_workReady[i].wait(lock);
+		}
+	}
+
+
+	
+
 }
 
-std::vector<WorkerThread*>& ThreadManager::GetThreads()
+unsigned int ThreadManager::ThreadCount()
 {
-	return m_threads;
+	return m_workerCount;
 }
 
 std::vector<WorkerTask*>& ThreadManager::GetSchedualedTasks()
@@ -164,9 +166,36 @@ std::vector<float> ThreadManager::GetActivity()
 	return m_thread_activity;
 }
 
-ThreadMode ThreadManager::GetThreadMode()
+void ThreadManager::Worker(unsigned int id)
 {
-	return m_mode;
+	while (true)
+	{
+		{
+			// Guard use of haveWork from other thread
+			std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);
+			while (!m_haveWork[id])
+			{ // Wait for some work
+				m_workReady[id].wait(lock);
+			};
+		}
+
+		m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
+
+		{ // Cleanup
+			m_workerTask[id]->queued = false;
+			if (m_workerTask[id]->type == TaskType::Single)
+			{
+				delete m_workerTask[id];
+			}
+		}
+
+		{
+			std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);
+			m_haveWork[id] = false;
+		}
+		m_workReady[id].notify_one(); // Tell main thread
+
+	}
 }
 
 float ThreadManager::GetDeltaTime()
@@ -178,107 +207,6 @@ float ThreadManager::GetDeltaTime()
 	return temp;
 }
 
-WorkerThread::WorkerThread(ThreadManager* thread_manager, ThreadMode mode)
-{
-	m_delta_time = SDL_GetPerformanceCounter();
-	m_seccond_delta = 0;
-	m_thread_activity.resize(20);
-	std::unique_lock<std::mutex> acquire(m_worker_lock);
-	m_mode = mode;
-	m_thread_manager = thread_manager;
-	if (mode == ThreadMode::Threading)thread = new std::thread(&WorkerThread::Loop, this);
-}
-
-void WorkerThread::Loop()
-{
-	WorkerTask* task;
-	do{
-		float lastDelta = GetDeltaTime();
-		if (m_thread_manager->GetTask(task))
-		{
-			task->funcPtr(task->lastDelta);
-			float end = GetDeltaTime();
-			m_active_time += end;
-			lastDelta += end;
-
-
-			{ // Cleanup
-				task->queued = false;
-				if (task->type == TaskType::Single)
-				{
-					delete task;
-				}
-			}
-		}
-		else if (m_mode == ThreadMode::Threading)
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			lastDelta += GetDeltaTime();
-		}
-
-		m_seccond_delta += lastDelta;
-		if (m_seccond_delta > 1.0f)
-		{
-			std::unique_lock<std::mutex> acquire(m_worker_lock);
-			memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
-			m_thread_activity[19] = m_active_time;
-			m_active_time = 0;
-			m_seccond_delta = 0;
-		}
-
-	} while (Running());
-	/*if (thread == nullptr && m_mode == ThreadMode::Threading )
-	{
-		thread = new std::thread(&WorkerThread::Loop, this);
-	}
-	else if (thread != nullptr && m_mode == ThreadMode::Joined)
-	{
-		thread->join();
-		delete thread;
-	}*/
-}
-
-void WorkerThread::ChangeMode(ThreadMode mode)
-{
-	{
-		std::unique_lock<std::mutex> acquire(m_worker_lock);
-		m_mode = mode;
-	}
-	if (mode == ThreadMode::Threading)
-	{
-		thread = new std::thread(&WorkerThread::Loop, this);
-	}
-	else
-	{
-		if (thread != nullptr)
-		{
-			thread->join();
-			delete thread;
-			thread = nullptr;
-		}
-	}
-}
-
-std::vector<float> WorkerThread::GetThreadActivity()
-{
-	std::unique_lock<std::mutex> acquire(m_worker_lock);
-	return m_thread_activity;
-}
-
-float WorkerThread::GetDeltaTime()
-{
-	Uint64 now = SDL_GetPerformanceCounter();
-	Uint64 last = m_delta_time;
-	m_delta_time = now;
-	float temp = static_cast<float>((float)(now - last) / SDL_GetPerformanceFrequency());
-	return temp;
-}
-
-bool WorkerThread::Running()
-{
-	std::unique_lock<std::mutex> acquire(m_worker_lock);
-	return m_mode == ThreadMode::Threading;
-}
 
 WorkerTask::WorkerTask()
 {
