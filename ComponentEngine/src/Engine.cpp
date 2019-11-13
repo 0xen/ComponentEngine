@@ -1206,7 +1206,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 	// Resize to fir all miss shader + the ray gen shader
 	primaryShaders.resize(1 + m_miss_groups.size());
 	// Bind the ray gen shader
-	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/rgen.spv" };
+	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/DOF/rgen.spv" };
 	// Copy over the miss shaders
 	memcpy(primaryShaders.data() + 1, m_miss_groups.data(), m_miss_groups.size() * sizeof(std::pair<VkShaderStageFlagBits, const char*>));
 	
