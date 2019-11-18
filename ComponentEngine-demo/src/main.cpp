@@ -59,8 +59,61 @@ void AddUIWindows()
 	}));
 }
 
+#include <iostream>
+#include <cmath>
+#include <thread>
+#include <future>
+#include <functional>
+
+
+
+void BeepBoopOutputSwag()
+{
+	std::cout << "Swiggity Swag" << std::endl;
+}
+
+
+
 int main(int argc, char **argv)
 {
+	BeepBoopOutputSwag();
+
+
+	std::packaged_task<int()> task(std::bind([](int a, int b)
+	{
+		return std::pow(a, b);
+	},
+	2,1));
+	std::future<int> result = task.get_future();
+
+
+
+
+	// Multithread safe check to see if the result is ready
+	if (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	{
+		// Get the result from the thread
+		std::cout << "task_lambda test 1:\t" << result.get() << '\n';
+	}
+
+
+
+	// To be preformed by the thread
+	task();
+
+
+	// Multithread safe check to see if the result is ready
+	if (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	{
+		// Get the result from the thread
+		std::cout << "task_lambda test 2:\t" << result.get() << '\n';
+	}
+
+
+
+
+	exit(0);
+
 
 
 	engine = Engine::Singlton();
