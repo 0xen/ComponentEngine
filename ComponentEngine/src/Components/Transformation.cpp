@@ -126,8 +126,6 @@ void ComponentEngine::Transformation::SetLocalMat4(glm::mat4 mat4, bool updatePh
 
 void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePhysics)
 {
-	Mesh::GetModelPositionTransferLock().lock();
-
 	glm::mat4* matrix = nullptr;
 
 	if (m_origional)
@@ -147,7 +145,6 @@ void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePh
 	}
 	if (updatePhysics)
 		Send(m_entity, m_entity, TransformationChange{ *matrix });
-	Mesh::GetModelPositionTransferLock().unlock();
 
 }
 
@@ -401,7 +398,6 @@ void ComponentEngine::Transformation::RemoveChild(Transformation * trans)
 
 void ComponentEngine::Transformation::PushToPositionArray(bool updatePhysics)
 {
-	Mesh::GetModelPositionTransferLock().lock();
 	glm::mat4* matrix = nullptr;
 
 	if (m_origional)
@@ -423,6 +419,5 @@ void ComponentEngine::Transformation::PushToPositionArray(bool updatePhysics)
 	}
 	if(updatePhysics)
 		Send(m_entity, m_entity, TransformationChange{ *matrix });
-	Mesh::GetModelPositionTransferLock().unlock();
 }
 

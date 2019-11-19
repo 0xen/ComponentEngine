@@ -151,7 +151,7 @@ void ComponentEngine::Engine::Start()
 		}, 60, "Scene Update");
 
 		// Update physics world
-		m_threadManager->AddTask([&](float frameTime) {
+		/*m_threadManager->AddTask([&](float frameTime) {
 
 			m_logic_lock.lock();
 			bool playing = m_play_state == PlayState::Play;
@@ -160,7 +160,7 @@ void ComponentEngine::Engine::Start()
 			{
 				m_physicsWorld->Update(frameTime);
 			}
-		}, 60, "PhysicsWorld");
+		}, 60, "PhysicsWorld");*/
 	}
 	else
 	{
@@ -168,40 +168,38 @@ void ComponentEngine::Engine::Start()
 		// Add Update Scene task. Update all components attached to each entity that supports it
 		m_threadManager->AddTask([&, this](float frameTime) {
 			EntityManager& em = GetEntityManager();
-			m_logic_lock.lock();
 			// Loop through all entities in the scene
 			for (auto e : em.GetEntitys())
 			{
+				m_logic_lock.lock();
 				// Loop through all components attached to the entity that inherits the Logic component
 				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 				{
 					logic.Update(frameTime);
 				});
+				m_logic_lock.unlock();
 			}
-			m_logic_lock.unlock();
+			UpdateSceneBuffers();
 		}, 60, "Scene Update");
 
 		// Update physics world
-		m_threadManager->AddTask([&](float frameTime) {
+		/*m_threadManager->AddTask([&](float frameTime) {
 			m_physicsWorld->Update(frameTime);
-		}, 60, "PhysicsWorld");
+		}, 60, "PhysicsWorld");*/
 	}
 
-	// Add UI task. Updates the UI manager
+	// Add Render task
+	m_threadManager->AddTask([&](float frameTime)
+	{
+
+	}, 100, "Raytrace");
+
+	// Add Render task
 	m_threadManager->AddTask([&](float frameTime)
 	{
 		UpdateUI(frameTime);
-	}, 30, "UI");
-
-	// Add Render task
-	m_threadManager->AddTask([&](float frameTime) {
 		RenderFrame();
-	}, 60, "Render");
-
-	// Add Update Scene Buffers task
-	m_threadManager->AddTask([&](float frameTime) {
-		UpdateScene();
-	}, 60, "Scene Buffer Swapping");
+	}, 60, "UI Render");
 	
 
 	Log("Starting Engine", Info);
@@ -268,12 +266,11 @@ void ComponentEngine::Engine::Update()
 }
 
 // Update the scene by transferring all data from the temporary secondary buffers to the primary ones
-void ComponentEngine::Engine::UpdateScene()
+void ComponentEngine::Engine::UpdateSceneBuffers()
 {
 	EntityManager& em = GetEntityManager();
 
 	m_logic_lock.lock();
-	Mesh::SetBufferData();
 	// Store the data from local memory to the secondary buffer
 	for (auto e : em.GetEntitys())
 	{
@@ -285,7 +282,6 @@ void ComponentEngine::Engine::UpdateScene()
 	}
 
 	GetRendererMutex().lock();
-	Mesh::TransferToPrimaryBuffers();
 	// Loop through each entity
 	for (auto e : em.GetEntitys())
 	{
@@ -324,7 +320,7 @@ void ComponentEngine::Engine::Rebuild()
 		m_standardRTConfigSet->UpdateSet();
 	}
 	// Rebuild the render pass instance
-	m_render_pass->Rebuild();
+	m_ui_renderpass->Rebuild();
 	GetRendererMutex().unlock();
 }
 
@@ -337,7 +333,7 @@ void ComponentEngine::Engine::RenderFrame()
 	// Update all renderer's via there Update function
 	m_top_level_acceleration->Update();
 	// Call the main engines render pass
-	m_render_pass->Render();
+	m_ui_renderpass->Render();
 	GetRendererMutex().unlock();
 }
 
@@ -909,9 +905,9 @@ VulkanAcceleration * ComponentEngine::Engine::GetTopLevelAS()
 	return m_top_level_acceleration;
 }
 
-VulkanRenderPass * ComponentEngine::Engine::GetRenderPass()
+VulkanRenderPass * ComponentEngine::Engine::GetUIRenderPass()
 {
-	return m_render_pass;
+	return m_ui_renderpass;
 }
 
 // Get the total used vertex size
@@ -1004,7 +1000,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	}
 
 
-	m_render_pass->RebuildCommandBuffers();
+	//m_raytrace_renderpass->RebuildCommandBuffers();
 
 
 	GetRendererMutex().unlock();
@@ -1197,7 +1193,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 {
 	if (m_default_raytrace != nullptr)
 	{
-		m_render_pass->RemoveGraphicsPipeline(m_default_raytrace);
+		m_raytrace_renderpass->RemoveGraphicsPipeline(m_default_raytrace);
 		delete m_default_raytrace;
 	}
 
@@ -1206,7 +1202,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 	// Resize to fir all miss shader + the ray gen shader
 	primaryShaders.resize(1 + m_miss_groups.size());
 	// Bind the ray gen shader
-	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/DOF/rgen.spv" };
+	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/rgen.spv" };
 	// Copy over the miss shaders
 	memcpy(primaryShaders.data() + 1, m_miss_groups.data(), m_miss_groups.size() * sizeof(std::pair<VkShaderStageFlagBits, const char*>));
 	
@@ -1220,7 +1216,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 
 	// Create the raytracing pipeline
 	m_default_raytrace = m_renderer->CreateRaytracePipeline(
-		m_render_pass, // Current render pass
+		m_raytrace_renderpass, // Current render pass
 		primaryShaders, // Ray gen + miss shaders
 		hitgroups // All defined hit groups
 	);
@@ -1274,7 +1270,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 		m_default_raytrace->AttachDescriptorSet(3, m_RTModelInstanceSet);
 	}
 	m_default_raytrace->Build();
-	m_render_pass->AttachGraphicsPipeline(m_default_raytrace);
+	m_raytrace_renderpass->AttachGraphicsPipeline(m_default_raytrace);
 
 }
 
@@ -1287,7 +1283,10 @@ void ComponentEngine::Engine::InitRenderer()
 
 	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
-	m_render_pass = m_renderer->CreateRenderPass(((m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild) ? 1 : 2);
+
+
+	m_ui_renderpass = m_renderer->CreateRenderPass(1);
+	m_raytrace_renderpass = m_renderer->CreateRenderPass(1);
 
 
 	// If the rendering was not fully created, error out
@@ -1936,13 +1935,13 @@ void ComponentEngine::Engine::InitImGUI()
 	// Setup ImGUI Pipeline
 	if (editor)
 	{
-		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass, {
+		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_ui_renderpass, {
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/Editor/frag.spv" }
 			});
 		// Attach screen buffer
 		//
-		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_render_pass->GetCombinedImageSamplerReadPool());
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_ui_renderpass->GetCombinedImageSamplerReadPool());
 
 		// Attach font buffer
 		m_imgui.m_imgui_pipeline->AttachDescriptorPool(2, m_imgui.m_font_texture_pool);
@@ -1950,7 +1949,7 @@ void ComponentEngine::Engine::InitImGUI()
 	}
 	else
 	{
-		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_render_pass, {
+		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_ui_renderpass, {
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/Release/frag.spv" }
 			});
@@ -1966,7 +1965,7 @@ void ComponentEngine::Engine::InitImGUI()
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
 		config.input = COMBINED_IMAGE_SAMPLER;
-		config.subpass = editor ? 1 : 0;
+		config.subpass = 0;
 		config.culling = VK_CULL_MODE_NONE;
 		config.use_depth_stencil = false;
 	}
@@ -1996,7 +1995,7 @@ void ComponentEngine::Engine::InitImGUI()
 	// Build Pipeline
 	m_imgui.m_imgui_pipeline->Build();
 
-	m_render_pass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
+	m_ui_renderpass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
 
 	const int temp_vert_max = 30000;
 	const int temp_in_max = 40000;
@@ -2145,7 +2144,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
 	}
 
-	m_render_pass->RebuildCommandBuffers();
+	m_ui_renderpass->RebuildCommandBuffers();
 
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();

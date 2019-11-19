@@ -129,7 +129,7 @@ namespace ComponentEngine
 		// Update the threading and window services
 		void Update();
 		// Update the scene by transferring all data from the temporary secondary buffers to the primary ones
-		void UpdateScene();
+		void UpdateSceneBuffers();
 		// Update the ui manager
 		void UpdateUI(float delta);
 		// Rebuild the renderer components of the engine
@@ -223,7 +223,7 @@ namespace ComponentEngine
 		// Get the raytracing top level acceleration structure
 		VulkanAcceleration* GetTopLevelAS();
 		// Get the engines render pass instance
-		VulkanRenderPass* GetRenderPass();
+		VulkanRenderPass* GetUIRenderPass();
 		// Get the total used vertex size
 		unsigned int& GetUsedVertex();
 		// Get the total used index size
@@ -307,7 +307,8 @@ namespace ComponentEngine
 
 		// Rendering Data
 		VulkanRenderer* m_renderer = nullptr;
-		VulkanRenderPass* m_render_pass = nullptr;
+		VulkanRenderPass* m_ui_renderpass = nullptr;
+		VulkanRenderPass* m_raytrace_renderpass = nullptr;
 		VulkanSwapchain* m_swapchain = nullptr;
 
 		// Default pipeline data

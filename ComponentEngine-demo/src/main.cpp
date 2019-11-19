@@ -67,19 +67,11 @@ void AddUIWindows()
 
 
 
-void BeepBoopOutputSwag()
-{
-	std::cout << "Swiggity Swag" << std::endl;
-}
-
-
-
 int main(int argc, char **argv)
 {
-	BeepBoopOutputSwag();
 
 
-	std::packaged_task<int()> task(std::bind([](int a, int b)
+	/*std::packaged_task<int()> task(std::bind([](int a, int b)
 	{
 		return std::pow(a, b);
 	},
@@ -112,13 +104,13 @@ int main(int argc, char **argv)
 
 
 
-	exit(0);
+	exit(0);*/
 
 
 
 	engine = Engine::Singlton();
 	
-	int flags =  EngineFlags::ReleaseBuild;
+	int flags = 0;// EngineFlags::ReleaseBuild;
 	engine->SetFlag(flags);
 
 	engine->Start();

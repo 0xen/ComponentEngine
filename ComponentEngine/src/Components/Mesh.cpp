@@ -25,8 +25,6 @@ using namespace ComponentEngine;
 
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-ordered_lock ComponentEngine::Mesh::m_transformation_lock;
-
 std::map<std::string, VulkanModelPool*> ComponentEngine::Mesh::m_mesh_instances;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
@@ -128,7 +126,7 @@ void ComponentEngine::Mesh::Display()
 				if (ImGui::Selectable(hitgroup.name.c_str(), is_selected))
 				{
 					as->SetModelPoolHitGroupOffset(m_model_pool, i);
-					engine->GetRenderPass()->Rebuild();
+					engine->GetUIRenderPass()->Rebuild();
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();
@@ -197,21 +195,6 @@ void ComponentEngine::Mesh::Update(float frame_time)
 void ComponentEngine::Mesh::EditorUpdate(float frame_time)
 {
 	if(m_loaded)m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
-}
-
-void ComponentEngine::Mesh::SetBufferData()
-{
-
-}
-
-void ComponentEngine::Mesh::TransferToPrimaryBuffers()
-{
-
-}
-
-ordered_lock& ComponentEngine::Mesh::GetModelPositionTransferLock()
-{
-	return m_transformation_lock;
 }
 
 void ComponentEngine::Mesh::LoadModel()

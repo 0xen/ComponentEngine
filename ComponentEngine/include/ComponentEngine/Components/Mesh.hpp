@@ -65,10 +65,6 @@ namespace ComponentEngine
 
 		virtual void Update(float frame_time);
 		virtual void EditorUpdate(float frame_time);
-
-		static void SetBufferData();
-		static void TransferToPrimaryBuffers();
-		static ordered_lock& GetModelPositionTransferLock();
 		void LoadModel();
 		void UnloadModel();
 
@@ -92,8 +88,6 @@ namespace ComponentEngine
 
 		// How many slots we will reserve 
 		static const unsigned int m_buffer_size_step;
-
-		static ordered_lock m_transformation_lock;
 
 		enteez::Entity * m_entity;
 	};

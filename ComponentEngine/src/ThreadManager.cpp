@@ -46,7 +46,9 @@ bool ThreadManager::GetTask(WorkerTask*& task)
 void ThreadManager::AddTask(std::function<void(float)> funcPtr, std::string name)
 {
 	WorkerTask* newTask = new WorkerTask();
-	newTask->funcPtr = funcPtr;
+	newTask->task = std::packaged_task<void()>(std::bind(funcPtr,0.1666f));
+
+
 	newTask->name = name;
 	newTask->type = TaskType::Single;
 	std::unique_lock<std::mutex> acquire(m_task_pool_lock);
@@ -57,7 +59,9 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups
 {
 	WorkerTask* newTask = new WorkerTask();
 	newTask->queued = false;
-	newTask->funcPtr = funcPtr;
+	newTask->task = std::packaged_task<void()>(std::bind(funcPtr, 0.1666f));
+
+
 	newTask->ups = ups;
 	newTask->name = name;
 	newTask->deltaTime = 1.0f / ups;
@@ -73,8 +77,15 @@ void ThreadManager::Update()
 	m_delta_update = 0.0f;
 
 	{ // Schedualed task
+
+		// Calculate how much preformance this thread is using
+		m_seccond_delta += delta;
+
 		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
 
+		bool seccondElapsed = m_seccond_delta > 1.0f;
+
+		// Loop through all tasks
 		for (int i = 0; i < m_schedualed_tasks.size(); ++i)
 		{
 			WorkerTask*& task = m_schedualed_tasks[i];
@@ -91,8 +102,28 @@ void ThreadManager::Update()
 					m_task_pool.push_back(task);
 				}
 			}
+
+			if (seccondElapsed)
+			{
+				memcpy(task->taskActivity.data(), task->taskActivity.data() + 1, sizeof(float) * 19);
+				float averageUPS = task->acumalitiveTime > 0 ? 1.0f / (task->acumalitiveTime / task->totalCount) : 0.0f;
+				task->acumalitiveTime = 0.0f;
+				task->totalCount = 0;
+				task->taskActivity[19] = averageUPS;
+			}
+		}
+
+		if (seccondElapsed)
+		{
+			memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
+			m_thread_activity[19] = m_active_time;
+			m_active_time = 0;
+			m_seccond_delta = 0;
 		}
 	}
+
+
+
 
 	// Push tasks
 	for (int i = 0; i < m_workerCount; ++i)
@@ -110,41 +141,18 @@ void ThreadManager::Update()
 		}
 	}
 
-	// Calculate how much preformance this thread is using
-	m_seccond_delta += delta;
-	if (m_seccond_delta > 1.0f)
-	{
-		{ // Generate a process time for the worker threads
-			std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
-
-			for (int i = 0; i < m_schedualed_tasks.size(); ++i)
-			{
-				WorkerTask*& task = m_schedualed_tasks[i];
-
-				memcpy(task->taskActivity.data(), task->taskActivity.data() + 1, sizeof(float) * 19);
-				float averageUPS = task->acumalitiveTime > 0 ? 1.0f / (task->acumalitiveTime / task->totalCount) : 0.0f;
-				task->acumalitiveTime = 0.0f;
-				task->totalCount = 0;
-				task->taskActivity[19] = averageUPS;
-			}
-		}
-		memcpy(m_thread_activity.data(), m_thread_activity.data() + 1, sizeof(float) * 19);
-		m_thread_activity[19] = m_active_time;
-		m_active_time = 0;
-		m_seccond_delta = 0;
-	}
-
+	/*
 	// Wait for Workers
 	for (int i = 0; i < m_workerCount; ++i)
 	{
 		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
-		while (m_haveWork[i])
+		if (m_haveWork[i])
 		{
 			// Wait until work is done
 			m_workReady[i].wait(lock);
 		}
 	}
-
+	*/
 
 	
 
@@ -179,7 +187,9 @@ void ThreadManager::Worker(unsigned int id)
 			};
 		}
 
-		m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
+		//m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
+		m_workerTask[id]->task();
+		m_workerTask[id]->task.reset();
 
 		{ // Cleanup
 			m_workerTask[id]->queued = false;
