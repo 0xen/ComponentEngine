@@ -67,37 +67,50 @@ void AddUIWindows()
 
 
 
-void BeepBoopOutputSwag()
-{
-	std::cout << "Swiggity Swag" << std::endl;
-}
-
-
-
 int main(int argc, char **argv)
 {
-	BeepBoopOutputSwag();
 
-
-	std::packaged_task<int()> task(std::bind([](int a, int b)
+	/*
+	std::packaged_task<void()> task(std::bind([](int a, int b)
 	{
-		return std::pow(a, b);
+		std::cout << "test" << std::endl;
 	},
 	2,1));
-	std::future<int> result = task.get_future();
+	std::future<void> result = task.get_future();
 
 
+	std::cout << "Task valid test1: " << task.valid() << std::endl;
 
+
+	std::packaged_task<void()> taskInvalid;
+	std::cout << "Task valid test2: " << taskInvalid.valid() << std::endl;
+
+
+	// To be preformed by the thread
+	task();
 
 	// Multithread safe check to see if the result is ready
 	if (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 	{
 		// Get the result from the thread
-		std::cout << "task_lambda test 1:\t" << result.get() << '\n';
+		std::cout << "task_lambda test 1:\t" << '\n';
+	}
+	// Multithread safe check to see if the result is ready
+	if (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	{
+		// Get the result from the thread
+		std::cout << "task_lambda test 1:\t" << '\n';
+	}
+	// Multithread safe check to see if the result is ready
+	if (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	{
+		// Get the result from the thread
+		std::cout << "task_lambda test 1:\t" << '\n';
 	}
 
 
 
+	task.reset();
 	// To be preformed by the thread
 	task();
 
@@ -106,19 +119,19 @@ int main(int argc, char **argv)
 	if (result.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 	{
 		// Get the result from the thread
-		std::cout << "task_lambda test 2:\t" << result.get() << '\n';
+		std::cout << "task_lambda test 2:\t" << '\n';
 	}
 
 
 
 
-	exit(0);
+	exit(0);*/
 
 
 
 	engine = Engine::Singlton();
 	
-	int flags =  EngineFlags::ReleaseBuild;
+	int flags = 0;// EngineFlags::ReleaseBuild;
 	engine->SetFlag(flags);
 
 	engine->Start();

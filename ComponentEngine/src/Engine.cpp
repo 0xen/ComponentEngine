@@ -196,6 +196,7 @@ void ComponentEngine::Engine::Start()
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime) {
 		RenderFrame();
+		std::cout << "Rendering" << std::endl;
 	}, 60, "Render");
 
 	// Add Update Scene Buffers task

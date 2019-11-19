@@ -5,6 +5,10 @@
 #include <functional>
 #include <vector>
 
+#include <cmath>
+#include <future>
+#include <functional>
+
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -20,7 +24,10 @@ enum TaskType
 struct WorkerTask
 {
 	WorkerTask();
-	std::function<void(float)> funcPtr;
+
+	std::packaged_task<void()> task; 
+	std::future<void> future;
+
 	unsigned int ups;
 	float deltaTime; // How long since last update
 	float lastDelta; // How long it took before the function was calld

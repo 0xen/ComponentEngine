@@ -46,7 +46,8 @@ bool ThreadManager::GetTask(WorkerTask*& task)
 void ThreadManager::AddTask(std::function<void(float)> funcPtr, std::string name)
 {
 	WorkerTask* newTask = new WorkerTask();
-	newTask->funcPtr = funcPtr;
+	newTask->task = std::packaged_task<void()>(std::bind(funcPtr, 0.0166f));
+	newTask->future = newTask->task.get_future();
 	newTask->name = name;
 	newTask->type = TaskType::Single;
 	std::unique_lock<std::mutex> acquire(m_task_pool_lock);
@@ -57,7 +58,8 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups
 {
 	WorkerTask* newTask = new WorkerTask();
 	newTask->queued = false;
-	newTask->funcPtr = funcPtr;
+	newTask->task = std::packaged_task<void()>(std::bind(funcPtr, 0.0166f));
+	newTask->future = newTask->task.get_future();
 	newTask->ups = ups;
 	newTask->name = name;
 	newTask->deltaTime = 1.0f / ups;
@@ -94,14 +96,18 @@ void ThreadManager::Update()
 		}
 	}
 
+
+
+
+
 	// Push tasks
 	for (int i = 0; i < m_workerCount; ++i)
 	{
 		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
-		if(!m_haveWork[i])
+		if (!m_haveWork[i])
 		{
 			WorkerTask* task;
-			if(GetTask(task))
+			if (GetTask(task))
 			{
 				m_workerTask[i] = task;
 				m_haveWork[i] = true;
@@ -109,6 +115,8 @@ void ThreadManager::Update()
 			m_workReady[i].notify_one(); // Tell worker
 		}
 	}
+
+
 
 	// Calculate how much preformance this thread is using
 	m_seccond_delta += delta;
@@ -138,12 +146,28 @@ void ThreadManager::Update()
 	for (int i = 0; i < m_workerCount; ++i)
 	{
 		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
+		if(m_workerTask[i] != nullptr && m_workerTask[i]->future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+		{
+			m_workerTask[i]->task.reset();
+			m_workerTask[i]->queued = false;
+			if (m_workerTask[i]->type == TaskType::Single)
+			{
+				delete m_workerTask[i];
+				m_workerTask[i] = nullptr;
+			}
+		}
+	}
+
+	// Wait for Workers
+	/*for (int i = 0; i < m_workerCount; ++i)
+	{
+		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
 		while (m_haveWork[i])
 		{
 			// Wait until work is done
 			m_workReady[i].wait(lock);
 		}
-	}
+	}*/
 
 
 	
@@ -178,22 +202,23 @@ void ThreadManager::Worker(unsigned int id)
 				m_workReady[id].wait(lock);
 			};
 		}
+		m_workerTask[id]->task();
 
-		m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
-
-		{ // Cleanup
+		/*{ // Cleanup
 			m_workerTask[id]->queued = false;
 			if (m_workerTask[id]->type == TaskType::Single)
 			{
 				delete m_workerTask[id];
 			}
-		}
+		}*/
 
 		{
 			std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);
 			m_haveWork[id] = false;
 		}
+		/*
 		m_workReady[id].notify_one(); // Tell main thread
+		*/
 
 	}
 }
