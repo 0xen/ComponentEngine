@@ -1921,7 +1921,7 @@ void ComponentEngine::Engine::InitImGUI()
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &font_width, &font_height);
 	m_imgui.m_font_texture = m_renderer->CreateTextureBuffer(font_data, VkFormat::VK_FORMAT_R8G8B8A8_UNORM, font_width, font_height);
 
-	io.Fonts->TexID = (ImTextureID)0;
+	io.Fonts->TexID = (ImTextureID)1;
 	m_imgui.texture_descriptors.push_back(m_imgui.m_font_texture->GetDescriptorImageInfo(BufferSlot::Primary));
 
 
@@ -1941,11 +1941,11 @@ void ComponentEngine::Engine::InitImGUI()
 			});
 		// Attach screen buffer
 		//
-		//m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_ui_renderpass->GetCombinedImageSamplerReadPool());
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_ui_renderpass->GetCombinedImageSamplerReadPool());
 
 		// Attach font buffer
-		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_imgui.m_font_texture_pool);
-		m_imgui.m_imgui_pipeline->AttachDescriptorSet(0, m_imgui.m_texture_descriptor_set);
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(2, m_imgui.m_font_texture_pool);
+		m_imgui.m_imgui_pipeline->AttachDescriptorSet(2, m_imgui.m_texture_descriptor_set);
 	}
 	else
 	{
