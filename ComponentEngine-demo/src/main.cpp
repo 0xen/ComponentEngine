@@ -125,6 +125,10 @@ int main(int argc, char **argv)
 		});
 
 	}
+	engine->GetThreadManager()->AddTask([&](float frameTime)
+	{
+		engine->LoadScene("../TransparencyTest.bin");
+	});
 
 
 

@@ -47,7 +47,7 @@ Ray CameraRay(vec2 screen_coordinate)
 // Trace a ray to see what we hit
 void TraceRay(Ray ray)
 {
-    uint rayFlags = gl_RayFlagsOpaqueNV;
+    uint rayFlags = gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV;
     uint cullMask = 0xff;
 
 
@@ -73,7 +73,7 @@ void main()
     const vec2 inUV = pixelCenter/vec2(gl_LaunchSizeNV.xy);
     vec2 screen_coordinate = inUV * 2.0 - 1.0;
 
-    rayPayload[3] = intBitsToFloat(1);
+    rayPayload[3] = intBitsToFloat(MAX_RECURSION - 1);
 
     vec3 color = vec3(0.0);
     // Create a basic ray payload

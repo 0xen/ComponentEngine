@@ -126,7 +126,7 @@ void ComponentEngine::Mesh::Display()
 				if (ImGui::Selectable(hitgroup.name.c_str(), is_selected))
 				{
 					as->SetModelPoolHitGroupOffset(m_model_pool, i);
-					engine->GetUIRenderPass()->Rebuild();
+					engine->GetRenderPass()->Rebuild();
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();

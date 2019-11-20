@@ -243,13 +243,13 @@ void main()
     {
       currentResursion -= 1;
       rayPayload[3] = intBitsToFloat(currentResursion);
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
 
       globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 
 
       rayPayload[3] = intBitsToFloat(currentResursion);
-      traceNV(topLevelAS, gl_RayFlagsOpaqueNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
+      traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
 
       globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
 

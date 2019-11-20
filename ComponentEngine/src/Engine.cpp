@@ -64,7 +64,7 @@ ComponentEngine::Engine::Engine()
 
 	m_flags = 0;
 
-	m_max_recursions = 10;
+	m_max_recursions = 5;
 
 	m_all_vertexs.resize(m_vertex_max);
 	m_all_indexs.resize(m_index_max);
@@ -147,6 +147,7 @@ void ComponentEngine::Engine::Start()
 				}
 			}
 
+			UpdateSceneBuffers();
 			m_logic_lock.unlock();
 		}, 60, "Scene Update");
 
@@ -191,16 +192,14 @@ void ComponentEngine::Engine::Start()
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime)
 	{
-
-	}, 100, "Raytrace");
+		UpdateUI(frameTime);
+	}, 60, "UI Render");
 
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime)
 	{
-		UpdateUI(frameTime);
 		RenderFrame();
-	}, 60, "UI Render");
-	
+	}, 60, "Render");
 
 	Log("Starting Engine", Info);
 }
@@ -320,7 +319,7 @@ void ComponentEngine::Engine::Rebuild()
 		m_standardRTConfigSet->UpdateSet();
 	}
 	// Rebuild the render pass instance
-	m_ui_renderpass->Rebuild();
+	m_raytrace_renderpass->Rebuild();
 	GetRendererMutex().unlock();
 }
 
@@ -333,7 +332,7 @@ void ComponentEngine::Engine::RenderFrame()
 	// Update all renderer's via there Update function
 	m_top_level_acceleration->Update();
 	// Call the main engines render pass
-	m_ui_renderpass->Render();
+	m_raytrace_renderpass->Render();
 	GetRendererMutex().unlock();
 }
 
@@ -905,9 +904,9 @@ VulkanAcceleration * ComponentEngine::Engine::GetTopLevelAS()
 	return m_top_level_acceleration;
 }
 
-VulkanRenderPass * ComponentEngine::Engine::GetUIRenderPass()
+VulkanRenderPass * ComponentEngine::Engine::GetRenderPass()
 {
-	return m_ui_renderpass;
+	return m_raytrace_renderpass;
 }
 
 // Get the total used vertex size
@@ -1284,9 +1283,7 @@ void ComponentEngine::Engine::InitRenderer()
 	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
 
-
-	m_ui_renderpass = m_renderer->CreateRenderPass(1);
-	m_raytrace_renderpass = m_renderer->CreateRenderPass(1);
+	m_raytrace_renderpass = m_renderer->CreateRenderPass(((m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild) ? 1 : 2);
 
 
 	// If the rendering was not fully created, error out
@@ -1450,13 +1447,8 @@ void ComponentEngine::Engine::InitRenderer()
 		}
 
 		{ // Default Textured PBR
-
-
-			// Add the PBR shadow miss shader
+		  // Add the PBR shadow miss shader
 			unsigned int missShader = AddMissShader("../Shaders/Raytrace/PBR/Miss/rmiss.spv", {});
-
-
-
 			{ // Primary PBR hitgroup
 				HitShaderPipeline defaultHitgroup{ "PBR",
 				{
@@ -1464,7 +1456,7 @@ void ComponentEngine::Engine::InitRenderer()
 				},
 				true
 				};
-				AddHitShaderPipeline(defaultHitgroup, { missShader, 0 });
+				AddHitShaderPipeline(defaultHitgroup, { missShader, m_general_miss_shader });
 			}
 
 
@@ -1477,6 +1469,20 @@ void ComponentEngine::Engine::InitRenderer()
 				false
 				};
 				AddHitShaderPipeline(shadowHitHitgroup, {});
+			}
+		}
+
+		{ // Transparent
+
+		  // Add the PBR shadow miss shader
+			{ // Primary PBR hitgroup
+				HitShaderPipeline defaultHitgroup{ "Transparent",
+				{
+					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Transparent/Hitgroups/rchit.spv" },
+				},
+				true
+				};
+				AddHitShaderPipeline(defaultHitgroup, { });
 			}
 		}
 	}
@@ -1935,13 +1941,13 @@ void ComponentEngine::Engine::InitImGUI()
 	// Setup ImGUI Pipeline
 	if (editor)
 	{
-		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_ui_renderpass, {
+		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_raytrace_renderpass, {
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/Editor/frag.spv" }
 			});
 		// Attach screen buffer
 		//
-		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_ui_renderpass->GetCombinedImageSamplerReadPool());
+		m_imgui.m_imgui_pipeline->AttachDescriptorPool(0, m_raytrace_renderpass->GetCombinedImageSamplerReadPool());
 
 		// Attach font buffer
 		m_imgui.m_imgui_pipeline->AttachDescriptorPool(2, m_imgui.m_font_texture_pool);
@@ -1949,7 +1955,7 @@ void ComponentEngine::Engine::InitImGUI()
 	}
 	else
 	{
-		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_ui_renderpass, {
+		m_imgui.m_imgui_pipeline = m_renderer->CreateGraphicsPipeline(m_raytrace_renderpass, {
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, "../Shaders/ImGUI/vert.spv" },
 			{ VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, "../Shaders/ImGUI/Release/frag.spv" }
 			});
@@ -1965,7 +1971,7 @@ void ComponentEngine::Engine::InitImGUI()
 	{
 		VulkanGraphicsPipelineConfig& config = m_imgui.m_imgui_pipeline->GetGraphicsPipelineConfig();
 		config.input = COMBINED_IMAGE_SAMPLER;
-		config.subpass = 0;
+		config.subpass = ((m_flags & EngineFlags::ReleaseBuild) == EngineFlags::ReleaseBuild) ? 0 : 1;
 		config.culling = VK_CULL_MODE_NONE;
 		config.use_depth_stencil = false;
 	}
@@ -1995,7 +2001,7 @@ void ComponentEngine::Engine::InitImGUI()
 	// Build Pipeline
 	m_imgui.m_imgui_pipeline->Build();
 
-	m_ui_renderpass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
+	m_raytrace_renderpass->AttachGraphicsPipeline(m_imgui.m_imgui_pipeline);
 
 	const int temp_vert_max = 30000;
 	const int temp_in_max = 40000;
@@ -2144,7 +2150,7 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
 	}
 
-	m_ui_renderpass->RebuildCommandBuffers();
+	m_raytrace_renderpass->RebuildCommandBuffers();
 
 	GetRendererMutex().unlock();
 	m_logic_lock.unlock();

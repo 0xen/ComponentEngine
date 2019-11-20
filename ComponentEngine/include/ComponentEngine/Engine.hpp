@@ -223,7 +223,7 @@ namespace ComponentEngine
 		// Get the raytracing top level acceleration structure
 		VulkanAcceleration* GetTopLevelAS();
 		// Get the engines render pass instance
-		VulkanRenderPass* GetUIRenderPass();
+		VulkanRenderPass* GetRenderPass();
 		// Get the total used vertex size
 		unsigned int& GetUsedVertex();
 		// Get the total used index size
@@ -307,7 +307,6 @@ namespace ComponentEngine
 
 		// Rendering Data
 		VulkanRenderer* m_renderer = nullptr;
-		VulkanRenderPass* m_ui_renderpass = nullptr;
 		VulkanRenderPass* m_raytrace_renderpass = nullptr;
 		VulkanSwapchain* m_swapchain = nullptr;
 
