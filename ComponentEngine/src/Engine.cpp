@@ -64,8 +64,6 @@ ComponentEngine::Engine::Engine()
 
 	m_flags = 0;
 
-	m_max_recursions = 5;
-
 	m_all_vertexs.resize(m_vertex_max);
 	m_all_indexs.resize(m_index_max);
 }
@@ -1170,7 +1168,7 @@ void ComponentEngine::Engine::InitEnteeZ()
 	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI, IO>();
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, IO, Logic, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
-	RegisterBase<Camera, Logic, UI, TransferBuffers>(); 
+	RegisterBase<Camera, Logic, UI, TransferBuffers, IO>();
 	RegisterBase<Rigidbody,
 		MsgRecive<TransformationChange>, MsgRecive<OnComponentEnter<ICollisionShape>>,
 		MsgRecive<CollisionRecording>, MsgRecive<CollisionEvent>,
@@ -1201,7 +1199,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 	// Resize to fir all miss shader + the ray gen shader
 	primaryShaders.resize(1 + m_miss_groups.size());
 	// Bind the ray gen shader
-	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/Gen/rgen.spv" };
+	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/build/rgen.raygen" };
 	// Copy over the miss shaders
 	memcpy(primaryShaders.data() + 1, m_miss_groups.data(), m_miss_groups.size() * sizeof(std::pair<VkShaderStageFlagBits, const char*>));
 	
@@ -1226,7 +1224,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 
 	int groupID = 0;
 	// Ray generation entry point
-	m_default_raytrace->AddRayGenerationProgram(groupID++, {}, { m_max_recursions, m_general_miss_shader });
+	m_default_raytrace->AddRayGenerationProgram(groupID++, {}, { m_general_miss_shader });
 
 	// Define all miss shaders
 	for (int i = 1; i < primaryShaders.size(); i++)
@@ -1240,7 +1238,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 	}
 
 
-	m_default_raytrace->SetMaxRecursionDepth(m_max_recursions);
+	m_default_raytrace->SetMaxRecursionDepth(3);
 
 	m_default_raytrace->AttachVertexBinding({
 		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,
@@ -1433,10 +1431,21 @@ void ComponentEngine::Engine::InitRenderer()
 	{// Define default hit and miss groups
 
 		
-		m_general_miss_shader = AddMissShader("../Shaders/Raytrace/Default/Miss/rmiss.spv", {});
+		m_general_miss_shader = AddMissShader("../Shaders/Raytrace/build/rmiss.gradient_miss", {});
 
 
-		{ // Default Textured PBR - No lights
+		{
+			unsigned int missShader = AddMissShader("../Shaders/Raytrace/build/rmiss.shadow_miss", {});
+			HitShaderPipeline defaultHitgroup{ "PBR",
+			{
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/build/rchit.pbr_hit" },
+			},
+			true
+			};
+			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { missShader, m_general_miss_shader });
+		}
+
+		/*{ // Default Textured PBR - No lights
 			HitShaderPipeline defaultHitgroup{ "PBR - No Light",
 			{
 				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Textured/rchit.spv" },
@@ -1484,7 +1493,7 @@ void ComponentEngine::Engine::InitRenderer()
 				};
 				AddHitShaderPipeline(defaultHitgroup, { });
 			}
-		}
+		}*/
 	}
 	RebuildRaytracePipeline();
 }

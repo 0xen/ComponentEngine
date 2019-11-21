@@ -468,7 +468,6 @@ namespace ComponentEngine
 		VulkanUniformBuffer* m_light_buffer;
 		VulkanBufferPool* m_light_buffer_pool;
 
-		unsigned int m_max_recursions;
 		// Miss shader index. Create a gradient effect when the ray misses
 		unsigned int m_general_miss_shader;
 		// Default textured PBR shader

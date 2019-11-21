@@ -57,6 +57,13 @@ void AddUIWindows()
 			ImGui::PopID();
 		}
 	}));
+	engine->GetUIManager()->AddElement(new UITemplate("Configuration", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
+	{
+	},
+		[&]()
+	{
+		engine->GetMainCamera()->DisplayRaytraceConfig();
+	}));
 }
 
 #include <iostream>
@@ -121,14 +128,11 @@ int main(int argc, char **argv)
 	{
 		// Load the scene
 		engine->GetThreadManager()->AddTask([&](float frameTime) {
-			engine->LoadScene("../Room.obj");
+			//engine->LoadScene("../Room.obj");
+			engine->LoadScene("../TransparencyTest.bin");
 		});
 
 	}
-	engine->GetThreadManager()->AddTask([&](float frameTime)
-	{
-		engine->LoadScene("../TransparencyTest.bin");
-	});
 
 
 

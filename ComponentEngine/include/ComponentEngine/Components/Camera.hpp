@@ -4,6 +4,7 @@
 #include <ComponentEngine\Components\Logic.hpp>
 #include <ComponentEngine\Components\UI.hpp>
 #include <ComponentEngine\Components\TransferBuffers.hpp>
+#include <ComponentEngine\Components\IO.hpp>
 
 #include <vector>
 
@@ -30,7 +31,7 @@ namespace ComponentEngine
 
 	class Transformation;
 
-	class Camera : public Logic, public UI, public TransferBuffers
+	class Camera : public Logic, public UI, public TransferBuffers, public IO
 	{
 
 	public:
@@ -43,6 +44,13 @@ namespace ComponentEngine
 		virtual void BufferTransfer();
 		virtual void Display();
 
+		void DisplayRaytraceConfig();
+
+		virtual void Load(std::ifstream& in);
+		virtual void Save(std::ofstream& out);
+		virtual unsigned int PayloadSize();
+		virtual bool DynamiclySized();
+
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 
 		void SetMainCamera();
@@ -51,6 +59,8 @@ namespace ComponentEngine
 
 		Transformation* GetTransformation();
 	private:
+
+		void SendDataToGPU();
 
 		enteez::Entity* m_entity = nullptr;
 		VulkanUniformBuffer* m_camera_buffer;
@@ -71,6 +81,11 @@ namespace ComponentEngine
 			glm::mat4 viewInverse;
 			glm::mat4 projInverse;
 
+			unsigned int recursionCount;
+			// Camera Settings
+			unsigned int sampleCount;
+			float aperture;
+			float focusDistance;
 		}m_camera_data;
 	};
 
