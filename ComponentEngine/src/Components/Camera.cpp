@@ -132,7 +132,7 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 
 	ImGui::Text("SampleCount");
 	int sampleCount = m_camera_data.sampleCount;
-	if (ImGui::DragInt("##cameraSampleCount", &sampleCount, 1, 1, 50))
+	if (ImGui::DragInt("##cameraSampleCount", &sampleCount, 0.05f, 1, 50))
 	{
 		m_camera_data.sampleCount = sampleCount;
 		SendDataToGPU();
@@ -140,7 +140,7 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 
 	ImGui::Text("RecursionCount");
 	int RecursionCount = m_camera_data.recursionCount;
-	if (ImGui::DragInt("##cameraRecursionCount", &RecursionCount, 1, 1, 20))
+	if (ImGui::DragInt("##cameraRecursionCount", &RecursionCount, 0.05f, 1, Engine::Singlton()->GetRaytracerRecursionDepth()))
 	{
 		m_camera_data.recursionCount = RecursionCount;
 		SendDataToGPU();

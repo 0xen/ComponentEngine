@@ -5,9 +5,11 @@
 
 #include "Structures.glsl"
 
-layout(location = 0) rayPayloadInNV RayPayload rayPayload;
+layout(location = 0) rayPayloadInNV RayPayload inRayPayload;
 
-layout(location = 1) rayPayloadNV bool isShadowed;
+layout(location = 1) rayPayloadNV RayPayload rayPayload;
+
+layout(location = 2) rayPayloadNV bool isShadowed;
 
 hitAttributeNV vec3 attribs;
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
@@ -185,34 +187,30 @@ void main()
 	// Calculate the reflection angle
 	vec3 reflectVec = reflect(-viewVector, normal);
 
-
-	vec3 globalIll = vec3(1);
-	vec3 globalIll2 = vec3(1);
-	/*vec3 globalIll = vec3(0.0f,0.0f,0.0f);
+	vec3 globalIll = vec3(0.0f,0.0f,0.0f);
 	vec3 globalIll2 = vec3(0.0f,0.0f,0.0f);
 
-	int currentResursion = floatBitsToInt(inRayPayload[3]);
+	const uint currentResursion = inRayPayload.recursion;
 
 	if(currentResursion>0)
 	{
-		currentResursion -= 1;
-		rayPayload[3] = intBitsToFloat(currentResursion);
+		rayPayload.recursion = currentResursion - 1;
 		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
 
-		globalIll = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
+		globalIll = rayPayload.colour.xyz;
 
 
-		rayPayload[3] = intBitsToFloat(currentResursion);
+		rayPayload.recursion = currentResursion - 1;
 		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
 
-		globalIll2 = vec3(rayPayload[0], rayPayload[1], rayPayload[2]);//vec3(0.2f,0.2f,0.2f);//rayPayload.color;
+		globalIll2 = rayPayload.colour.xyz;
 
 
 		globalIll2.x = pow(globalIll2.x, 2) * 2;
 		globalIll2.y = pow(globalIll2.y, 2) * 2;
 		globalIll2.z = pow(globalIll2.z, 2) * 2;
 	}
-	inRayPayload[3] = intBitsToFloat(currentResursion);*/
+	inRayPayload.recursion = currentResursion;
 
 	// At a glancing angle, how much should we increase the reflection
 	// Microfacet specular - fresnel term - Slide 21
@@ -255,7 +253,7 @@ void main()
 
 		    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
 		            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-		            MISS_SHADER_INDEX, origin, 0.001, l, rdist + 1.0f, 1);
+		            MISS_SHADER_INDEX, origin, 0.001, l, rdist + 1.0f, 2);
 
 
 		    if (!isShadowed)
@@ -318,7 +316,7 @@ void main()
 
 		    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
 		            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-		            MISS_SHADER_INDEX, origin, 0.001, l, 1000.0f, 1);
+		            MISS_SHADER_INDEX, origin, 0.001, l, 1000.0f, 2);
 
 
 
@@ -372,8 +370,7 @@ void main()
 
 
 
-	rayPayload.colourAndDistance.xyz = colour;
-	rayPayload.colourAndDistance.w = -1.0f; // Define we have missed
+	inRayPayload.colour.xyz = colour;
 }
 
 

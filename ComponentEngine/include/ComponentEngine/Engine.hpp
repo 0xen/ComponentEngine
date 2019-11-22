@@ -243,6 +243,8 @@ namespace ComponentEngine
 		// Get all hit shader instances
 		std::vector<HitShaderPipeline>& GetHitShaderPipelines();
 
+		const unsigned int GetRaytracerRecursionDepth();
+
 		friend class UIManager;
 	private:
 		Engine();
@@ -473,7 +475,7 @@ namespace ComponentEngine
 		// Default textured PBR shader
 		unsigned int m_default_textured_pbr_shader;
 
-
+		const unsigned int m_maxRecursionDepth;
 
 	};
 	

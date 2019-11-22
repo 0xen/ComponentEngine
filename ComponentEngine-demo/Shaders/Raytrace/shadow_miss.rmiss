@@ -1,7 +1,7 @@
 #version 460
 #extension GL_NV_ray_tracing : require
 
-layout(location = 1) rayPayloadInNV bool isShadowed;
+layout(location = 2) rayPayloadInNV bool isShadowed;
 
 void main()
 {

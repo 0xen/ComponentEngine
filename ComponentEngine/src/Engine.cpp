@@ -54,7 +54,7 @@ bool ComponentEngine::Engine::IsRunning()
 	return m_running == EngineStates::Running;
 }
 
-ComponentEngine::Engine::Engine()
+ComponentEngine::Engine::Engine() : m_maxRecursionDepth(10)
 {
 	// Reset key codes
 	for (int i = 0; i < 256; i++)
@@ -1032,6 +1032,11 @@ std::vector<HitShaderPipeline>& ComponentEngine::Engine::GetHitShaderPipelines()
 	return m_pipelines;
 }
 
+const unsigned int ComponentEngine::Engine::GetRaytracerRecursionDepth()
+{
+	return m_maxRecursionDepth;
+}
+
 // Create a SDL window instance
 void ComponentEngine::Engine::InitWindow()
 {
@@ -1238,7 +1243,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 	}
 
 
-	m_default_raytrace->SetMaxRecursionDepth(3);
+	m_default_raytrace->SetMaxRecursionDepth(m_maxRecursionDepth);
 
 	m_default_raytrace->AttachVertexBinding({
 		VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX,

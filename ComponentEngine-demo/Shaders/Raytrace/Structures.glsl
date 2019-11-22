@@ -14,7 +14,8 @@ struct Camera
 
 struct RayPayload
 {
-	vec4 colourAndDistance; // Color.xyz + distance
+	vec4 colour; // Color.xyz + distance
+	uint recursion;
 	uint randomSeed;
 };
 
