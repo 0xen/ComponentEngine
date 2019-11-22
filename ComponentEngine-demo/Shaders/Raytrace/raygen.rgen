@@ -7,9 +7,8 @@
 
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
-
-
-layout(binding=2, set = 0) readonly uniform CameraBuffer {Camera camera; };
+layout(binding =2, set = 0, rgba8) uniform image2D accumilationImage;
+layout(binding=3, set = 0) readonly uniform CameraBuffer {Camera camera; };
 
 
 layout(location = 0) rayPayloadNV RayPayload ray;
@@ -32,6 +31,7 @@ void main()
 
     // Generate a random seem for the ray
     ray.randomSeed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), camera.sampleCount);
+
 
 	const float tmin = 0.001;
 	const float tmax = 10000.0;
@@ -64,4 +64,7 @@ void main()
 
 
     imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
+
+    
+    imageStore(accumilationImage, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
 }

@@ -477,6 +477,9 @@ namespace ComponentEngine
 
 		const unsigned int m_maxRecursionDepth;
 
+		// Used to store the acumilated image from multiple render passes
+		VulkanTextureBuffer* m_accumilation_texture_buffer = nullptr;
+
 	};
 	
 }

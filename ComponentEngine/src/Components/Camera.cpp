@@ -79,6 +79,7 @@ ComponentEngine::Camera::~Camera()
 
 void ComponentEngine::Camera::Update(float frame_time)
 {
+
 }
 
 void ComponentEngine::Camera::SetBufferData()

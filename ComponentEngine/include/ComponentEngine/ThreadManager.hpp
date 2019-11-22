@@ -25,7 +25,7 @@ struct WorkerTask
 {
 	WorkerTask();
 	
-	std::packaged_task<void()> task;
+	std::packaged_task<void(float)> task;
 
 
 	unsigned int ups;

@@ -4,12 +4,12 @@ struct Camera
     mat4 proj;
     mat4 viewInverse;
     mat4 projInverse;
-
-	uint recursionCount;
-	// Camera Settings
-	uint sampleCount;
-	float aperture;
-	float focusDistance;
+    
+    uint recursionCount;
+    // Camera Settings
+    uint sampleCount;
+    float aperture;
+    float focusDistance;
 };
 
 struct RayPayload

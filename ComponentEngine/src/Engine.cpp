@@ -310,10 +310,16 @@ void ComponentEngine::Engine::Rebuild()
 	GetRendererMutex().lock();
 	// Rebuild the swapchain as well as the image views
 	m_swapchain->RebuildSwapchain();
+
+	// Resize the accumilation buffer for the raytracer
+	delete m_accumilation_texture_buffer;
+	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
+
 	if (m_standardRTConfigSet)
 	{
 		// Update raytracer with new raytracing staging buffers
 		m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
+		m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 		m_standardRTConfigSet->UpdateSet();
 	}
 	// Rebuild the render pass instance
@@ -743,7 +749,8 @@ void ComponentEngine::Engine::SetCamera(Camera* camera)
 	{
 		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
-		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+		m_standardRTConfigSet->AttachBuffer(3, m_main_camera->GetCameraBuffer());
 		m_standardRTConfigSet->UpdateSet();
 		// Rebuild the render pass and raytracing dependences
 		Rebuild();
@@ -969,7 +976,8 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	{
 		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
-		m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+		m_standardRTConfigSet->AttachBuffer(3, m_main_camera->GetCameraBuffer());
 		m_standardRTConfigSet->UpdateSet();
 	}
 
@@ -1302,6 +1310,9 @@ void ComponentEngine::Engine::InitRenderer()
 		});
 
 
+	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
+
+
 	// Create camera descriptor set from the tempalte
 	m_camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
 
@@ -1340,14 +1351,16 @@ void ComponentEngine::Engine::InitRenderer()
 			standardRTConfigPool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 3),
 				});
-
+			 
 			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
 
 			m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 			m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
-			m_standardRTConfigSet->AttachBuffer(2, m_main_camera->GetCameraBuffer());
+			m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+			m_standardRTConfigSet->AttachBuffer(3, m_main_camera->GetCameraBuffer());
 			m_standardRTConfigSet->UpdateSet();
 
 		}
@@ -1513,6 +1526,8 @@ void ComponentEngine::Engine::DeInitRenderer()
 	{
 		delete it;
 	}
+	// Destroy raytracer components
+	delete m_accumilation_texture_buffer;
 	// Destroy all renderer components
 	delete m_default_camera;
 	m_default_camera = nullptr;

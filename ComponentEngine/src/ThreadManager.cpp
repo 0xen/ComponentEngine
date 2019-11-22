@@ -46,7 +46,7 @@ bool ThreadManager::GetTask(WorkerTask*& task)
 void ThreadManager::AddTask(std::function<void(float)> funcPtr, std::string name)
 {
 	WorkerTask* newTask = new WorkerTask();
-	newTask->task = std::packaged_task<void()>(std::bind(funcPtr,0.1666f));
+	newTask->task = std::packaged_task<void(float)>(funcPtr);
 
 
 	newTask->name = name;
@@ -59,7 +59,7 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups
 {
 	WorkerTask* newTask = new WorkerTask();
 	newTask->queued = false;
-	newTask->task = std::packaged_task<void()>(std::bind(funcPtr, 0.1666f));
+	newTask->task = std::packaged_task<void(float)>(funcPtr);
 
 
 	newTask->ups = ups;
@@ -188,7 +188,7 @@ void ThreadManager::Worker(unsigned int id)
 		}
 
 		//m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
-		m_workerTask[id]->task();
+		m_workerTask[id]->task(m_workerTask[id]->lastDelta);
 		m_workerTask[id]->task.reset();
 
 		{ // Cleanup
