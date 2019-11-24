@@ -313,7 +313,7 @@ void ComponentEngine::Engine::Rebuild()
 
 	// Resize the accumilation buffer for the raytracer
 	delete m_accumilation_texture_buffer;
-	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
+	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 
 	if (m_standardRTConfigSet)
 	{
@@ -1212,7 +1212,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 	// Resize to fir all miss shader + the ray gen shader
 	primaryShaders.resize(1 + m_miss_groups.size());
 	// Bind the ray gen shader
-	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/build/rgen.raygen" };
+	primaryShaders[0] = { VkShaderStageFlagBits::VK_SHADER_STAGE_RAYGEN_BIT_NV,		"../Shaders/Raytrace/shader_build/rgen.raygen" };
 	// Copy over the miss shaders
 	memcpy(primaryShaders.data() + 1, m_miss_groups.data(), m_miss_groups.size() * sizeof(std::pair<VkShaderStageFlagBits, const char*>));
 	
@@ -1310,7 +1310,7 @@ void ComponentEngine::Engine::InitRenderer()
 		});
 
 
-	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT);
+	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 
 
 	// Create camera descriptor set from the tempalte
@@ -1449,14 +1449,14 @@ void ComponentEngine::Engine::InitRenderer()
 	{// Define default hit and miss groups
 
 		
-		m_general_miss_shader = AddMissShader("../Shaders/Raytrace/build/rmiss.gradient_miss", {});
+		m_general_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.gradient_miss", {});
 
 
 		{
-			unsigned int missShader = AddMissShader("../Shaders/Raytrace/build/rmiss.shadow_miss", {});
+			unsigned int missShader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.shadow_miss", {});
 			HitShaderPipeline defaultHitgroup{ "PBR",
 			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/build/rchit.pbr_hit" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.pbr_hit" },
 			},
 			true
 			};
