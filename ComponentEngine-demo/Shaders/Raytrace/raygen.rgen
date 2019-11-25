@@ -8,7 +8,8 @@
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
 layout(binding =2, set = 0, rgba8) uniform image2D accumilationImage;
-layout(binding=3, set = 0) readonly uniform CameraBuffer {Camera camera; };
+layout(binding =3, set = 0, r8) uniform image2D sampleImage;
+layout(binding=4, set = 0) readonly uniform CameraBuffer {Camera camera; };
 
 
 layout(location = 0) rayPayloadNV RayPayload ray;
@@ -67,4 +68,8 @@ void main()
 
     
     imageStore(accumilationImage, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
+
+
+    //imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), 1);
+    imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(20));
 }

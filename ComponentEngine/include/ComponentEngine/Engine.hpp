@@ -480,6 +480,9 @@ namespace ComponentEngine
 		// Used to store the acumilated image from multiple render passes
 		VulkanTextureBuffer* m_accumilation_texture_buffer = nullptr;
 
+
+		VulkanTextureBuffer* m_sample_texture_buffer = nullptr;
+
 	};
 	
 }

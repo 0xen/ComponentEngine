@@ -63,9 +63,9 @@ void AddUIWindows()
 
 }
 
+
 int main(int argc, char **argv)
 {
-
 	engine = Engine::Singlton();
 	
 	int flags = 0;// EngineFlags::ReleaseBuild;
