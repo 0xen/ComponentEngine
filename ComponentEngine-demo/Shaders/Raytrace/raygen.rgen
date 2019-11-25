@@ -8,7 +8,7 @@
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
 layout(binding =2, set = 0, rgba8) uniform image2D accumilationImage;
-layout(binding =3, set = 0, r8) uniform image2D sampleImage;
+layout(binding =3, set = 0, r8ui) uniform uimage2D sampleImage;
 layout(binding=4, set = 0) readonly uniform CameraBuffer {Camera camera; };
 
 

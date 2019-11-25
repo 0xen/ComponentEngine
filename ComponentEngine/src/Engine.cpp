@@ -317,7 +317,7 @@ void ComponentEngine::Engine::Rebuild()
 
 
 	delete m_sample_texture_buffer;
-	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 
 
 	if (m_standardRTConfigSet)
@@ -1319,7 +1319,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
-	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 
 
 	// Create camera descriptor set from the tempalte
