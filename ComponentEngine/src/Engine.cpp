@@ -36,6 +36,8 @@
 #include <renderer\vulkan\VulkanDescriptorSet.hpp>
 #include <renderer\vulkan\VulkanSwapchain.hpp>
 #include <renderer\vulkan\VulkanRenderPass.hpp>
+#include <renderer\vulkan\VulkanComputePipeline.hpp>
+#include <renderer\vulkan\VulkanComputeProgram.hpp>
 
 #include <lodepng.h>
 
@@ -311,14 +313,7 @@ void ComponentEngine::Engine::Rebuild()
 	// Rebuild the swapchain as well as the image views
 	m_swapchain->RebuildSwapchain();
 
-	// Resize the accumilation buffer for the raytracer
-	delete m_accumilation_texture_buffer;
-	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
-
-
-	delete m_sample_texture_buffer;
-	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
-
+	RebuildRaytracingResources();
 
 	if (m_standardRTConfigSet)
 	{
@@ -1318,14 +1313,24 @@ void ComponentEngine::Engine::InitRenderer()
 		});
 
 
-	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
-	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+
+	m_sample_texture_pool = m_renderer->CreateDescriptorPool({
+		m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0),
+		});
+	m_sample_texture_set = m_sample_texture_pool->CreateDescriptorSet();
+
+
+	InitRaytracingResources();
 
 
 	// Create camera descriptor set from the tempalte
 	m_camera_descriptor_set = m_camera_pool->CreateDescriptorSet();
 
 	SetCamera(m_default_camera);
+
+
+
+	
 
 
 
@@ -1538,8 +1543,7 @@ void ComponentEngine::Engine::DeInitRenderer()
 		delete it;
 	}
 	// Destroy raytracer components
-	delete m_accumilation_texture_buffer;
-	delete m_sample_texture_buffer;
+	DestroyRaytracingResources();
 	// Destroy all renderer components
 	delete m_default_camera;
 	m_default_camera = nullptr;
@@ -1550,6 +1554,53 @@ void ComponentEngine::Engine::DeInitRenderer()
 	m_renderer->Stop();
 	delete m_renderer;
 	m_renderer = nullptr;
+}
+
+void ComponentEngine::Engine::InitRaytracingResources()
+{
+	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+
+	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height,  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+
+
+
+	m_sample_texture_rebuild_pipeline = m_renderer->CreateComputePipeline("../Shaders/Raytrace/shader_build/comp.sample_texture_create", m_window_handle->width, m_window_handle->height, 1);
+
+	
+
+	m_sample_texture_set->AttachBuffer(0, { m_sample_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+	m_sample_texture_set->UpdateSet();
+
+
+	m_sample_texture_rebuild_pipeline->AttachDescriptorPool(0, m_sample_texture_pool);
+
+	m_sample_texture_rebuild_pipeline->AttachDescriptorSet(0, m_sample_texture_set);
+
+	m_sample_texture_rebuild_pipeline->Build();
+
+	m_sample_texture_rebuild_program = m_renderer->CreateComputeProgram();
+	m_sample_texture_rebuild_program->AttachPipeline(m_sample_texture_rebuild_pipeline);
+	m_sample_texture_rebuild_program->Build();
+
+	m_sample_texture_rebuild_program->Run();
+
+}
+
+void ComponentEngine::Engine::RebuildRaytracingResources()
+{
+	DestroyRaytracingResources();
+
+	InitRaytracingResources();
+}
+
+void ComponentEngine::Engine::DestroyRaytracingResources()
+{
+	// Resize the accumilation buffer for the raytracer
+	delete m_accumilation_texture_buffer;
+	delete m_sample_texture_buffer;
+
+	delete m_sample_texture_rebuild_program;
+	delete m_sample_texture_rebuild_pipeline;
 }
 
 // Define the EnteeZ component hooks

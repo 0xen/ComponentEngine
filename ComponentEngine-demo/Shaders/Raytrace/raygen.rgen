@@ -8,7 +8,11 @@
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
 layout(binding =2, set = 0, rgba8) uniform image2D accumilationImage;
-layout(binding =3, set = 0, r8ui) uniform uimage2D sampleImage;
+
+
+layout(binding = 3, set = 0, r8ui) uniform uimage2D sampleImage;
+//layout(binding =3, set = 0, r8ui) uniform uimage2D sampleImage;
+
 layout(binding=4, set = 0) readonly uniform CameraBuffer {Camera camera; };
 
 
@@ -37,9 +41,12 @@ void main()
 	const float tmin = 0.001;
 	const float tmax = 10000.0;
 
+
+	uint sampleCount = imageLoad(sampleImage ,ivec2(gl_LaunchIDNV.xy)).r;
+
 	// Loop through for the amount of samples we want to preform on the pixel.
 	// This is done for depth of field (Bokah) effect.
-	for (uint s = 0; s < camera.sampleCount; ++s)
+	for (uint s = 0; s < sampleCount; ++s)
 	{
 
 
@@ -60,7 +67,7 @@ void main()
 	}
 
 
-	color/= camera.sampleCount;
+	color/= sampleCount;
 
 
 
@@ -68,8 +75,4 @@ void main()
 
     
     imageStore(accumilationImage, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
-
-
-    //imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), 1);
-    imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(20));
 }

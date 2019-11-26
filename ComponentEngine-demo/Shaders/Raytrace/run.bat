@@ -6,4 +6,17 @@ C:/VulkanSDK/Bin32/glslangValidator.exe -V gradient_miss.rmiss -o shader_build/r
 C:/VulkanSDK/Bin32/glslangValidator.exe -V shadow_miss.rmiss -o shader_build/rmiss.shadow_miss
 
 C:/VulkanSDK/Bin32/glslangValidator.exe -V pbr_hit.rchit -o shader_build/rchit.pbr_hit
+
+
+
+
+
+C:/VulkanSDK/Bin32/glslangValidator.exe -V sample_texture_create.comp -o shader_build/comp.sample_texture_create
+
+
+
+
+
+
+
 pause

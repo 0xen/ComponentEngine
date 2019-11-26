@@ -267,6 +267,13 @@ namespace ComponentEngine
 		void InitRenderer();
 		// Destroy the current renderer instance
 		void DeInitRenderer();
+
+		void InitRaytracingResources();
+
+		void RebuildRaytracingResources();
+
+		void DestroyRaytracingResources();
+
 		// Define the EnteeZ component hooks
 		void InitComponentHooks();
 
@@ -482,6 +489,12 @@ namespace ComponentEngine
 
 
 		VulkanTextureBuffer* m_sample_texture_buffer = nullptr;
+
+		VulkanComputePipeline* m_sample_texture_rebuild_pipeline = nullptr;
+		VulkanDescriptorPool* m_sample_texture_pool = nullptr;
+		VulkanDescriptorSet* m_sample_texture_set = nullptr; 
+		VulkanComputeProgram* m_sample_texture_rebuild_program = nullptr;
+
 
 	};
 	
