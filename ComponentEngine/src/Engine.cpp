@@ -321,6 +321,7 @@ void ComponentEngine::Engine::Rebuild()
 		m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
 		m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 		m_standardRTConfigSet->AttachBuffer(3, { m_sample_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+		m_standardRTConfigSet->AttachBuffer(4, { m_ray_depth_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 		m_standardRTConfigSet->UpdateSet();
 	}
 	// Rebuild the render pass instance
@@ -752,7 +753,8 @@ void ComponentEngine::Engine::SetCamera(Camera* camera)
 		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
 		m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 		m_standardRTConfigSet->AttachBuffer(3, { m_sample_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
-		m_standardRTConfigSet->AttachBuffer(4, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->AttachBuffer(4, { m_ray_depth_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+		m_standardRTConfigSet->AttachBuffer(5, m_main_camera->GetCameraBuffer());
 		m_standardRTConfigSet->UpdateSet();
 		// Rebuild the render pass and raytracing dependences
 		Rebuild();
@@ -980,7 +982,8 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
 		m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 		m_standardRTConfigSet->AttachBuffer(3, { m_sample_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
-		m_standardRTConfigSet->AttachBuffer(4, m_main_camera->GetCameraBuffer());
+		m_standardRTConfigSet->AttachBuffer(4, { m_ray_depth_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+		m_standardRTConfigSet->AttachBuffer(5, m_main_camera->GetCameraBuffer());
 		m_standardRTConfigSet->UpdateSet();
 	}
 
@@ -1041,6 +1044,13 @@ unsigned int ComponentEngine::Engine::AddHitShaderPipeline(HitShaderPipeline pip
 std::vector<HitShaderPipeline>& ComponentEngine::Engine::GetHitShaderPipelines()
 {
 	return m_pipelines;
+}
+
+void ComponentEngine::Engine::ResetViewportBuffers()
+{
+	Engine::Singlton()->GetRendererMutex().lock();
+	if(m_sample_texture_rebuild_program!=nullptr) m_sample_texture_rebuild_program->Run();
+	Engine::Singlton()->GetRendererMutex().unlock();
 }
 
 const unsigned int ComponentEngine::Engine::GetRaytracerRecursionDepth()
@@ -1316,6 +1326,8 @@ void ComponentEngine::Engine::InitRenderer()
 
 	m_sample_texture_pool = m_renderer->CreateDescriptorPool({
 		m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0),
+		m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1),
+		m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2),
 		});
 	m_sample_texture_set = m_sample_texture_pool->CreateDescriptorSet();
 
@@ -1367,7 +1379,8 @@ void ComponentEngine::Engine::InitRenderer()
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 3),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 4),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 4),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 5),
 				});
 			 
 			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
@@ -1376,7 +1389,8 @@ void ComponentEngine::Engine::InitRenderer()
 			m_standardRTConfigSet->AttachBuffer(1, { m_swapchain->GetRayTraceStagingBuffer() });
 			m_standardRTConfigSet->AttachBuffer(2, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 			m_standardRTConfigSet->AttachBuffer(3, { m_sample_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
-			m_standardRTConfigSet->AttachBuffer(4, m_main_camera->GetCameraBuffer());
+			m_standardRTConfigSet->AttachBuffer(4, { m_ray_depth_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+			m_standardRTConfigSet->AttachBuffer(5, m_main_camera->GetCameraBuffer());
 			m_standardRTConfigSet->UpdateSet();
 
 		}
@@ -1558,17 +1572,25 @@ void ComponentEngine::Engine::DeInitRenderer()
 
 void ComponentEngine::Engine::InitRaytracingResources()
 {
-	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8G8B8A8_UNORM, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+	m_accumilation_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 
-	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height,  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+	m_sample_texture_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R8_UINT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
+
+
+	m_ray_depth_buffer = m_renderer->CreateTextureBuffer(VkFormat::VK_FORMAT_R32_SFLOAT, m_window_handle->width, m_window_handle->height, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_IMAGE_LAYOUT_GENERAL);
 
 
 
-	m_sample_texture_rebuild_pipeline = m_renderer->CreateComputePipeline("../Shaders/Raytrace/shader_build/comp.sample_texture_create", m_window_handle->width, m_window_handle->height, 1);
+
+
+
+	m_sample_texture_rebuild_pipeline = m_renderer->CreateComputePipeline("../Shaders/Raytrace/shader_build/comp.reset_buffer", m_window_handle->width, m_window_handle->height, 1);
 
 	
 
 	m_sample_texture_set->AttachBuffer(0, { m_sample_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+	m_sample_texture_set->AttachBuffer(1, { m_accumilation_texture_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
+	m_sample_texture_set->AttachBuffer(2, { m_ray_depth_buffer->GetDescriptorImageInfo(BufferSlot::Primary) });
 	m_sample_texture_set->UpdateSet();
 
 
@@ -1582,7 +1604,6 @@ void ComponentEngine::Engine::InitRaytracingResources()
 	m_sample_texture_rebuild_program->AttachPipeline(m_sample_texture_rebuild_pipeline);
 	m_sample_texture_rebuild_program->Build();
 
-	m_sample_texture_rebuild_program->Run();
 
 }
 
@@ -1598,6 +1619,7 @@ void ComponentEngine::Engine::DestroyRaytracingResources()
 	// Resize the accumilation buffer for the raytracer
 	delete m_accumilation_texture_buffer;
 	delete m_sample_texture_buffer;
+	delete m_ray_depth_buffer;
 
 	delete m_sample_texture_rebuild_program;
 	delete m_sample_texture_rebuild_pipeline;

@@ -164,6 +164,8 @@ void main()
 	// World position
 	vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
 
+	inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
+
 	vec3 viewVector = normalize(gl_WorldRayOriginNV - origin);
 
 
@@ -194,16 +196,20 @@ void main()
 
 	if(currentResursion>0)
 	{
+		rayPayload.depth = 0;
 		rayPayload.recursion = currentResursion - 1;
 		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
 
 		globalIll = rayPayload.colour.xyz;
+		inRayPayload.depth += rayPayload.depth;
 
 
+		rayPayload.depth = 0;
 		rayPayload.recursion = currentResursion - 1;
 		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
 
 		globalIll2 = rayPayload.colour.xyz;
+		inRayPayload.depth += rayPayload.depth;
 
 
 		globalIll2.x = pow(globalIll2.x, 2) * 2;

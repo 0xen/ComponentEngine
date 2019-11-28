@@ -7,9 +7,11 @@ struct Camera
     
     uint recursionCount;
     // Camera Settings
-    uint sampleCount;
+    uint samplesPerFrame;
     float aperture;
     float focusDistance;
+    float movementTolerance;
+    uint totalSampleCount;
 };
 
 struct RayPayload
@@ -17,6 +19,7 @@ struct RayPayload
 	vec4 colour; // Color.xyz + distance
 	uint recursion;
 	uint randomSeed;
+  float depth;
 };
 
 struct Light

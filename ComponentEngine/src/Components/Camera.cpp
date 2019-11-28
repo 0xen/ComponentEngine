@@ -18,10 +18,12 @@ ComponentEngine::Camera::Camera()
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
-	m_camera_data.sampleCount = 5;
+	m_camera_data.samplesPerFrame = 10;
+	m_camera_data.totalSamples = 50;
 	m_camera_data.recursionCount = 5;
 	m_camera_data.aperture = 0.16f;
 	m_camera_data.focusDistance = 13.1f;
+	m_camera_data.movmentTollarance = 0.01f;
 
 	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Double, sizeof(Camera), 1,true);
 	UpdateProjection();
@@ -41,10 +43,12 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
-	m_camera_data.sampleCount = 5;
+	m_camera_data.samplesPerFrame = 10;
+	m_camera_data.totalSamples = 50;
 	m_camera_data.recursionCount = 5;
 	m_camera_data.aperture = 0.16f;
 	m_camera_data.focusDistance = 13.1f;
+	m_camera_data.movmentTollarance = 0.01f;
 
 	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Double, sizeof(Camera), 1,true);
 	UpdateProjection();
@@ -131,15 +135,23 @@ void ComponentEngine::Camera::Display()
 void ComponentEngine::Camera::DisplayRaytraceConfig()
 {
 
-	ImGui::Text("SampleCount");
-	int sampleCount = m_camera_data.sampleCount;
-	if (ImGui::DragInt("##cameraSampleCount", &sampleCount, 0.05f, 1, 50))
+	ImGui::Text("Sample Per Frame");
+	int sampleCount = m_camera_data.samplesPerFrame;
+	if (ImGui::DragInt("##samplePerFrame", &sampleCount, 0.05f, 1, 50))
 	{
-		m_camera_data.sampleCount = sampleCount;
+		m_camera_data.samplesPerFrame = sampleCount;
 		SendDataToGPU();
 	}
 
-	ImGui::Text("RecursionCount");
+	ImGui::Text("Total Samples");
+	int totalSamples = m_camera_data.totalSamples;
+	if (ImGui::DragInt("##totalSamples", &totalSamples, 0.05f, 1, 250))
+	{
+		m_camera_data.totalSamples = totalSamples;
+		SendDataToGPU();
+	}
+
+	ImGui::Text("Recursion Count");
 	int RecursionCount = m_camera_data.recursionCount;
 	if (ImGui::DragInt("##cameraRecursionCount", &RecursionCount, 0.05f, 1, Engine::Singlton()->GetRaytracerRecursionDepth()))
 	{
@@ -155,6 +167,12 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 
 	ImGui::Text("Focus Distance");
 	if (ImGui::DragFloat("##cameraFocusDistance", &m_camera_data.focusDistance, 0.05f, 1.0f, 100.0f))
+	{
+		SendDataToGPU();
+	}
+
+	ImGui::Text("Movement Tolerance");
+	if (ImGui::DragFloat("##cameraMovmentTolerance", &m_camera_data.movmentTollarance, 0.0001f, 0.001f, 2.0f))
 	{
 		SendDataToGPU();
 	}
@@ -232,5 +250,6 @@ void ComponentEngine::Camera::SendDataToGPU()
 {
 	Engine::Singlton()->GetRendererMutex().lock();
 	m_camera_buffer->SetData(BufferSlot::Secondery);
+	Engine::Singlton()->ResetViewportBuffers();
 	Engine::Singlton()->GetRendererMutex().unlock();
 }

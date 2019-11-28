@@ -83,9 +83,11 @@ namespace ComponentEngine
 
 			unsigned int recursionCount;
 			// Camera Settings
-			unsigned int sampleCount;
+			unsigned int samplesPerFrame;
 			float aperture;
 			float focusDistance;
+			float movmentTollarance;
+			unsigned int totalSamples;
 		}m_camera_data;
 	};
 

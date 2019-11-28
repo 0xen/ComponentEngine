@@ -11,7 +11,7 @@ C:/VulkanSDK/Bin32/glslangValidator.exe -V pbr_hit.rchit -o shader_build/rchit.p
 
 
 
-C:/VulkanSDK/Bin32/glslangValidator.exe -V sample_texture_create.comp -o shader_build/comp.sample_texture_create
+C:/VulkanSDK/Bin32/glslangValidator.exe -V reset_buffer.comp -o shader_build/comp.reset_buffer
 
 
 

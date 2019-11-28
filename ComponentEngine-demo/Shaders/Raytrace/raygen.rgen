@@ -6,14 +6,16 @@
 #include "Maths.glsl"
 
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
-layout(binding = 1, set = 0, rgba8) uniform image2D image;
-layout(binding =2, set = 0, rgba8) uniform image2D accumilationImage;
 
+layout(binding = 1, set = 0, rgba8) uniform image2D image;
+
+layout(binding =2, set = 0, rgba32f) uniform image2D accumilationImage;
 
 layout(binding = 3, set = 0, r8ui) uniform uimage2D sampleImage;
-//layout(binding =3, set = 0, r8ui) uniform uimage2D sampleImage;
 
-layout(binding=4, set = 0) readonly uniform CameraBuffer {Camera camera; };
+layout(binding = 4, set = 0, r32f) uniform image2D rayDepthImage;
+
+layout(binding=5, set = 0) readonly uniform CameraBuffer {Camera camera; };
 
 
 layout(location = 0) rayPayloadNV RayPayload ray;
@@ -34,22 +36,55 @@ void main()
 
     vec3 color = vec3(0.0f,0.0f,0.0f);
 
-    // Generate a random seem for the ray
-    ray.randomSeed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), camera.sampleCount);
-
 
 	const float tmin = 0.001;
 	const float tmax = 10000.0;
 
 
-	uint sampleCount = imageLoad(sampleImage ,ivec2(gl_LaunchIDNV.xy)).r;
+
+	// Generate Initial Probing ray
+	vec4 origin = camera.viewInverse * vec4(0,0, 0, 1);
+	vec4 target = camera.projInverse * (vec4(uv.x, uv.y, 1, 1));
+	vec4 direction = camera.viewInverse * vec4(normalize(target.xyz * camera.focusDistance), 0);
+
+	ray.recursion = camera.recursionCount - 1;
+	ray.depth = 0.0f;
+
+    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV , 0xFF, 0, 0,
+        MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
+
+	//color += ray.colour.rgb;
+
+	vec3 accumulatedColor = imageLoad(accumilationImage, ivec2(gl_LaunchIDNV.xy)).rgb;
+
+	float lastDepth = imageLoad(rayDepthImage ,ivec2(gl_LaunchIDNV.xy)).r;
+
+	if(ray.depth > lastDepth + camera.movementTolerance || ray.depth < lastDepth - camera.movementTolerance)
+	{
+    	imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(0));
+    	accumulatedColor = vec3(0);
+	}
+
+    imageStore(rayDepthImage, ivec2(gl_LaunchIDNV.xy), vec4(ray.depth));
+
+
+    const uint maxSamples = camera.totalSampleCount;
+
+
+	uint overalSampleCount = imageLoad(sampleImage ,ivec2(gl_LaunchIDNV.xy)).r;
+	uint samplesPerFrame = camera.samplesPerFrame;
+	uint toSample = maxSamples - overalSampleCount > samplesPerFrame ? samplesPerFrame : maxSamples - overalSampleCount;
+	const bool accumulate = toSample < maxSamples;
+
+
+
+    // Generate a random seem for the ray
+    ray.randomSeed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), overalSampleCount);
 
 	// Loop through for the amount of samples we want to preform on the pixel.
 	// This is done for depth of field (Bokah) effect.
-	for (uint s = 0; s < sampleCount; ++s)
+	for (uint s = 0; s < toSample; ++s)
 	{
-
-
 		vec2 offset = camera.aperture/2 * RandomInUnitDisk(ray.randomSeed);
 		vec4 origin = camera.viewInverse * vec4(offset, 0, 1);
 		vec4 target = camera.projInverse * (vec4(uv.x, uv.y, 1, 1));
@@ -57,6 +92,7 @@ void main()
 		
 
 		ray.recursion = camera.recursionCount - 1;
+		ray.depth = 0.0f;
 
 	    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV , 0xFF, 0, 0,
 	        MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
@@ -67,12 +103,24 @@ void main()
 	}
 
 
-	color/= sampleCount;
+
+	accumulatedColor += color;
+
+
+	color = accumulatedColor / (overalSampleCount + toSample);
 
 
 
     imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
 
+
+
+
     
-    imageStore(accumilationImage, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
+	if(accumulate)
+	{
+    	imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(overalSampleCount + toSample));
+    	imageStore(accumilationImage, ivec2(gl_LaunchIDNV.xy), vec4(accumulatedColor,1.0f));
+	}
+
 }

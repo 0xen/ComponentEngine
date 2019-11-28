@@ -243,6 +243,8 @@ namespace ComponentEngine
 		// Get all hit shader instances
 		std::vector<HitShaderPipeline>& GetHitShaderPipelines();
 
+		void ResetViewportBuffers();
+
 		const unsigned int GetRaytracerRecursionDepth();
 
 		friend class UIManager;
@@ -489,6 +491,12 @@ namespace ComponentEngine
 
 
 		VulkanTextureBuffer* m_sample_texture_buffer = nullptr;
+
+
+		VulkanTextureBuffer* m_ray_depth_buffer = nullptr;
+
+
+
 
 		VulkanComputePipeline* m_sample_texture_rebuild_pipeline = nullptr;
 		VulkanDescriptorPool* m_sample_texture_pool = nullptr;
