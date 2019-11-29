@@ -42,19 +42,21 @@ layout (constant_id = 1) const uint SHADOW_SHADER_INDEX = 0;
 
 Light unpackLight(uint index)
 {
-  uint startingIndex = index * 3;
+  uint startingIndex = index * 4;
 
   vec4 d0 = lights.l[startingIndex];
   vec4 d1 = lights.l[startingIndex + 1];
   vec4 d2 = lights.l[startingIndex + 2];
+  vec4 d3 = lights.l[startingIndex + 3];
 
   Light l;
   l.position = vec3(d0.x,d0.y,d0.z);
   l.intensity = d0.w;
-  l.color = vec3(d1.z,d1.y,d1.x);
+  l.color = vec3(d1.x,d1.y,d1.z);
   l.alive = floatBitsToInt(d1.w);
   l.type = floatBitsToInt(d2.x);
   l.dir = vec3(d2.y,d2.z,d2.w);
+  l.modelID = floatBitsToInt(d3.x);
 
   return l;
 }
@@ -236,7 +238,7 @@ void main()
 
 		if(light.alive==0)
 		{
-		    continue;
+		    break;
 		}
 
 
@@ -246,68 +248,72 @@ void main()
 		uint sbtRecordStride = 0;
 
 
-		if(light.type == 0)
-		{
-		    vec3 l = light.position - origin;
+		/*if(light.type == 0)
+		{*/
+	    vec3 l = light.position - origin;
 
 
-		    float rdist = 1 / length(l);
-		    // Normalise the light vector
-		    l *= rdist;
+	    if(dot(normal,normalize(l))<0)
+	    	continue;
 
-		    isShadowed = false;
+		inRayPayload.depth += length(l);
 
-		    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-		            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-		            MISS_SHADER_INDEX, origin, 0.001, l, rdist + 1.0f, 2);
+	    float rdist = 1 / length(l);
 
 
-		    if (!isShadowed)
-		    {
-		        float  li = light.intensity * rdist * rdist;
-		        vec3 lc = light.color;
-		    
-		    
-		        // Vector that is half way between the view and the light
-		        vec3 h = normalize(l + viewVector);
-		    
-		        float nDotL = max(dot(normal,l), 0.001f);
-		        float nDotH = max(dot(normal,h), 0.001f);
-		    
-		    
-		        // Lambert diffuse - Slide 13
-		        vec3 lambert = albedo / PI; // PI used for conservation of energy
-		    
-		    
-		        // Reflected light - Microfacet
-		        // Microfacet specular - normal distribution term - Slide 15-17
-		        float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
-		        float alpha2 = alpha * alpha;
-		        float nDotH2 = nDotH * nDotH;
-		        float dn = nDotH2 * (alpha2 - 1) + 1;
-		        float D = alpha2 / (PI * dn * dn);
-		    
-		    
-		        // Microfacet specular - geometry term - Slide 23
-		        float k = (roughness + 1);
-		        k = k * k / 8;
-		        float gV = nDotV / (nDotV * (1 - k) + k);
-		        float gL = nDotL / (nDotL * (1 - k) + k);
-		        float G = gV * gL;
-		    
-		        // BRDF - Slide 14 & 24 - Lambert is the diffuse term
-		        vec3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
-		    
-		        colour += PI * li * lc * cavity * brdf * nDotL;
-		    
-		    }
+	    isShadowed = false;
+
+	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
+	            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
+	            MISS_SHADER_INDEX, origin, 0.001, normalize(l), length(l), 2);
+
+
+	    if (!isShadowed)
+	    {
+	        float  li = light.intensity * rdist * rdist;
+	        vec3 lc = light.color;
+	    
+	    
+	        // Vector that is half way between the view and the light
+	        vec3 h = normalize(l + viewVector);
+	    
+	        float nDotL = max(dot(normal,normalize(l)), 0.001f);
+	        float nDotH = max(dot(normal,h), 0.001f);
+	    
+	    
+	        // Lambert diffuse - Slide 13
+	        vec3 lambert = albedo / PI; // PI used for conservation of energy
+	    
+	    
+	        // Reflected light - Microfacet
+	        // Microfacet specular - normal distribution term - Slide 15-17
+	        float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
+	        float alpha2 = alpha * alpha;
+	        float nDotH2 = nDotH * nDotH;
+	        float dn = nDotH2 * (alpha2 - 1) + 1;
+	        float D = alpha2 / (PI * dn * dn);
+	    
+	    
+	        // Microfacet specular - geometry term - Slide 23
+	        float k = (roughness + 1);
+	        k = k * k / 8;
+	        float gV = nDotV / (nDotV * (1 - k) + k);
+	        float gL = nDotL / (nDotL * (1 - k) + k);
+	        float G = gV * gL;
+	    
+	        // BRDF - Slide 14 & 24 - Lambert is the diffuse term
+	        vec3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
+	    
+	        colour += PI * li * lc * cavity * brdf * nDotL;
+	    
+	    }
 
 
 
 
 
 
-		}
+		/*}
 		else if(light.type == 1)
 		{
 		    vec3 l = light.dir;
@@ -365,7 +371,7 @@ void main()
 		        colour += PI * li * lc * cavity * brdf * nDotL;
 		    
 		    }
-		}
+		}*/
 
 
 	}
@@ -376,7 +382,7 @@ void main()
 
 
 
-	inRayPayload.colour.xyz = colour;
+	inRayPayload.colour.rgb = colour;
 }
 
 

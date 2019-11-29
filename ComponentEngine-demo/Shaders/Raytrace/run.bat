@@ -7,6 +7,8 @@ C:/VulkanSDK/Bin32/glslangValidator.exe -V shadow_miss.rmiss -o shader_build/rmi
 
 C:/VulkanSDK/Bin32/glslangValidator.exe -V pbr_hit.rchit -o shader_build/rchit.pbr_hit
 
+C:/VulkanSDK/Bin32/glslangValidator.exe -V light_color.rchit -o shader_build/rchit.light_color
+
 
 
 

@@ -1,6 +1,7 @@
 #include <ComponentEngine\Components\Light.hpp>
 #include <ComponentEngine\Engine.hpp>
 #include <ComponentEngine\Components\Transformation.hpp>
+#include <ComponentEngine\Components\Mesh.hpp>
 
 #include <renderer\vulkan\VulkanUniformBuffer.hpp>
 #include <renderer\vulkan\VulkanBufferPool.hpp>
@@ -38,6 +39,11 @@ void ComponentEngine::Light::Update(float frame_time)
 	data->alive = 1;
 	data->lightType = m_type;
 	data->dir = m_dir;
+	data->modelID = -1;
+	if (m_entity->HasComponent<Mesh>())
+	{
+		data->modelID = m_entity->GetComponent<Mesh>().GetUUID();
+	}
 }
 
 // Called during updates when we are not in the play state
@@ -49,6 +55,7 @@ void ComponentEngine::Light::EditorUpdate(float frame_time)
 // Called when we are in a ImGui UI draw state and the components info needs to be rendered
 void ComponentEngine::Light::Display()
 {
+	ImGui::PushID(this);
 	ImGui::Text("Light Type");
 	ImGui::Combo("##LightType", &m_type, m_light_types, 2, 2);
 
@@ -65,10 +72,16 @@ void ComponentEngine::Light::Display()
 	}
 
 	ImGui::Text("Intensity");
-	ImGui::DragFloat("##LightIntensity", (float*)&m_intensity, 0.5f, 0.0f, 10000.0f);
+	if (ImGui::DragFloat("##LightIntensity", (float*)&m_intensity, 0.5f, 0.0f, 10000.0f))
+	{
+		Engine::Singlton()->ResetViewportBuffers();
+	}
 	ImGui::Text("Color");
-	ImGui::ColorEdit3("##LightColor", (float*)&m_color, ImGuiColorEditFlags_InputRGB);
-
+	if (ImGui::ColorEdit3("##LightColor", (float*)&m_color, ImGuiColorEditFlags_InputRGB))
+	{
+		Engine::Singlton()->ResetViewportBuffers();
+	}
+	ImGui::PopID();
 }
 
 // Load the component from a file

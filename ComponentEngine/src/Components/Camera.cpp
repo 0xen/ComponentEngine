@@ -18,12 +18,12 @@ ComponentEngine::Camera::Camera()
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
-	m_camera_data.samplesPerFrame = 10;
+	m_camera_data.samplesPerFrame = 2;
 	m_camera_data.totalSamples = 50;
-	m_camera_data.recursionCount = 5;
-	m_camera_data.aperture = 0.16f;
-	m_camera_data.focusDistance = 13.1f;
-	m_camera_data.movmentTollarance = 0.01f;
+	m_camera_data.recursionCount = 3;
+	m_camera_data.aperture = 0.002f;
+	m_camera_data.focusDistance = 0.5f;
+	m_camera_data.movmentTollarance = 0.0001f;
 
 	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Double, sizeof(Camera), 1,true);
 	UpdateProjection();
@@ -43,12 +43,12 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
-	m_camera_data.samplesPerFrame = 10;
+	m_camera_data.samplesPerFrame = 2;
 	m_camera_data.totalSamples = 50;
-	m_camera_data.recursionCount = 5;
-	m_camera_data.aperture = 0.16f;
-	m_camera_data.focusDistance = 13.1f;
-	m_camera_data.movmentTollarance = 0.01f;
+	m_camera_data.recursionCount = 3;
+	m_camera_data.aperture = 0.002f;
+	m_camera_data.focusDistance = 0.5f;
+	m_camera_data.movmentTollarance = 0.0001f;
 
 	m_camera_buffer = Engine::Singlton()->GetRenderer()->CreateUniformBuffer(&m_camera_data, BufferChain::Double, sizeof(Camera), 1,true);
 	UpdateProjection();
@@ -160,19 +160,19 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 	}
 
 	ImGui::Text("Aperture");
-	if (ImGui::DragFloat("##cameraAperture", &m_camera_data.aperture, 0.001f, 0.01f, 1.0f))
+	if (ImGui::DragFloat("##cameraAperture", &m_camera_data.aperture, 0.001f, 0.001f, 1.0f, "%.5f"))
 	{
 		SendDataToGPU();
 	}
 
 	ImGui::Text("Focus Distance");
-	if (ImGui::DragFloat("##cameraFocusDistance", &m_camera_data.focusDistance, 0.05f, 1.0f, 100.0f))
+	if (ImGui::DragFloat("##cameraFocusDistance", &m_camera_data.focusDistance, 0.005f, 0.001f, 100.0f, "%.5f"))
 	{
 		SendDataToGPU();
 	}
 
 	ImGui::Text("Movement Tolerance");
-	if (ImGui::DragFloat("##cameraMovmentTolerance", &m_camera_data.movmentTollarance, 0.0001f, 0.001f, 2.0f))
+	if (ImGui::DragFloat("##cameraMovmentTolerance", &m_camera_data.movmentTollarance, 0.0001f, 0.001f, 2.0f, "%.5f"))
 	{
 		SendDataToGPU();
 	}

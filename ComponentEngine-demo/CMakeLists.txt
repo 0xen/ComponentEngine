@@ -17,10 +17,12 @@ set(HAVE_LIBC TRUE)
 set(src
     src/main.cpp
     src/KeyboardMovment.cpp
+    src/MouseDrag.cpp
 )
  
 set(headers
     include/KeyboardMovment.hpp
+    include/MouseDrag.hpp
 )
 
 include_directories(include)

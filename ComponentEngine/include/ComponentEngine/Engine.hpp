@@ -483,6 +483,8 @@ namespace ComponentEngine
 		unsigned int m_general_miss_shader;
 		// Default textured PBR shader
 		unsigned int m_default_textured_pbr_shader;
+		// Default single color shader
+		unsigned int m_default_light_color_shader;
 
 		const unsigned int m_maxRecursionDepth;
 

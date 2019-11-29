@@ -19,6 +19,7 @@ ComponentEngine::KeyboardMovment::KeyboardMovment(enteez::Entity* entity)
 	m_ignore_axis_y = false;
 	m_ignore_axis_z = false;
 	m_local_movment = true;
+	m_inEditor = false;
 }
 
 void ComponentEngine::KeyboardMovment::Update(float frame_time)
@@ -26,8 +27,6 @@ void ComponentEngine::KeyboardMovment::Update(float frame_time)
 	// Since we are focusing on a window, we want to ignore any keyboard inputs
 	/*if (UIManager::IsWindowFocused())
 		return;*/
-	if (Engine::Singlton()->GetPlayState() == Editor)
-		return;
 
 	Engine* engine = Engine::Singlton();
 	Transformation* trans = &m_entity->GetComponent<Transformation>();
@@ -85,11 +84,16 @@ void ComponentEngine::KeyboardMovment::Update(float frame_time)
 
 void ComponentEngine::KeyboardMovment::EditorUpdate(float frame_time)
 {
-	Update(frame_time);
+	if(m_inEditor)
+		Update(frame_time);
 }
 
 void ComponentEngine::KeyboardMovment::Display()
 {
+	{
+		ImGui::Text("Work In Editor");
+		ImGui::Checkbox("##KeyboardMovmentInEditor",&m_inEditor);
+	}
 	{ // Movment speed input
 		ImGui::Text("Movment Speed");
 		ImGui::DragFloat("##KeyboardMovment_Speed", &m_speed, 0.5f, 1.0f, 25.0f);
@@ -132,7 +136,7 @@ void ComponentEngine::KeyboardMovment::Save(std::ofstream & out)
 
 unsigned int ComponentEngine::KeyboardMovment::PayloadSize()
 {
-	return SizeOfOffsetRange(KeyboardMovment, m_speed, m_local_movment);
+	return SizeOfOffsetRange(KeyboardMovment, m_speed, m_inEditor);
 }
 
 bool ComponentEngine::KeyboardMovment::DynamiclySized()

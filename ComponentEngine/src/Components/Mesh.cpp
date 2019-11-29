@@ -32,6 +32,7 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 	m_loaded = false;
 	m_vertex_count = 0;
 	m_hit_group = 0;
+	m_model = nullptr;
 }
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
@@ -39,6 +40,7 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSen
 	m_loaded = false;
 	m_vertex_count = 0;
 	m_hit_group = 0;
+	m_model = nullptr;
 	ChangePath(path);
 	LoadModel();
 
@@ -104,6 +106,8 @@ void ComponentEngine::Mesh::Display()
 
 	if (m_loaded)
 	{
+		ImGui::PushID(this);
+
 		ImGui::Text("Vertex Count: %d", m_vertex_count);
 
 		std::vector<HitShaderPipeline>& hitgroups = Engine::Singlton()->GetHitShaderPipelines();
@@ -134,6 +138,7 @@ void ComponentEngine::Mesh::Display()
 			ImGui::EndCombo();
 		}
 
+		ImGui::PopID();
 	}
 
 	DropBoxInstance<FileForms> tempFilePath = m_file_path;
@@ -332,4 +337,10 @@ void ComponentEngine::Mesh::UnloadModel()
 		Engine::Singlton()->UpdateAccelerationDependancys();
 		m_loaded = false;
 	}
+}
+
+int ComponentEngine::Mesh::GetUUID()
+{
+	if (m_model == nullptr)return -1;
+	return m_model->GetUUID();
 }

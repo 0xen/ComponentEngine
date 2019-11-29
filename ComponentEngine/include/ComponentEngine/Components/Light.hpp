@@ -24,6 +24,8 @@ namespace ComponentEngine
 		int alive; // Is the light enabled or not
 		int lightType; // Define the type of light. 0: Point light, 1: Directional Light
 		glm::vec3 dir; // Directional light direction
+		int modelID;
+		int padding[3];
 	};
 	class Light : public Logic, public IO, public UI
 	{

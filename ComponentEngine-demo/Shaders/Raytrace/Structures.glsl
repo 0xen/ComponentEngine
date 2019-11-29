@@ -30,6 +30,7 @@ struct Light
   int alive;
   int type;
   vec3 dir;
+  int modelID;
 };
 
 struct Offsets

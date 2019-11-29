@@ -59,7 +59,7 @@ void main()
 
 	float lastDepth = imageLoad(rayDepthImage ,ivec2(gl_LaunchIDNV.xy)).r;
 
-	if(ray.depth > lastDepth + camera.movementTolerance || ray.depth < lastDepth - camera.movementTolerance)
+	if(/*ray.depth < camera.movementTolerance ||*/ ray.depth > lastDepth + camera.movementTolerance || ray.depth < lastDepth - camera.movementTolerance)
 	{
     	imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(0));
     	accumulatedColor = vec3(0);

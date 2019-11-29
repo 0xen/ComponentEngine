@@ -301,9 +301,15 @@ void ComponentEngine::Engine::UpdateSceneBuffers()
 // Update the ui manager
 void ComponentEngine::Engine::UpdateUI(float delta)
 {
+	m_logic_lock.lock();
+	GetRendererMutex().lock();
+
 	ImGuiIO& io = ImGui::GetIO();
 	io.DeltaTime = delta;
 	UpdateImGUI();
+
+	GetRendererMutex().unlock();
+	m_logic_lock.unlock();
 }
 
 // Rebuild the renderer components of the engine
@@ -394,6 +400,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		GetRendererMutex().lock();
 
 		GetEntityManager().Clear();
+		ResetViewportBuffers();
 
 		GetRendererMutex().unlock();
 		m_logic_lock.unlock();
@@ -467,6 +474,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		// Read in the component count
 		unsigned int componentCount;
 		Common::Read(in, &componentCount, sizeof(unsigned int));
+
 
 		// Loop through each component
 		for (int j = 0; j < componentCount; j++)
@@ -551,7 +559,7 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	{
 		createEntity(nullptr);
 	}
-
+	ResetViewportBuffers();
 	return true;
 }
 
@@ -953,6 +961,7 @@ void ComponentEngine::Engine::RebuildOffsetAllocation()
 			m_offset_allocation_array[index].index = index_offset;
 			m_offset_allocation_array[index].vertex = vertex_offset;
 			m_offset_allocation_array[index].position = mp.model_pool->GetModelBufferOffset(model.second, 0);
+			model.second->SetUUID(index);
 			index++;
 		}
 	}
@@ -1491,6 +1500,16 @@ void ComponentEngine::Engine::InitRenderer()
 			true
 			};
 			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { missShader, m_general_miss_shader });
+		}
+
+		{
+			HitShaderPipeline defaultHitgroup{ "Light Color",
+			{
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.light_color" },
+			},
+			true
+			};
+			m_default_light_color_shader = AddHitShaderPipeline(defaultHitgroup, { });
 		}
 
 		/*{ // Default Textured PBR - No lights
@@ -2149,8 +2168,6 @@ void ComponentEngine::Engine::InitImGUI()
 // Update the ui manager
 void ComponentEngine::Engine::UpdateImGUI()
 {
-	m_logic_lock.lock();
-	GetRendererMutex().lock();
 
 	// Render all imgui menu components
 	m_ui->Render();
@@ -2265,9 +2282,6 @@ void ComponentEngine::Engine::UpdateImGUI()
 	}
 
 	m_raytrace_renderpass->RebuildCommandBuffers();
-
-	GetRendererMutex().unlock();
-	m_logic_lock.unlock();
 }
 
 // Destroy the instance of imgui

@@ -32,6 +32,7 @@ namespace ComponentEngine
 		bool m_ignore_axis_y;
 		bool m_ignore_axis_z;
 		bool m_local_movment;
+		bool m_inEditor;
 		KeyInstance keys0;
 		KeyInstance keys1;
 		KeyInstance keys2;

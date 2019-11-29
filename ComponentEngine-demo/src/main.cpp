@@ -15,6 +15,7 @@
 
 #include <EnteeZ\EnteeZ.hpp>
 #include <KeyboardMovment.hpp>
+#include <MouseDrag.hpp>
 #include <iostream>
 
 using namespace ComponentEngine;
@@ -28,8 +29,10 @@ VulkanRaytracePipeline* ray_pipeline = nullptr;
 void RegisterCustomComponents()
 {
 	engine->RegisterComponentBase("Keyboard Movement", KeyboardMovment::EntityHookDefault);
+	engine->RegisterComponentBase("Mouse Drag", MouseDrag::EntityHookDefault);
 
 	engine->RegisterBase<KeyboardMovment, Logic, UI, IO>();
+	engine->RegisterBase<MouseDrag, Logic, UI, IO>();
 }
 
 void AddUIWindows()

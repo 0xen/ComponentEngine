@@ -68,6 +68,8 @@ namespace ComponentEngine
 		void LoadModel();
 		void UnloadModel();
 
+		int GetUUID();
+
 		friend class Engine;
 	private:
 
