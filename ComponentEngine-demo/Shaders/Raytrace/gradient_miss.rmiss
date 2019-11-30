@@ -8,7 +8,9 @@ layout(location = 0) rayPayloadInNV RayPayload rayPayload;
 
 void main()
 {
-	const float brightness = 0.3f;
+	const float brightness = 0.0f;
+
+	
    	// View-independent background gradient to simulate a basic sky background
 	const vec3 gradientStart = vec3(0.0, 0.6, 1.0);
 	const vec3 gradientEnd = vec3(1.0, 0.6, 0.0);

@@ -189,19 +189,21 @@ void ThreadManager::Worker(unsigned int id)
 
 		//m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
 		m_workerTask[id]->task(m_workerTask[id]->lastDelta);
-		m_workerTask[id]->task.reset();
 
-		{ // Cleanup
-			m_workerTask[id]->queued = false;
-			if (m_workerTask[id]->type == TaskType::Single)
-			{
-				delete m_workerTask[id];
-			}
-		}
+		
 
 		{
 			std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);
 			m_haveWork[id] = false;
+
+
+			m_workerTask[id]->queued = false;
+			m_workerTask[id]->task.reset();
+			if (m_workerTask[id]->type == TaskType::Single)
+			{
+				delete m_workerTask[id];
+			}
+			m_workerTask[id] = nullptr;
 		}
 		m_workReady[id].notify_one(); // Tell main thread
 

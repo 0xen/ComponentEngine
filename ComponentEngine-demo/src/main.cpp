@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 		// Load the scene
 		engine->GetThreadManager()->AddTask([&](float frameTime) {
 			//engine->LoadScene("../Room.obj");
-			engine->LoadScene("../TransparencyTest.bin");
+			engine->LoadScene("../Head.bin");
 		});
 
 	}

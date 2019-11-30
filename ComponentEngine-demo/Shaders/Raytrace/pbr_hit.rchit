@@ -238,7 +238,7 @@ void main()
 
 		if(light.alive==0)
 		{
-		    break;
+		    continue;
 		}
 
 
