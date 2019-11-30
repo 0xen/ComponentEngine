@@ -261,26 +261,45 @@ void ComponentEngine::Mesh::LoadModel()
 			used_vertex++;
 		}
 
-		unsigned int material_count = 0;
+
 		unsigned int offset = texture_descriptors.size();
+
+
+		std::vector<bool> loadedTextures(loader.m_textures.size());
+		for (int i = 0; i <  loader.m_textures.size(); i++)
+		{
+			std::stringstream ss;
+			ss << m_dir << loader.m_textures[i];
+
+			VulkanTextureBuffer* texture = engine->LoadTexture(ss.str());
+			loadedTextures[i] = texture != nullptr;
+			if (loadedTextures[i])
+			{
+				textures.push_back(texture);
+
+				texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+			}
+		}
+
+
 		for (auto& material : loader.m_materials)
 		{
-			if (material.textureID >= 0)
+			if (material.textureID >= 0 && loadedTextures[material.textureID])
 				material.textureID += offset;
 			else
 				material.textureID = 0; // Set to default white texture
 
-			if (material.metalicTextureID >= 0)
+			if (material.metalicTextureID >= 0 && loadedTextures[material.metalicTextureID])
 				material.metalicTextureID += offset;
 			else
 				material.metalicTextureID = 1; // Set to default black texture
 
-			if (material.roughnessTextureID >= 0)
+			if (material.roughnessTextureID >= 0 && loadedTextures[material.roughnessTextureID])
 				material.roughnessTextureID += offset;
 			else
 				material.roughnessTextureID = 0; // Set to default white texture
 
-			if (material.normalTextureID >= 0)
+			if (material.normalTextureID >= 0 && loadedTextures[material.normalTextureID])
 				material.normalTextureID += offset;
 			else
 				material.normalTextureID = 0; // Set to default white texture
@@ -288,19 +307,6 @@ void ComponentEngine::Mesh::LoadModel()
 			materials[used_materials] = material;
 
 			used_materials++;
-		}
-
-		for (auto& texturePath : loader.m_textures)
-		{
-			std::stringstream ss;
-			ss << m_dir << texturePath;
-
-			VulkanTextureBuffer* texture = engine->LoadTexture(ss.str());
-
-			textures.push_back(texture);
-
-			texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
-
 		}
 
 		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);

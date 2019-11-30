@@ -480,7 +480,7 @@ namespace ComponentEngine
 		VulkanBufferPool* m_light_buffer_pool;
 
 		// Miss shader index. Create a gradient effect when the ray misses
-		unsigned int m_general_miss_shader;
+		unsigned int m_gradient_miss_shader;
 		// Default textured PBR shader
 		unsigned int m_default_textured_pbr_shader;
 		// Default single color shader

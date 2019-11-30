@@ -127,9 +127,8 @@ WaveFrontMaterial unpackMaterial(int matIndex)
 
 void main()
 {
-    
-	float PI = 3.14159265359f;
-	float GAMMA = 2.2f;
+	const float PI = 3.14159265359f;
+	const float GAMMA = 2.2f;
 
 
 	Offsets o = unpackOffsets(gl_InstanceID);
@@ -166,9 +165,83 @@ void main()
 	// World position
 	vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
 
-	inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
-
 	vec3 viewVector = normalize(gl_WorldRayOriginNV - origin);
+
+
+
+	// Calculate the reflection angle
+	vec3 reflectVec = reflect(-viewVector, normal);
+
+	vec3 globalIll = vec3(0.0f,0.0f,0.0f);
+	vec3 globalIll2 = vec3(0.0f,0.0f,0.0f);
+
+	const uint currentResursion = inRayPayload.recursion;
+
+	
+
+	if(inRayPayload.depthTest)
+	{
+		inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
+		if(currentResursion>0)
+		{
+			rayPayload.depth = 0;
+			rayPayload.recursion = currentResursion - 1;
+			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, normal, 1000.0, 1);
+
+			inRayPayload.depth += rayPayload.depth;
+
+
+			rayPayload.depth = 0;
+			rayPayload.recursion = currentResursion - 1;
+			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.00001f, reflectVec, 1000.0, 1);
+
+			inRayPayload.depth += rayPayload.depth;
+		}
+		inRayPayload.recursion = currentResursion;
+
+		for(uint i = 0 ; i < 100; i ++)
+		{
+			// Lighting Calc
+			Light light = unpackLight(i);
+
+			if(light.alive==0)
+			{
+			    continue;
+			}
+
+		    vec3 l = light.position - origin;
+
+		    if(dot(normal,normalize(l))<0)
+		    	continue;
+
+			inRayPayload.depth += length(l);
+		}
+
+		return;
+	}
+
+
+	if(currentResursion>0)
+	{
+		rayPayload.recursion = currentResursion - 1;
+		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, normal, 1000.0, 1);
+
+		globalIll = rayPayload.colour.xyz;
+
+
+		rayPayload.recursion = currentResursion - 1;
+		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.00001f, reflectVec, 1000.0, 1);
+
+		globalIll2 = rayPayload.colour.xyz;
+
+
+		globalIll2.x = pow(globalIll2.x, 2) * 2;
+		globalIll2.y = pow(globalIll2.y, 2) * 2;
+		globalIll2.z = pow(globalIll2.z, 2) * 2;
+	}
+	inRayPayload.recursion = currentResursion;
+
+
 
 
 	// Texture maps             
@@ -188,37 +261,11 @@ void main()
 
 
 
-	// Calculate the reflection angle
-	vec3 reflectVec = reflect(-viewVector, normal);
-
-	vec3 globalIll = vec3(0.0f,0.0f,0.0f);
-	vec3 globalIll2 = vec3(0.0f,0.0f,0.0f);
-
-	const uint currentResursion = inRayPayload.recursion;
-
-	if(currentResursion>0)
-	{
-		rayPayload.depth = 0;
-		rayPayload.recursion = currentResursion - 1;
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.001, normal, 1000.0, 1);
-
-		globalIll = rayPayload.colour.xyz;
-		inRayPayload.depth += rayPayload.depth;
 
 
-		rayPayload.depth = 0;
-		rayPayload.recursion = currentResursion - 1;
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.001, reflectVec, 1000.0, 1);
-
-		globalIll2 = rayPayload.colour.xyz;
-		inRayPayload.depth += rayPayload.depth;
 
 
-		globalIll2.x = pow(globalIll2.x, 2) * 2;
-		globalIll2.y = pow(globalIll2.y, 2) * 2;
-		globalIll2.z = pow(globalIll2.z, 2) * 2;
-	}
-	inRayPayload.recursion = currentResursion;
+
 
 	// At a glancing angle, how much should we increase the reflection
 	// Microfacet specular - fresnel term - Slide 21
@@ -231,7 +278,7 @@ void main()
 
 
 
-	for(uint i = 0 ; i < 100; i ++)
+	for(uint i = 0; i < 100; i ++)
 	{
 		// Lighting Calc
 		Light light = unpackLight(i);
@@ -256,8 +303,6 @@ void main()
 	    if(dot(normal,normalize(l))<0)
 	    	continue;
 
-		inRayPayload.depth += length(l);
-
 	    float rdist = 1 / length(l);
 
 
@@ -265,7 +310,7 @@ void main()
 
 	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
 	            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-	            MISS_SHADER_INDEX, origin, 0.001, normalize(l), length(l), 2);
+	            MISS_SHADER_INDEX, origin, 0.00001f, normalize(l), length(l), 2);
 
 
 	    if (!isShadowed)

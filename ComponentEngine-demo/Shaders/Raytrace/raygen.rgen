@@ -47,13 +47,14 @@ void main()
 	vec4 target = camera.projInverse * (vec4(uv.x, uv.y, 1, 1));
 	vec4 direction = camera.viewInverse * vec4(normalize(target.xyz * camera.focusDistance), 0);
 
-	ray.recursion = camera.recursionCount - 1;
+	ray.recursion = 1;
 	ray.depth = 0.0f;
+	ray.depthTest = true;
 
     traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV , 0xFF, 0, 0,
         MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
 
-	//color += ray.colour.rgb;
+	ray.depthTest = false;
 
 	vec3 accumulatedColor = imageLoad(accumilationImage, ivec2(gl_LaunchIDNV.xy)).rgb;
 

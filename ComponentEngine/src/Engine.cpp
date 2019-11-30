@@ -1259,7 +1259,7 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 
 	int groupID = 0;
 	// Ray generation entry point
-	m_default_raytrace->AddRayGenerationProgram(groupID++, {}, { m_general_miss_shader });
+	m_default_raytrace->AddRayGenerationProgram(groupID++, {}, { m_gradient_miss_shader });
 
 	// Define all miss shaders
 	for (int i = 1; i < primaryShaders.size(); i++)
@@ -1487,8 +1487,8 @@ void ComponentEngine::Engine::InitRenderer()
 	}
 	{// Define default hit and miss groups
 
-		
-		m_general_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.gradient_miss", {});
+
+		m_gradient_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.gradient_miss", {});
 
 
 		{
@@ -1499,7 +1499,7 @@ void ComponentEngine::Engine::InitRenderer()
 			},
 			true
 			};
-			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { missShader, m_general_miss_shader });
+			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { missShader, m_gradient_miss_shader });
 		}
 
 		{

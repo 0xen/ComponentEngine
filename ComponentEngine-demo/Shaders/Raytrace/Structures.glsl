@@ -19,6 +19,7 @@ struct RayPayload
 	vec4 colour; // Color.xyz + distance
 	uint recursion;
 	uint randomSeed;
+  bool depthTest;
   float depth;
 };
 
