@@ -1389,7 +1389,7 @@ void ComponentEngine::Engine::InitRenderer()
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 2),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 3),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_RAYGEN_BIT_NV, 4),
-				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV, 5),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_RAYGEN_BIT_NV | VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 5),
 				});
 			 
 			m_standardRTConfigSet = standardRTConfigPool->CreateDescriptorSet();
@@ -1493,7 +1493,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 		{
 			unsigned int missShader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.shadow_miss", {});
-			HitShaderPipeline defaultHitgroup{ "PBR",
+			HitShaderPipeline defaultHitgroup{ "PBR-Metal",
 			{
 				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.pbr_hit" },
 			},
@@ -1509,58 +1509,20 @@ void ComponentEngine::Engine::InitRenderer()
 			},
 			true
 			};
-			m_default_light_color_shader = AddHitShaderPipeline(defaultHitgroup, { });
+			m_default_light_color_shader = AddHitShaderPipeline(defaultHitgroup, {});
 		}
 
-		/*{ // Default Textured PBR - No lights
-			HitShaderPipeline defaultHitgroup{ "PBR - No Light",
+		{
+			HitShaderPipeline defaultHitgroup{ "Glass",
 			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Textured/rchit.spv" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.glass" },
 			},
 			true
 			};
-			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, {});
+			m_glass_shader = AddHitShaderPipeline(defaultHitgroup, {});
 		}
 
-		{ // Default Textured PBR
-		  // Add the PBR shadow miss shader
-			unsigned int missShader = AddMissShader("../Shaders/Raytrace/PBR/Miss/rmiss.spv", {});
-			{ // Primary PBR hitgroup
-				HitShaderPipeline defaultHitgroup{ "PBR",
-				{
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/PBR/Hitgroups/rchit.spv" },
-				},
-				true
-				};
-				AddHitShaderPipeline(defaultHitgroup, { missShader, m_general_miss_shader });
-			}
 
-
-			{
-
-				// Secondary shadow fall through hitgroup 
-				HitShaderPipeline shadowHitHitgroup{ "Default Textured PBR Shadow Fall through",
-				{
-				},
-				false
-				};
-				AddHitShaderPipeline(shadowHitHitgroup, {});
-			}
-		}
-
-		{ // Transparent
-
-		  // Add the PBR shadow miss shader
-			{ // Primary PBR hitgroup
-				HitShaderPipeline defaultHitgroup{ "Transparent",
-				{
-					{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/Transparent/Hitgroups/rchit.spv" },
-				},
-				true
-				};
-				AddHitShaderPipeline(defaultHitgroup, { });
-			}
-		}*/
 	}
 	RebuildRaytracePipeline();
 }

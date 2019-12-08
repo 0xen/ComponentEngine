@@ -18,6 +18,7 @@ ComponentEngine::Camera::Camera()
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
+	m_camera_data.maxRecursionDepthColor = glm::vec3(0.7f, 0.7f, 0.7f);
 	m_camera_data.samplesPerFrame = 2;
 	m_camera_data.totalSamples = 50;
 	m_camera_data.recursionCount = 3;
@@ -43,6 +44,7 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
+	m_camera_data.maxRecursionDepthColor = glm::vec3(0.7f, 0.7f, 0.7f);
 	m_camera_data.samplesPerFrame = 2;
 	m_camera_data.totalSamples = 50;
 	m_camera_data.recursionCount = 3;
@@ -173,6 +175,12 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 
 	ImGui::Text("Movement Tolerance");
 	if (ImGui::DragFloat("##cameraMovmentTolerance", &m_camera_data.movmentTollarance, 0.0001f, 0.001f, 2.0f, "%.5f"))
+	{
+		SendDataToGPU();
+	}
+
+	ImGui::Text("Max Recursion Depth Color");
+	if (ImGui::ColorEdit3("##cameraMaxRecursionDepthColor", (float*)&m_camera_data.maxRecursionDepthColor))
 	{
 		SendDataToGPU();
 	}

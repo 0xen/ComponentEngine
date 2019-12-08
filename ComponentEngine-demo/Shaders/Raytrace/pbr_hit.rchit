@@ -14,6 +14,8 @@ layout(location = 2) rayPayloadNV bool isShadowed;
 hitAttributeNV vec3 attribs;
 layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
 
+layout(binding=5, set = 0) readonly uniform CameraBuffer {Camera camera; };
+
 layout(binding = 0, set = 1) buffer Vertices { vec4 v[]; }
 vertices;
 layout(binding = 1, set = 1) buffer Indices { uint i[]; }
@@ -172,8 +174,8 @@ void main()
 	// Calculate the reflection angle
 	vec3 reflectVec = reflect(-viewVector, normal);
 
-	vec3 globalIll = vec3(0.0f,0.0f,0.0f);
-	vec3 globalIll2 = vec3(0.0f,0.0f,0.0f);
+	vec3 globalIll = camera.maxRecursionDepthColor;
+	vec3 globalIll2 = camera.maxRecursionDepthColor;
 
 	const uint currentResursion = inRayPayload.recursion;
 

@@ -4,6 +4,7 @@ struct Camera
     mat4 proj;
     mat4 viewInverse;
     mat4 projInverse;
+    vec3 maxRecursionDepthColor;
     
     uint recursionCount;
     // Camera Settings

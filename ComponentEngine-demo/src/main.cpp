@@ -37,6 +37,8 @@ void RegisterCustomComponents()
 
 void AddUIWindows()
 {
+
+
 	engine->GetUIManager()->AddElement(new UITemplate("Status", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
 	{
 		ImGuiStyle& style = ImGui::GetStyle();

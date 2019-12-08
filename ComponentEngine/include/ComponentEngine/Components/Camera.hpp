@@ -81,6 +81,8 @@ namespace ComponentEngine
 			glm::mat4 viewInverse;
 			glm::mat4 projInverse;
 
+			glm::vec3 maxRecursionDepthColor;
+
 			unsigned int recursionCount;
 			// Camera Settings
 			unsigned int samplesPerFrame;

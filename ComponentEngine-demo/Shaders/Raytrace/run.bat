@@ -9,6 +9,8 @@ C:/VulkanSDK/Bin32/glslangValidator.exe -V pbr_hit.rchit -o shader_build/rchit.p
 
 C:/VulkanSDK/Bin32/glslangValidator.exe -V light_color.rchit -o shader_build/rchit.light_color
 
+C:/VulkanSDK/Bin32/glslangValidator.exe -V glass.rchit -o shader_build/rchit.glass
+
 
 
 
