@@ -104,11 +104,7 @@ WaveFrontMaterial unpackMaterial(int matIndex)
 
 void main()
 {
-
-	inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
-	
-
-
+	rayPayload.depthTest = inRayPayload.depthTest;
 	Offsets o = unpackOffsets(gl_InstanceID);
 
 
@@ -148,13 +144,38 @@ void main()
 	vec3 viewVector = normalize(gl_WorldRayOriginNV - origin);
 
 	const uint currentResursion = inRayPayload.recursion;
+	
+	vec3 refractVec = refract(viewVector, normal, 1.0f);
+
+
+	if(inRayPayload.depthTest)
+	{
+		inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
+
+		//rayPayload.depthTest = true;
+
+		if(currentResursion>0)
+		{
+			//rayPayload.depthTest = true;
+
+
+			rayPayload.depth = 0;
+			rayPayload.recursion = currentResursion - 1;
+			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, refractVec, 1000.0, 1);
+
+			inRayPayload.depth += rayPayload.depth;
+		}
+
+
+		inRayPayload.colour.xyz = camera.maxRecursionDepthColor;
+		return;
+	}
 
 	vec3 color = camera.maxRecursionDepthColor;
 	if(currentResursion>0)
 	{
 		rayPayload.recursion = currentResursion - 1;
 
-		vec3 refractVec = refract(viewVector, normal, 1.0f);
 
 		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.00001f, refractVec, 1000.0, 1);
 

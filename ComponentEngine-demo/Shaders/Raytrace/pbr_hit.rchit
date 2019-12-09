@@ -129,6 +129,8 @@ WaveFrontMaterial unpackMaterial(int matIndex)
 
 void main()
 {
+	rayPayload.depthTest = inRayPayload.depthTest;
+	
 	const float PI = 3.14159265359f;
 	const float GAMMA = 2.2f;
 
@@ -179,13 +181,13 @@ void main()
 
 	const uint currentResursion = inRayPayload.recursion;
 
-	
 
 	if(inRayPayload.depthTest)
 	{
 		inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
 		if(currentResursion>0)
-		{
+		{	
+			//rayPayload.depthTest = true;
 			rayPayload.depth = 0;
 			rayPayload.recursion = currentResursion - 1;
 			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, normal, 1000.0, 1);
@@ -219,6 +221,7 @@ void main()
 			inRayPayload.depth += length(l);
 		}
 
+		inRayPayload.colour.xyz = camera.maxRecursionDepthColor;
 		return;
 	}
 
