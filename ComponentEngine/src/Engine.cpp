@@ -1490,16 +1490,18 @@ void ComponentEngine::Engine::InitRenderer()
 
 		m_gradient_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.gradient_miss", {});
 
+		m_global_illumination_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.global_illumination_miss", {});
+
+		m_shadow_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.shadow_miss", {});
 
 		{
-			unsigned int missShader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.shadow_miss", {});
 			HitShaderPipeline defaultHitgroup{ "PBR-Metal",
 			{
 				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.pbr_hit" },
 			},
 			true
 			};
-			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { missShader, m_gradient_miss_shader });
+			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader, m_global_illumination_miss_shader });
 		}
 
 		{
@@ -1520,6 +1522,16 @@ void ComponentEngine::Engine::InitRenderer()
 			true
 			};
 			m_glass_shader = AddHitShaderPipeline(defaultHitgroup, {});
+		}
+
+		{
+			HitShaderPipeline defaultHitgroup{ "Textured-NoReflect",
+			{
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.textured" },
+			},
+			true
+			};
+			m_textured_default_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader });
 		}
 
 

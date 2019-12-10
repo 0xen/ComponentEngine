@@ -481,12 +481,18 @@ namespace ComponentEngine
 
 		// Miss shader index. Create a gradient effect when the ray misses
 		unsigned int m_gradient_miss_shader;
+		//
+		unsigned int m_global_illumination_miss_shader;
+		//
+		unsigned int m_shadow_miss_shader;
 		// Default textured PBR shader
 		unsigned int m_default_textured_pbr_shader;
 		// Default single color shader
 		unsigned int m_default_light_color_shader;
 		// 
 		unsigned int m_glass_shader;
+		// 
+		unsigned int m_textured_default_shader;
 
 		const unsigned int m_maxRecursionDepth;
 

@@ -5,5 +5,5 @@ layout(location = 2) rayPayloadInNV bool isShadowed;
 
 void main()
 {
-	isShadowed = true;
+	isShadowed = false;
 }

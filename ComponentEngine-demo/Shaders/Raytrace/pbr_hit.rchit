@@ -3,129 +3,7 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_GOOGLE_include_directive : require
 
-#include "Structures.glsl"
-
-layout(location = 0) rayPayloadInNV RayPayload inRayPayload;
-
-layout(location = 1) rayPayloadNV RayPayload rayPayload;
-
-layout(location = 2) rayPayloadNV bool isShadowed;
-
-hitAttributeNV vec3 attribs;
-layout(binding = 0, set = 0) uniform accelerationStructureNV topLevelAS;
-
-layout(binding=5, set = 0) readonly uniform CameraBuffer {Camera camera; };
-
-layout(binding = 0, set = 1) buffer Vertices { vec4 v[]; }
-vertices;
-layout(binding = 1, set = 1) buffer Indices { uint i[]; }
-indices;
-
-layout(binding = 2, set = 1) buffer MatColorBufferObject { vec4[] m; }
-materials;
-
-layout(binding = 0, set = 2) uniform sampler2D[] textureSamplers;
-
-layout(binding = 3, set = 1) buffer Lights { vec4 l[]; }
-lights;
-
-layout(binding = 0, set = 3) buffer ModelPos { mat4 m[]; }
-models;
-
-layout(binding = 1, set = 3) buffer ModelOffsets { uint o[]; }
-offsets;
-
-
-
-layout (constant_id = 0) const uint MISS_SHADER_INDEX = 0;
-layout (constant_id = 1) const uint SHADOW_SHADER_INDEX = 0;
-
-
-
-Light unpackLight(uint index)
-{
-  uint startingIndex = index * 4;
-
-  vec4 d0 = lights.l[startingIndex];
-  vec4 d1 = lights.l[startingIndex + 1];
-  vec4 d2 = lights.l[startingIndex + 2];
-  vec4 d3 = lights.l[startingIndex + 3];
-
-  Light l;
-  l.position = vec3(d0.x,d0.y,d0.z);
-  l.intensity = d0.w;
-  l.color = vec3(d1.x,d1.y,d1.z);
-  l.alive = floatBitsToInt(d1.w);
-  l.type = floatBitsToInt(d2.x);
-  l.dir = vec3(d2.y,d2.z,d2.w);
-  l.modelID = floatBitsToInt(d3.x);
-
-  return l;
-}
-
-
-Offsets unpackOffsets(uint index)
-{
-  uint startingIndex = index * 3;
-  Offsets o;
-  o.index = offsets.o[startingIndex];
-  o.vertex = offsets.o[startingIndex + 1];
-  o.position = offsets.o[startingIndex + 2];
-  return o;
-}
-
-// Number of vec4 values used to represent a vertex
-uint vertexSize = 3;
-
-Vertex unpackVertex(uint index, uint vertexOffset)
-{
-  Vertex v;
-
-  vec4 d0 = vertices.v[vertexSize * (index + vertexOffset)];
-  vec4 d1 = vertices.v[vertexSize * (index + vertexOffset) + 1];
-  vec4 d2 = vertices.v[vertexSize * (index + vertexOffset) + 2];
-
-  v.pos = d0.xyz;
-  v.nrm = vec3(d0.w, d1.x, d1.y);
-  v.color = vec3(d1.z, d1.w, d2.x);
-  v.texCoord = vec2(d2.y, d2.z);
-  v.matIndex = floatBitsToInt(d2.w);
-  return v;
-}
-
-// Number of vec4 values used to represent a material
-const int sizeofMat = 6;
-
-WaveFrontMaterial unpackMaterial(int matIndex)
-{
-  WaveFrontMaterial m;
-  vec4 d0 = materials.m[sizeofMat * matIndex + 0];
-  vec4 d1 = materials.m[sizeofMat * matIndex + 1];
-  vec4 d2 = materials.m[sizeofMat * matIndex + 2];
-  vec4 d3 = materials.m[sizeofMat * matIndex + 3];
-  vec4 d4 = materials.m[sizeofMat * matIndex + 4];
-  vec4 d5 = materials.m[sizeofMat * matIndex + 5];
-
-  m.ambient = vec3(d0.x, d0.y, d0.z);
-  m.diffuse = vec3(d0.w, d1.x, d1.y);
-  m.specular = vec3(d1.z, d1.w, d2.x);
-  m.transmittance = vec3(d2.y, d2.z, d2.w);
-  m.emission = vec3(d3.x, d3.y, d3.z);
-  m.shininess = d3.w;
-  m.ior = d4.x;
-  m.dissolve = d4.y;
-  m.illum = int(d4.z);
-  m.textureId = floatBitsToInt(d4.w);
-
-  m.metalicTextureId = floatBitsToInt(d5.r);
-  m.roughnessTextureId = floatBitsToInt(d5.g);
-  m.normalTextureId = floatBitsToInt(d5.b);
-
-  return m;
-}
-
-
-
+#include "HitgroupHelpers.glsl"
 
 void main()
 {
@@ -175,10 +53,6 @@ void main()
 
 	// Calculate the reflection angle
 	vec3 reflectVec = reflect(-viewVector, normal);
-
-	vec3 globalIll = camera.maxRecursionDepthColor;
-	vec3 globalIll2 = camera.maxRecursionDepthColor;
-
 	const uint currentResursion = inRayPayload.recursion;
 
 
@@ -226,16 +100,20 @@ void main()
 	}
 
 
+	vec3 globalIll = camera.maxRecursionDepthColor;
+	vec3 globalIll2 = camera.maxRecursionDepthColor;
+
+
 	if(currentResursion>0)
 	{
 		rayPayload.recursion = currentResursion - 1;
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, normal, 1000.0, 1);
+		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, MISS_SHADER_INDEX, origin, 0.00001f, normal, 1000.0, 1);
 
 		globalIll = rayPayload.colour.xyz;
 
 
 		rayPayload.recursion = currentResursion - 1;
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.00001f, reflectVec, 1000.0, 1);
+		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, MISS_SHADER_INDEX, origin, 0.00001f, reflectVec, 1000.0, 1);
 
 		globalIll2 = rayPayload.colour.xyz;
 
@@ -311,11 +189,11 @@ void main()
 	    float rdist = 1 / length(l);
 
 
-	    isShadowed = false;
+	    isShadowed = true;
 
 	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-	            0xFF, SHADOW_SHADER_INDEX, sbtRecordStride,
-	            MISS_SHADER_INDEX, origin, 0.00001f, normalize(l), length(l), 2);
+	            0xFF, 0, 0,
+	            SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, l, length(l), 2);
 
 
 	    if (!isShadowed)
