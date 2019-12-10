@@ -145,7 +145,19 @@ void main()
 
 	const uint currentResursion = inRayPayload.recursion;
 	
-	vec3 refractVec = refract(viewVector, normal, 1.0f);
+	uint cullFlag;
+	vec3 refractVec;
+
+	if(((gl_IncomingRayFlagsNV >> gl_RayFlagsCullBackFacingTrianglesNV) & 0x1) == 0x1)
+	{
+		cullFlag = gl_RayFlagsCullFrontFacingTrianglesNV ;
+		refractVec = refract(viewVector, normal, 1.33f);
+	}
+	else
+	{
+		cullFlag = gl_RayFlagsCullBackFacingTrianglesNV;
+		refractVec = refract(viewVector, normal, 1.0f);
+	}
 
 
 	if(inRayPayload.depthTest)
@@ -161,7 +173,7 @@ void main()
 
 			rayPayload.depth = 0;
 			rayPayload.recursion = currentResursion - 1;
-			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, refractVec, 1000.0, 1);
+			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | cullFlag, 0xff, 0, 0, 0, origin, 0.00001f, refractVec, 1000.0, 1);
 
 			inRayPayload.depth += rayPayload.depth;
 		}
@@ -177,7 +189,7 @@ void main()
 		rayPayload.recursion = currentResursion - 1;
 
 
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.00001f, refractVec, 1000.0, 1);
+		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | cullFlag,0xff, 0, 0, 0, origin, 0.00001f, refractVec, 1000.0, 1);
 
 		color = rayPayload.colour.xyz;
 	}
