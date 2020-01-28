@@ -276,11 +276,23 @@ void ComponentEngine::Transformation::Display()
 		glm::vec3 change = glm::vec3(glm::degrees(euler.x), glm::degrees(euler.y), glm::degrees(euler.z));
 		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			m_local_mat4 = glm::mat4(1.0f);
-			m_local_mat4 = glm::translate(m_local_mat4, translation);
-			m_local_mat4 *= glm::inverse(glm::toMat4(glm::quat(glm::vec3(glm::radians(change.x), glm::radians(change.y), glm::radians(change.z)))));
-			m_local_mat4 = glm::scale(m_local_mat4, scale);
-			PushToPositionArray();
+			for (int i = 0; i < 3; i++)
+			{
+				if (glm::degrees(euler[i]) != change[i])
+				{
+					m_local_mat4 = glm::mat4(1.0f);
+					m_local_mat4 = glm::translate(m_local_mat4, translation);
+
+					glm::vec3 rotAxis(0, 0, 0);
+					rotAxis[i] = 1.0f;
+
+					glm::quat appliedRot = glm::angleAxis(glm::radians(change[i] - euler[i]), rotAxis);
+
+					m_local_mat4 *= glm::inverse(glm::toMat4(rotation*appliedRot));
+					m_local_mat4 = glm::scale(m_local_mat4, scale);
+					PushToPositionArray();
+				}
+			}
 		}
 		ImGui::PopID();
 	}

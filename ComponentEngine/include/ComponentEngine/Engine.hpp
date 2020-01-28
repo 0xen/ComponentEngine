@@ -144,6 +144,8 @@ namespace ComponentEngine
 		bool MouseKeyDown(int key);
 		// Return the last mouse movement instance
 		glm::vec2 GetLastMouseMovment();
+		// Reset mouse movement
+		void ResetMouseMovment();
 		// Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 		bool LoadScene(const char* path);
 		// Save to the current scene

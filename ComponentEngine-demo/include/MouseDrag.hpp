@@ -4,6 +4,8 @@
 #include <ComponentEngine\Components\UI.hpp>
 #include <ComponentEngine\Components\IO.hpp>
 
+#include <glm\glm.hpp>
+
 namespace enteez
 {
 	class Entity;
@@ -18,6 +20,12 @@ namespace ComponentEngine
 		enteez::Entity* m_entity;
 
 		float m_rotateSpeed;
+		glm::vec3 offset;
+		bool m_flip_x;
+		bool m_flip_y;
+		bool m_lock_x;
+		bool m_lock_y;
+
 
 	public:
 		MouseDrag(enteez::Entity* entity);

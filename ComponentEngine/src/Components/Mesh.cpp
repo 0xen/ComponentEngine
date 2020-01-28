@@ -162,6 +162,8 @@ void ComponentEngine::Mesh::Display()
 	}
 
 
+
+
 }
 
 void ComponentEngine::Mesh::Load(std::ifstream & in)

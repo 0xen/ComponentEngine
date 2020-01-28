@@ -14,6 +14,8 @@ ComponentEngine::KeyboardMovment::KeyboardMovment(enteez::Entity* entity)
 	keys1 = { SDL_SCANCODE_S };
 	keys2 = { SDL_SCANCODE_A };
 	keys3 = { SDL_SCANCODE_D };
+	keys4 = { SDL_SCANCODE_C };
+	keys5 = { SDL_SCANCODE_SPACE };
 	m_speed = 10.0f;
 	m_ignore_axis_x = false;
 	m_ignore_axis_y = false;
@@ -73,6 +75,24 @@ void ComponentEngine::KeyboardMovment::Update(float frame_time)
 		if (!m_ignore_axis_x)(mat4)[3][0] += xFacing.x;
 		if (!m_ignore_axis_y)(mat4)[3][1] += xFacing.y;
 		if (!m_ignore_axis_z)(mat4)[3][2] += xFacing.z;
+		change = true;
+	}
+	if (engine->KeyDown(keys4.key)) // Down
+	{
+		glm::vec3 yFacing = mat4[1];
+		yFacing = glm::normalize(yFacing) * -m_speed * frame_time;
+		if (!m_ignore_axis_x)(mat4)[3][0] += yFacing.x;
+		if (!m_ignore_axis_y)(mat4)[3][1] += yFacing.y;
+		if (!m_ignore_axis_z)(mat4)[3][2] += yFacing.z;
+		change = true;
+	}
+	if (engine->KeyDown(keys5.key)) // up
+	{
+		glm::vec3 yFacing = mat4[1];
+		yFacing = glm::normalize(yFacing) * m_speed * frame_time;
+		if (!m_ignore_axis_x)(mat4)[3][0] += yFacing.x;
+		if (!m_ignore_axis_y)(mat4)[3][1] += yFacing.y;
+		if (!m_ignore_axis_z)(mat4)[3][2] += yFacing.z;
 		change = true;
 	}
 

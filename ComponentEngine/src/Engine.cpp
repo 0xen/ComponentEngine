@@ -147,6 +147,7 @@ void ComponentEngine::Engine::Start()
 				}
 			}
 
+			ResetMouseMovment();
 			UpdateSceneBuffers();
 			m_logic_lock.unlock();
 		}, 60, "Scene Update");
@@ -389,6 +390,12 @@ glm::vec2 ComponentEngine::Engine::GetLastMouseMovment()
 {
 	std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
 	return m_mousePosDelta;
+}
+
+void ComponentEngine::Engine::ResetMouseMovment()
+{
+	std::lock_guard<std::mutex> guard(m_locks[READ_MOUSE_DATA]);
+	m_mousePosDelta = glm::vec2();
 }
 
 // Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
@@ -811,6 +818,7 @@ void ComponentEngine::Engine::SetPlayState(PlayState play_state)
 {
 	m_logic_lock.lock();
 	m_play_state = play_state;
+	GrabMouse(false);
 	m_logic_lock.unlock();
 }
 
@@ -1093,7 +1101,6 @@ void ComponentEngine::Engine::UpdateWindow()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	SDL_Event event;
-	m_mousePosDelta = glm::vec2();
 	// Loop through each window update
 	while (SDL_PollEvent(&event) > 0)
 	{
@@ -1147,7 +1154,7 @@ void ComponentEngine::Engine::UpdateWindow()
 					io.MousePos = ImVec2(event.motion.x, event.motion.y);
 				}
 				m_lastMousePos = glm::vec2(event.motion.x, event.motion.y);
-				m_mousePosDelta = glm::vec2(event.motion.xrel, event.motion.yrel);
+				m_mousePosDelta += glm::vec2(event.motion.xrel, event.motion.yrel);
 			}
 				break;
 			// Was a key typed

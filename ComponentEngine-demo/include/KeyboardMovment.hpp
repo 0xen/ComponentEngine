@@ -37,6 +37,8 @@ namespace ComponentEngine
 		KeyInstance keys1;
 		KeyInstance keys2;
 		KeyInstance keys3;
+		KeyInstance keys4;
+		KeyInstance keys5; 
 	public:
 		KeyboardMovment(enteez::Entity* entity);
 		virtual void Update(float frame_time);
