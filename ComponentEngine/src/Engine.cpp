@@ -1494,7 +1494,6 @@ void ComponentEngine::Engine::InitRenderer()
 	}
 	{// Define default hit and miss groups
 
-
 		m_gradient_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.gradient_miss", {});
 
 		m_global_illumination_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.global_illumination_miss", {});

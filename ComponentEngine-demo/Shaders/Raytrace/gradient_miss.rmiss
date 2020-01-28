@@ -18,4 +18,5 @@ void main()
 	float t = 0.5 * (unitDir.y + 1.0);
 	rayPayload.colour.rgb = (1.0-t) * gradientEnd + t * gradientStart;
 	rayPayload.colour.rgb *= brightness;
+	rayPayload.depth += length(gl_WorldRayOriginNV) + gl_WorldRayDirectionNV.x + gl_WorldRayDirectionNV.y;
 }
