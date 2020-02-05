@@ -63,7 +63,7 @@ void AddUIWindows()
 		}
 	}));
 	engine->GetUIManager()->AddElement(new UITemplate("Configuration", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
-	{},[&](){	engine->GetMainCamera()->DisplayRaytraceConfig();		}));
+	{},[&](){	engine->GetMainCamera()->Display();		}));
 
 
 }

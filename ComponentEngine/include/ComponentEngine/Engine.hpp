@@ -249,6 +249,10 @@ namespace ComponentEngine
 
 		const unsigned int GetRaytracerRecursionDepth();
 
+		std::string GetHoveredWindowName();
+
+		void SetHoveredWindowName(std::string name);
+
 		friend class UIManager;
 	private:
 		Engine();
@@ -434,6 +438,7 @@ namespace ComponentEngine
 		int m_lockedPosX;
 		int m_lockedPosY;
 
+		std::string m_hovered_window_name;
 
 		VulkanAcceleration* m_top_level_acceleration;
 		

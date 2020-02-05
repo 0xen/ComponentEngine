@@ -229,6 +229,7 @@ void ComponentEngine::UIManager::Render()
 	PlayState state = m_engine->GetPlayState();
 	DockSpace();
 	RenderMainMenu();
+	Engine::Singlton()->SetHoveredWindowName("");
 	for (auto& b : m_bases)
 	{
 		if ((b->GetDisplayFlags() & state) == state)

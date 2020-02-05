@@ -14,6 +14,8 @@ void ComponentEngine::UIBase::Render()
 	PreDraw();
 	if (ImGui::Begin(m_title, &m_open, m_flags))
 	{
+		if (ImGui::IsWindowHovered())
+			Engine::Singlton()->SetHoveredWindowName(m_title);
 		Contents();
 	}
 	ImGui::End();

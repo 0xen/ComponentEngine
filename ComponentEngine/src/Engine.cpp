@@ -1075,6 +1075,16 @@ const unsigned int ComponentEngine::Engine::GetRaytracerRecursionDepth()
 	return m_maxRecursionDepth;
 }
 
+std::string ComponentEngine::Engine::GetHoveredWindowName()
+{
+	return m_hovered_window_name;
+}
+
+void ComponentEngine::Engine::SetHoveredWindowName(std::string name)
+{
+	m_hovered_window_name = name;
+}
+
 // Create a SDL window instance
 void ComponentEngine::Engine::InitWindow()
 {

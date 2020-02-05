@@ -22,7 +22,8 @@ void ComponentEngine::MouseDrag::Update(float frame_time)
 {
 	Engine* engine = Engine::Singlton();
 
-	if(engine->MouseKeyDown(0))
+
+	if(engine->MouseKeyDown(0) && Engine::Singlton()->GetHoveredWindowName() == "PlayWindow")
 	{
 		engine->GrabMouse(true);
 
