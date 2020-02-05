@@ -74,8 +74,11 @@ namespace ComponentEngine
 
 		void SetLocalMat4(glm::mat4 mat4, bool updatePhysics = false);
 		void SetWorldMat4(glm::mat4 mat4, bool updatePhysics = false);
+
 		glm::mat4& GetLocalMat4();
 		glm::mat4& GetMat4();
+
+		glm::mat4 GetParentWorldMat4(); 
 
 		float GetWorldX();
 		float GetWorldY();
@@ -103,6 +106,8 @@ namespace ComponentEngine
 
 		friend class Mesh;
 	private:
+
+
 		void AddChild(Transformation* trans);
 		void RemoveChild(Transformation* trans);
 		void PushToPositionArray(bool updatePhysics = true);

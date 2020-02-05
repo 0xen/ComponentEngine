@@ -137,6 +137,7 @@ void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePh
 		matrix = &((*m_global_position_array)[m_index]);
 	}
 
+	m_local_mat4 = mat4 / GetParentWorldMat4();
 
 	*matrix = mat4;
 	for (int i = 0; i < m_children.size(); i++)
@@ -167,6 +168,14 @@ glm::mat4 & ComponentEngine::Transformation::GetMat4()
 	}
 	return *matrix;
 }
+
+glm::mat4 ComponentEngine::Transformation::GetParentWorldMat4()
+{
+	if (m_parent != nullptr && m_parent->HasComponent<Transformation>())
+		return m_parent->GetComponent<Transformation>().GetMat4();
+	return glm::mat4(1.0f);
+}
+
 
 float ComponentEngine::Transformation::GetWorldX()
 {

@@ -131,8 +131,8 @@ void ThreadManager::Update()
 		std::unique_lock<std::mutex> lock(m_workerlockGuard[i]);
 		if(!m_haveWork[i])
 		{
-			WorkerTask* task;
-			if(GetTask(task))
+			WorkerTask* task = nullptr;
+			if (GetTask(task) && task != nullptr)
 			{
 				m_workerTask[i] = task;
 				m_haveWork[i] = true;
@@ -141,7 +141,7 @@ void ThreadManager::Update()
 		}
 	}
 
-	/*
+	
 	// Wait for Workers
 	for (int i = 0; i < m_workerCount; ++i)
 	{
@@ -152,7 +152,7 @@ void ThreadManager::Update()
 			m_workReady[i].wait(lock);
 		}
 	}
-	*/
+	
 
 	
 
@@ -187,7 +187,6 @@ void ThreadManager::Worker(unsigned int id)
 			};
 		}
 
-		//m_workerTask[id]->funcPtr(m_workerTask[id]->lastDelta);
 		m_workerTask[id]->task(m_workerTask[id]->lastDelta);
 
 		

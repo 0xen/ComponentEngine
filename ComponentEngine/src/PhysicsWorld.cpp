@@ -50,7 +50,7 @@ void ComponentEngine::PhysicsWorld::Update(float update_time)
 	m_engine->GetLogicMutex().lock();
 	m_physics_lock.lock();
 
-	m_dynamicsWorld->stepSimulation(update_time, 10);
+	m_dynamicsWorld->stepSimulation(update_time, 100);
 
 
 	btCollisionObjectArray& collisionObjects = m_dynamicsWorld->getCollisionObjectArray();
@@ -78,6 +78,9 @@ void ComponentEngine::PhysicsWorld::Update(float update_time)
 	for (int i = 0; i < collisionObjects.size(); i++)
 	{
 		enteez::Entity* entity = static_cast<enteez::Entity*>(collisionObjects[i]->getCollisionShape()->getUserPointer());
+		glm::mat4 worldPos;
+		collisionObjects[i]->getWorldTransform().getOpenGLMatrix((btScalar*)&worldPos);
+		//entity->GetComponent<Transformation>().SetWorldMat4(worldPos, false);
 		Send(entity, entity, CollisionRecording{ End });
 	}
 

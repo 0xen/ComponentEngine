@@ -82,6 +82,7 @@ namespace ComponentEngine
 		btScalar m_SpinningFriction;
 		btVector3 m_AnisotropicFriction;
 		btVector3 m_localInertia;
+		float m_gravity = -10.0f;
 		bool m_useGravity = true;
 		bool m_useCollision = true;
 		bool m_recordingCollisions = false;

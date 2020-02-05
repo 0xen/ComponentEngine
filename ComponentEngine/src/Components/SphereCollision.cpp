@@ -37,6 +37,7 @@ void ComponentEngine::SphereCollision::Display()
 void ComponentEngine::SphereCollision::Load(std::ifstream & in)
 {
 	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(SphereCollision, m_rad), PayloadSize());
+	Rebuild();
 }
 
 void ComponentEngine::SphereCollision::Save(std::ofstream & out)

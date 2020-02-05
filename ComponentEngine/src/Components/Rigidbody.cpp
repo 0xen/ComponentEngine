@@ -16,6 +16,7 @@ ComponentEngine::Rigidbody::Rigidbody(enteez::Entity * entity)
 	m_RollingFriction = btScalar(0.0f);
 	m_SpinningFriction = btScalar(0.0f);
 	m_AnisotropicFriction = btVector3(0, 0, 0);
+	m_gravity = -10.0f;
 
 	m_collisionFrameRecording = new std::vector<enteez::Entity*>();
 	m_collisionStaging = new std::vector<enteez::Entity*>();
@@ -86,6 +87,13 @@ void ComponentEngine::Rigidbody::Display()
 	{ // Gravity
 		ImGui::Text("Use Gravity");
 		if (ImGui::Checkbox("##UseGravity", &m_useGravity))
+		{
+			Rebuild = true;
+		}
+	}
+	{ // Gravity
+		ImGui::Text("Gravity Power");
+		if (ImGui::InputFloat("##Gravity", &m_gravity, 0.1f, 1.0f, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
 			Rebuild = true;
 		}
@@ -169,6 +177,7 @@ enteez::BaseComponentWrapper* ComponentEngine::Rigidbody::EntityHookDefault(ente
 void ComponentEngine::Rigidbody::Load(std::ifstream & in)
 {
 	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Rigidbody, m_friction), PayloadSize());
+	Rebuild();
 }
 
 void ComponentEngine::Rigidbody::Save(std::ofstream & out)
@@ -364,7 +373,7 @@ void ComponentEngine::Rigidbody::AddRigidbody(ICollisionShape * shape)
 	}
 	if (m_useGravity)
 	{
-		m_body->setGravity(btVector3(0, -10, 0));
+		m_body->setGravity(btVector3(0, m_gravity, 0));
 	}
 	else
 	{

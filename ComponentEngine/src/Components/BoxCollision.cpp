@@ -37,6 +37,7 @@ void ComponentEngine::BoxCollision::Display()
 void ComponentEngine::BoxCollision::Load(std::ifstream & in)
 {
 	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(BoxCollision, m_shape), PayloadSize());
+	Rebuild();
 }
 
 void ComponentEngine::BoxCollision::Save(std::ofstream & out)

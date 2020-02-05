@@ -153,7 +153,7 @@ void ComponentEngine::Engine::Start()
 		}, 60, "Scene Update");
 
 		// Update physics world
-		/*m_threadManager->AddTask([&](float frameTime) {
+		m_threadManager->AddTask([&](float frameTime) {
 
 			m_logic_lock.lock();
 			bool playing = m_play_state == PlayState::Play;
@@ -162,7 +162,7 @@ void ComponentEngine::Engine::Start()
 			{
 				m_physicsWorld->Update(frameTime);
 			}
-		}, 60, "PhysicsWorld");*/
+		}, 60, "PhysicsWorld");
 	}
 	else
 	{
@@ -185,9 +185,9 @@ void ComponentEngine::Engine::Start()
 		}, 60, "Scene Update");
 
 		// Update physics world
-		/*m_threadManager->AddTask([&](float frameTime) {
+		m_threadManager->AddTask([&](float frameTime) {
 			m_physicsWorld->Update(frameTime);
-		}, 60, "PhysicsWorld");*/
+		}, 60, "PhysicsWorld");
 	}
 
 	// Add Render task
