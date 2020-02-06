@@ -24,12 +24,18 @@ void ComponentEngine::PlayWindow::PreDraw()
 void ComponentEngine::PlayWindow::Contents()
 {
 
+	//UIManager::DrawScalingImage(0, 1080, 720, dim.x, dim.y);
+
+	//ImVec2 dim = ImGui::GetWindowSize();
+	//ImGui::Image((ImTextureID)0, dim, ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+
+
+
+	NativeWindowHandle* windowHandle = Engine::Singlton()->GetWindowHandle();
 
 	ImVec2 dim = ImGui::GetWindowSize();
-	ImGui::Image((ImTextureID)0, dim, ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+	UIManager::DrawScalingImage(0, windowHandle->width, windowHandle->height, dim.x, dim.y);
 
-
-	//UIManager::DrawScalingImage(0, 1080, 720, dim.x, dim.y);
 
 
 

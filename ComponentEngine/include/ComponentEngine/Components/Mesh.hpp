@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <map>
 
 #include <ComponentEngine\Components\MsgRecive.hpp>
@@ -72,9 +73,12 @@ namespace ComponentEngine
 
 		friend class Engine;
 	private:
+		void InstanciateModel();
 
 		// Key: File path, Value: Model instance
 		static std::map<std::string, VulkanModelPool*> m_mesh_instances;
+		static std::vector<std::string> m_meshes_loading;
+		static std::map<std::string, std::vector<Mesh*>> m_pending_models;
 
 		DropBoxInstance<FileForms> m_file_path;
 

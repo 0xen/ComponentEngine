@@ -26,6 +26,8 @@ using namespace ComponentEngine;
 const unsigned int Mesh::m_buffer_size_step = 100;
 
 std::map<std::string, VulkanModelPool*> ComponentEngine::Mesh::m_mesh_instances;
+std::vector<std::string> ComponentEngine::Mesh::m_meshes_loading;
+std::map<std::string, std::vector<Mesh*>> ComponentEngine::Mesh::m_pending_models;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 {
@@ -206,7 +208,6 @@ void ComponentEngine::Mesh::EditorUpdate(float frame_time)
 
 void ComponentEngine::Mesh::LoadModel()
 {
-	Engine* engine = Engine::Singlton();
 
 	if (m_loaded)
 	{
@@ -214,6 +215,170 @@ void ComponentEngine::Mesh::LoadModel()
 	}
 	m_loaded = false;
 
+
+	Engine::Singlton()->GetThreadManager()->AddTask([&](float delta)
+	{
+		Engine* engine = Engine::Singlton();
+
+
+
+
+
+		engine->GetModelLoadMutex().lock();
+
+		bool loading = std::find(m_meshes_loading.begin(), m_meshes_loading.end(), m_file_path.data.longForm) != m_meshes_loading.end();
+		bool notLoaded = m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end();
+		if (loading)
+		{
+			m_pending_models[m_file_path.data.longForm].push_back(this);
+			engine->GetModelLoadMutex().unlock();
+			return;
+		} 
+		else if (notLoaded)
+		{
+			// Tell the system we are loading the mesh
+			m_meshes_loading.push_back(m_file_path.data.longForm);
+		}
+		engine->GetModelLoadMutex().unlock();
+
+
+
+
+
+		VulkanAcceleration* as = engine->GetTopLevelAS();
+		
+		if (notLoaded)
+		{
+
+			VulkanVertexBuffer* vertexBuffer = engine->GetGlobalVertexBufer();
+			VulkanIndexBuffer* indexBuffer = engine->GetGlobalIndexBuffer();
+
+			std::vector<uint32_t>& all_indexs = engine->GetGlobalIndexArray();
+			std::vector<MeshVertex>& all_vertexs = engine->GetGlobalVertexArray();
+			std::vector<MatrialObj>& materials = engine->GetGlobalMaterialArray();
+			std::vector<VkDescriptorImageInfo>& texture_descriptors = engine->GetTextureDescriptors();
+			std::vector<VulkanTextureBuffer*>& textures = engine->GetTextures();
+			VulkanBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
+
+
+			{
+				// Make sure the file exists
+				std::ifstream file(m_file_path.data.longForm, std::ios::ate | std::ios::binary);
+				if (!file.is_open())
+				{
+					engine->Log("Could not find model");
+					return;
+				}
+				file.close();
+			}
+
+			// Load the model
+			ObjLoader<MeshVertex> loader;
+			loader.loadModel(m_file_path.data.longForm);
+
+			engine->GetModelLoadMutex().lock();
+
+			unsigned int& used_vertex = engine->GetUsedVertex();
+			unsigned int& used_index = engine->GetUsedIndex();
+			unsigned int& used_materials = engine->GetUsedMaterials();
+
+			uint32_t m_nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
+			uint32_t m_nbIndices = static_cast<uint32_t>(loader.m_indices.size());
+
+			unsigned int vertexStart = used_vertex;
+			unsigned int indexStart = used_index;
+
+			for (uint32_t& index : loader.m_indices)
+			{
+				all_indexs[used_index] = index;
+				used_index++;
+			}
+
+			for (MeshVertex& vertex : loader.m_vertices)
+			{
+				vertex.matID += used_materials;
+				all_vertexs[used_vertex] = vertex;
+				used_vertex++;
+			}
+
+
+			unsigned int offset = texture_descriptors.size();
+
+
+			std::vector<bool> loadedTextures(loader.m_textures.size());
+			for (int i = 0; i < loader.m_textures.size(); i++)
+			{
+				std::stringstream ss;
+				ss << m_dir << loader.m_textures[i];
+
+				VulkanTextureBuffer* texture = engine->LoadTexture(ss.str());
+				loadedTextures[i] = texture != nullptr;
+				if (loadedTextures[i])
+				{
+					textures.push_back(texture);
+
+					texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+				}
+			}
+
+
+			for (auto& material : loader.m_materials)
+			{
+				if (material.textureID >= 0 && loadedTextures[material.textureID])
+					material.textureID += offset;
+				else
+					material.textureID = 0; // Set to default white texture
+
+				if (material.metalicTextureID >= 0 && loadedTextures[material.metalicTextureID])
+					material.metalicTextureID += offset;
+				else
+					material.metalicTextureID = 1; // Set to default black texture
+
+				if (material.roughnessTextureID >= 0 && loadedTextures[material.roughnessTextureID])
+					material.roughnessTextureID += offset;
+				else
+					material.roughnessTextureID = 0; // Set to default white texture
+
+				if (material.normalTextureID >= 0 && loadedTextures[material.normalTextureID])
+					material.normalTextureID += offset;
+				else
+					material.normalTextureID = 0; // Set to default white texture
+
+				materials[used_materials] = material;
+
+				used_materials++;
+			}
+
+			m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
+
+			m_mesh_instances[m_file_path.data.longForm]->AttachBufferPool(0, position_buffer_pool);
+
+
+
+			as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm], m_hit_group);
+
+
+
+			m_meshes_loading.erase(std::find(m_meshes_loading.begin(), m_meshes_loading.end(), m_file_path.data.longForm));
+
+			for (Mesh* mesh : m_pending_models[m_file_path.data.longForm])
+			{
+				mesh->InstanciateModel();
+			}
+			m_pending_models[m_file_path.data.longForm].clear();
+			m_pending_models.erase(m_pending_models.find(m_file_path.data.longForm));
+
+
+			engine->GetModelLoadMutex().unlock();
+		}
+
+		InstanciateModel();
+
+	},"ModelLoader");
+
+
+	
+	/*
 	VulkanAcceleration* as = engine->GetTopLevelAS();
 
 	if (m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end())
@@ -334,7 +499,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 	engine->UpdateAccelerationDependancys();
 
-	m_loaded = true;
+	m_loaded = true;*/
 }
 
 void ComponentEngine::Mesh::UnloadModel()
@@ -351,4 +516,21 @@ int ComponentEngine::Mesh::GetUUID()
 {
 	if (m_model == nullptr)return -1;
 	return m_model->GetUUID();
+}
+
+void ComponentEngine::Mesh::InstanciateModel()
+{
+	m_model_pool = m_mesh_instances[m_file_path.data.longForm];
+
+	// Create a instance of the model
+	m_model = m_model_pool->CreateModel();
+
+	m_vertex_count = m_model_pool->GetVertexSize();
+
+	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+
+
+	Engine::Singlton()->UpdateAccelerationDependancys();
+
+	m_loaded = true;
 }

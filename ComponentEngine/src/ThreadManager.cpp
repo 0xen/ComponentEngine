@@ -9,7 +9,6 @@ ThreadManager::ThreadManager()
 	m_seccond_delta = 0;
 	m_thread_activity.resize(20);
 	m_seccond_delta = 0;
-	m_delta_update = 0;
 	m_delta_time = SDL_GetPerformanceCounter();
 
 	unsigned int thread_count = (unsigned int)(((float)std::thread::hardware_concurrency() * 1.5f) + 0.5f);
@@ -73,8 +72,7 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups
 void ThreadManager::Update()
 {
 
-	float delta = GetDeltaTime() + m_delta_update;// Engine::Singlton()->GetLastThreadTime();
-	m_delta_update = 0.0f;
+	float delta = GetDeltaTime();
 
 	{ // Schedualed task
 

@@ -50,7 +50,7 @@ void ComponentEngine::PhysicsWorld::Update(float update_time)
 	m_engine->GetLogicMutex().lock();
 	m_physics_lock.lock();
 
-	m_dynamicsWorld->stepSimulation(update_time, 100);
+	m_dynamicsWorld->stepSimulation(update_time, 10);
 
 
 	btCollisionObjectArray& collisionObjects = m_dynamicsWorld->getCollisionObjectArray();

@@ -79,7 +79,6 @@ private:
 	// Time since last seccond
 	float m_seccond_delta;
 	float m_active_time;
-	float m_delta_update; // Count up all time in update function
 	std::vector<float> m_thread_activity;
 
 	// Used to check the state of the is running mutex

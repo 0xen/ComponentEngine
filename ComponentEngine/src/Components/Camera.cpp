@@ -105,6 +105,8 @@ void ComponentEngine::Camera::Display()
 	bool cameraRunning = Engine::Singlton()->GetMainCamera() == this;
 	ImGui::Text("Status: %s", cameraRunning ? "Active":"Inavtive");
 
+	Engine::Singlton()->GetLogicMutex().lock();
+
 	if (!cameraRunning)
 	{
 		if (ImGui::Button("Activate Camera"))
@@ -132,10 +134,14 @@ void ComponentEngine::Camera::Display()
 	}
 
 	DisplayRaytraceConfig();
+
+	Engine::Singlton()->GetLogicMutex().unlock();
 }
 
 void ComponentEngine::Camera::DisplayRaytraceConfig()
 {
+
+	Engine::Singlton()->GetLogicMutex().lock();
 
 	ImGui::Text("Sample Per Frame");
 	int sampleCount = m_camera_data.samplesPerFrame;
@@ -184,6 +190,7 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 	{
 		SendDataToGPU();
 	}
+	Engine::Singlton()->GetLogicMutex().unlock();
 }
 
 void ComponentEngine::Camera::Load(std::ifstream & in)
@@ -225,6 +232,7 @@ VulkanUniformBuffer* ComponentEngine::Camera::GetCameraBuffer()
 
 void ComponentEngine::Camera::UpdateProjection()
 {
+	Engine::Singlton()->GetLogicMutex().lock();
 
 	float aspectRatio = ((float)1080) / ((float)720);
 	m_camera_data.proj = glm::perspective(
@@ -246,6 +254,7 @@ void ComponentEngine::Camera::UpdateProjection()
 	m_camera_data.projInverse = glm::inverse(m_camera_data.projInverse);
 
 	SendDataToGPU();
+	Engine::Singlton()->GetLogicMutex().unlock();
 }
 
 ComponentEngine::Transformation* ComponentEngine::Camera::GetTransformation()
@@ -256,8 +265,8 @@ ComponentEngine::Transformation* ComponentEngine::Camera::GetTransformation()
 
 void ComponentEngine::Camera::SendDataToGPU()
 {
-	Engine::Singlton()->GetRendererMutex().lock();
+	//Engine::Singlton()->GetRendererMutex().lock();
 	m_camera_buffer->SetData(BufferSlot::Secondery);
 	Engine::Singlton()->ResetViewportBuffers();
-	Engine::Singlton()->GetRendererMutex().unlock();
+	//Engine::Singlton()->GetRendererMutex().unlock();
 }

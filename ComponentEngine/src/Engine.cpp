@@ -116,22 +116,23 @@ void ComponentEngine::Engine::Start()
 	{
 		// Define the play state to be in the editor
 		m_play_state = PlayState::Editor;
-
+		
 		// Add Update Scene task. Update all components attached to each entity that supports it
 		m_threadManager->AddTask([&, this](float frameTime) {
 			EntityManager& em = GetEntityManager();
-			m_logic_lock.lock();
 			// Check if we are in a played state or not
 			if (m_play_state == PlayState::Play)
 			{
 				// Loop through all entities in the scene
 				for (auto e : em.GetEntitys())
 				{
+					m_logic_lock.lock();
 					// Loop through all components attached to the entity that inherits the Logic component
 					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 					{
 						logic.Update(frameTime);
 					});
+					m_logic_lock.unlock();
 				}
 			}
 			else
@@ -139,18 +140,21 @@ void ComponentEngine::Engine::Start()
 				// Loop through all entities in the scene
 				for (auto e : em.GetEntitys())
 				{
+					m_logic_lock.lock();
 					// Loop through all components attached to the entity that inherits the Logic component
 					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 					{
 						logic.EditorUpdate(frameTime);
 					});
+					m_logic_lock.unlock();
 				}
 			}
 
 			ResetMouseMovment();
-			UpdateSceneBuffers();
-			m_logic_lock.unlock();
-		}, 60, "Scene Update");
+			m_renderer_logic_transfer.lock();
+			m_logic_transfer_ready = true;
+			m_renderer_logic_transfer.unlock();
+		}, 30, "Scene Update");
 
 		// Update physics world
 		m_threadManager->AddTask([&](float frameTime) {
@@ -166,7 +170,7 @@ void ComponentEngine::Engine::Start()
 	}
 	else
 	{
-		m_play_state = PlayState::Play;
+		/*m_play_state = PlayState::Play;
 		// Add Update Scene task. Update all components attached to each entity that supports it
 		m_threadManager->AddTask([&, this](float frameTime) {
 			EntityManager& em = GetEntityManager();
@@ -187,14 +191,15 @@ void ComponentEngine::Engine::Start()
 		// Update physics world
 		m_threadManager->AddTask([&](float frameTime) {
 			m_physicsWorld->Update(frameTime);
-		}, 60, "PhysicsWorld");
+		}, 60, "PhysicsWorld");*/
 	}
+
 
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime)
 	{
 		UpdateUI(frameTime);
-	}, 60, "UI Render");
+	}, 30, "UI Render");
 
 	// Add Render task
 	m_threadManager->AddTask([&](float frameTime)
@@ -260,9 +265,7 @@ bool ComponentEngine::Engine::Running()
 void ComponentEngine::Engine::Update()
 {
 	m_threadManager->Update();
-	GetRendererMutex().lock();
 	UpdateWindow();
-	GetRendererMutex().unlock();
 }
 
 // Update the scene by transferring all data from the temporary secondary buffers to the primary ones
@@ -302,15 +305,10 @@ void ComponentEngine::Engine::UpdateSceneBuffers()
 // Update the ui manager
 void ComponentEngine::Engine::UpdateUI(float delta)
 {
-	m_logic_lock.lock();
-	GetRendererMutex().lock();
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.DeltaTime = delta;
 	UpdateImGUI();
-
-	GetRendererMutex().unlock();
-	m_logic_lock.unlock();
 }
 
 // Rebuild the renderer components of the engine
@@ -341,7 +339,24 @@ void ComponentEngine::Engine::RenderFrame()
 {
 	// If we do not have a camera, break
 	if (m_main_camera == nullptr)return;
+	TransferImGui();
 	GetRendererMutex().lock();
+	// Rebuild the render pass for ImGui UI Data
+	m_raytrace_renderpass->RequestRebuildCommandBuffers();
+
+
+	{
+		m_renderer_logic_transfer.lock();
+		bool transferReady = m_logic_transfer_ready;
+		m_logic_transfer_ready = false;
+		m_renderer_logic_transfer.unlock();
+		if (transferReady)
+		{
+			// Transfer data from CPU to GPU
+			UpdateSceneBuffers();
+		}
+	}
+
 	// Update all renderer's via there Update function
 	m_top_level_acceleration->Update();
 	// Call the main engines render pass
@@ -740,6 +755,11 @@ ordered_lock& ComponentEngine::Engine::GetLogicMutex()
 	return m_logic_lock;
 }
 
+ordered_lock & ComponentEngine::Engine::GetModelLoadMutex()
+{
+	return m_model_load_lock;
+}
+
 // Get the mutex that locks all render calls
 ordered_lock& ComponentEngine::Engine::GetRendererMutex()
 {
@@ -1066,7 +1086,8 @@ std::vector<HitShaderPipeline>& ComponentEngine::Engine::GetHitShaderPipelines()
 void ComponentEngine::Engine::ResetViewportBuffers()
 {
 	Engine::Singlton()->GetRendererMutex().lock();
-	if(m_sample_texture_rebuild_program!=nullptr) m_sample_texture_rebuild_program->Run();
+	if(m_sample_texture_rebuild_program!=nullptr)
+		m_sample_texture_rebuild_program->Run();
 	Engine::Singlton()->GetRendererMutex().unlock();
 }
 
@@ -2155,6 +2176,29 @@ void ComponentEngine::Engine::InitImGUI()
 	m_imgui.model_pool->AllowCustomScissors(true);
 }
 
+void ComponentEngine::Engine::TransferImGui()
+{
+	m_renderer_ui_transfer.lock();
+	bool transfer = m_ui_transfer_ready;
+	m_ui_transfer_ready = false;
+	m_renderer_ui_transfer.unlock();
+	if (transfer)
+	{
+		m_ui_lock.lock();
+		m_imgui.draw_group_textures_buffer->SetData(BufferSlot::Primary);
+		m_imgui.model_pool->Update();
+
+		if (IsRunning())
+		{
+			m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
+			m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
+		}
+
+		m_ui_lock.unlock();
+	}
+	
+}
+
 // Update the ui manager
 void ComponentEngine::Engine::UpdateImGUI()
 {
@@ -2176,6 +2220,8 @@ void ComponentEngine::Engine::UpdateImGUI()
 	unsigned int index_count = 0;
 	unsigned int vertex_count = 0;
 	int drawGroup = 0;
+
+	m_ui_lock.lock();
 	for (int n = 0; n < imDrawData->CmdListsCount; n++)
 	{
 
@@ -2262,16 +2308,10 @@ void ComponentEngine::Engine::UpdateImGUI()
 		m_imgui.draw_group[i]->ResetScissor();
 	}
 
-	m_imgui.draw_group_textures_buffer->SetData(BufferSlot::Primary);
-	m_imgui.model_pool->Update();
-
-	if (IsRunning())
-	{
-		m_imgui.m_vertex_buffer->SetData(BufferSlot::Primary);
-		m_imgui.m_index_buffer->SetData(BufferSlot::Primary);
-	}
-
-	m_raytrace_renderpass->RebuildCommandBuffers();
+	m_ui_lock.unlock();
+	m_renderer_ui_transfer.lock();
+	m_ui_transfer_ready = true;
+	m_renderer_ui_transfer.unlock();
 }
 
 // Destroy the instance of imgui

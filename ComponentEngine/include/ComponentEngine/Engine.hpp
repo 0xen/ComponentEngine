@@ -168,6 +168,9 @@ namespace ComponentEngine
 		std::string GetCurrentSceneDirectory();
 		// Get the mutex that locks all logic calls
 		ordered_lock& GetLogicMutex();
+
+		// 
+		ordered_lock& GetModelLoadMutex();
 		// Get the mutex that locks all render calls
 		ordered_lock& GetRendererMutex();
 		// Get the thread manager instance
@@ -292,6 +295,8 @@ namespace ComponentEngine
 
 		// Create a instance of imgui
 		void InitImGUI();
+		// Transfer ImGui Buffers to the GPU
+		void TransferImGui();
 		// Update the ui manager
 		void UpdateImGUI();
 		// Destroy the instance of imgui
@@ -409,8 +414,16 @@ namespace ComponentEngine
 		};
 
 		ordered_lock m_renderer_thread;
+		ordered_lock m_ui_lock;
+		ordered_lock m_renderer_ui_transfer;
+		bool m_ui_transfer_ready = false;
+
 		ordered_lock m_logic_lock;
+		ordered_lock m_renderer_logic_transfer;
+		bool m_logic_transfer_ready = false;
+
 		ordered_lock m_thread_data_lock;
+		ordered_lock m_model_load_lock;
 
 		std::vector<ConsoleMessage> m_console;
 		//std::vector<ThreadData*> m_thread_data;
