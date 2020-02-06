@@ -263,6 +263,16 @@ ComponentEngine::Transformation* ComponentEngine::Camera::GetTransformation()
 	return &m_entity->GetComponent<Transformation>();
 }
 
+float ComponentEngine::Camera::GetFOV()
+{
+	return m_fov;
+}
+
+void ComponentEngine::Camera::SetFOV(float f)
+{
+	m_fov = f;
+}
+
 void ComponentEngine::Camera::SendDataToGPU()
 {
 	//Engine::Singlton()->GetRendererMutex().lock();

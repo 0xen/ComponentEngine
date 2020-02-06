@@ -18,11 +18,13 @@ set(src
     src/main.cpp
     src/KeyboardMovment.cpp
     src/MouseDrag.cpp
+    src/CameraDolly.cpp
 )
  
 set(headers
     include/KeyboardMovment.hpp
     include/MouseDrag.hpp
+    include/CameraDolly.hpp
 )
 
 include_directories(include)

@@ -54,7 +54,7 @@ public:
 
 	void AddTask(std::function<void(float)> funcPtr, unsigned int ups, std::string name = "");
 
-	void Update();
+	void Update(bool useRTC);
 
 	unsigned int ThreadCount();
 

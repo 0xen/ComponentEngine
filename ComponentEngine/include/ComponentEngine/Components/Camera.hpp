@@ -31,6 +31,7 @@ namespace ComponentEngine
 
 	class Transformation;
 
+
 	class Camera : public Logic, public UI, public TransferBuffers, public IO
 	{
 
@@ -58,6 +59,10 @@ namespace ComponentEngine
 		void UpdateProjection();
 
 		Transformation* GetTransformation();
+
+		float GetFOV();
+		void SetFOV(float f);
+
 	private:
 
 		void SendDataToGPU();

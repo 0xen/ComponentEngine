@@ -442,6 +442,9 @@ namespace ComponentEngine
 
 		int m_flags;
 
+		// Use real time clock
+		bool m_use_RTC;
+
 		// Store the various locks that will be needed
 		std::mutex m_locks[EngineLock::MAX];
 

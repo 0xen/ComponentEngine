@@ -68,6 +68,7 @@ ComponentEngine::Engine::Engine() : m_maxRecursionDepth(10)
 
 	m_all_vertexs.resize(m_vertex_max);
 	m_all_indexs.resize(m_index_max);
+	m_use_RTC = true;
 }
 
 Engine* ComponentEngine::Engine::Singlton()
@@ -264,7 +265,7 @@ bool ComponentEngine::Engine::Running()
 // Update the threading and window services
 void ComponentEngine::Engine::Update()
 {
-	m_threadManager->Update();
+	m_threadManager->Update(m_use_RTC);
 	UpdateWindow();
 }
 
@@ -1937,6 +1938,16 @@ void ComponentEngine::Engine::InitImGUI()
 
 		// Add the window open/close menu drop down
 		m_window_dropdown = new MenuElement("Window", std::vector<MenuElement*>{});
+
+		m_ui->AddMenuElement(new MenuElement("Settings",
+			{
+				new MenuElement("Real Time Clock",[&]
+				{
+					m_use_RTC = !m_use_RTC;
+				})
+			}
+		));
+
 
 		// Loop through all currently added windows and append them to the toggle list
 		for (auto& window : m_ui->GetWindowBases())

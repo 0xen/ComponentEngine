@@ -69,15 +69,15 @@ void ThreadManager::AddTask(std::function<void(float)> funcPtr, unsigned int ups
 	m_schedualed_tasks.push_back(newTask);
 }
 
-void ThreadManager::Update()
+void ThreadManager::Update(bool useRTC)
 {
-
-	float delta = GetDeltaTime();
+	float RTDelta = GetDeltaTime();
+	float delta = useRTC ? RTDelta : (1.0f / 60.0f);
 
 	{ // Schedualed task
 
 		// Calculate how much preformance this thread is using
-		m_seccond_delta += delta;
+		m_seccond_delta += RTDelta;
 
 		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
 
