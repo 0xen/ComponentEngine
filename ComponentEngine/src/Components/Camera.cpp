@@ -20,7 +20,9 @@ ComponentEngine::Camera::Camera()
 
 	m_camera_data.maxRecursionDepthColor = glm::vec3(0.7f, 0.7f, 0.7f);
 	m_camera_data.samplesPerFrame = 2;
-	m_camera_data.totalSamples = 50;
+	m_camera_data.totalSamples = 20;
+	m_camera_data.globalIlluminationBrightness = 0.8f;
+	m_camera_data.globalIlluminationReflectionMissBrightness = 0.75f;
 	m_camera_data.recursionCount = 3;
 	m_camera_data.aperture = 0.002f;
 	m_camera_data.focusDistance = 0.5f;
@@ -46,7 +48,9 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 
 	m_camera_data.maxRecursionDepthColor = glm::vec3(0.7f, 0.7f, 0.7f);
 	m_camera_data.samplesPerFrame = 2;
-	m_camera_data.totalSamples = 50;
+	m_camera_data.totalSamples = 20;
+	m_camera_data.globalIlluminationBrightness = 0.8f;
+	m_camera_data.globalIlluminationReflectionMissBrightness = 0.75f;
 	m_camera_data.recursionCount = 3;
 	m_camera_data.aperture = 0.002f;
 	m_camera_data.focusDistance = 0.5f;
@@ -129,6 +133,18 @@ void ComponentEngine::Camera::Display()
 
 	ImGui::Text("FOV");
 	if (ImGui::DragFloat("##cameraFOV", &m_fov, 0.05f, 1.0f, 100.0f))
+	{
+		UpdateProjection();
+	}
+
+	ImGui::Text("Global Illumination Brightness");
+	if (ImGui::DragFloat("##cameraglobalIlluminationBrightness", &m_camera_data.globalIlluminationBrightness, 0.05f, 0.0f, 1.0f))
+	{
+		UpdateProjection();
+	}
+
+	ImGui::Text("Global Illumination Brightness Miss");
+	if (ImGui::DragFloat("##cameraglobalIlluminationBrightnessMiss", &m_camera_data.globalIlluminationReflectionMissBrightness, 0.05f, 0.0f, 1.0f))
 	{
 		UpdateProjection();
 	}

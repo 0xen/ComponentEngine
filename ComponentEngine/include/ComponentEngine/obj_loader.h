@@ -29,7 +29,9 @@ struct MatrialObj
   int metalicTextureID = -1;
   int roughnessTextureID = -1;
   int normalTextureID = -1;
-  int n;//Padding
+  int cavityTextureID = -1;
+  int aoTextureID = -1;
+  int n[3];//Padding
 };
 
 template <class TVert>

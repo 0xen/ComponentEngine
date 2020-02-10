@@ -7,6 +7,8 @@ struct Camera
     vec3 maxRecursionDepthColor;
     
     uint recursionCount;
+    float globalIlluminationBrightness;
+    float globalIlluminationReflectionMissBrightness;
     // Camera Settings
     uint samplesPerFrame;
     float aperture;
@@ -66,4 +68,6 @@ struct WaveFrontMaterial
   int metalicTextureId;
   int roughnessTextureId;
   int normalTextureId;
+  int cavityTextureId;
+  int aoTextureId;
 };

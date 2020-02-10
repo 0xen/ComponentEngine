@@ -32,18 +32,20 @@ void main()
   	WaveFrontMaterial mat = unpackMaterial(materialIndex);
 
 
+	vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
+	                        v2.texCoord * barycentrics.z;
+
 	// Calculate normal
 	vec3 f_normal = normalize(v0.nrm * barycentrics.x + v1.nrm * barycentrics.y + v2.nrm * barycentrics.z);
+	
+	vec3 texture_normal = normalize(texture(textureSamplers[mat.normalTextureId], texCoord).xyz);
 	mat3 normalMatrix = mat3(models.m[o.position]);
-	normalMatrix = transpose(normalMatrix);
-	vec3 normal = normalize(f_normal * normalMatrix);
+	//normalMatrix = transpose(normalMatrix);
+	//vec3 normal = normalize(f_normal * normalMatrix);
+	vec3 normal = normalize((f_normal * texture_normal) * normalMatrix);
 
-	//inRayPayload.normal = normal;
-
-	vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
-	                        v2.texCoord * barycentrics.z; 
+ 
 	          
-	normal = normalize(normal * texture(textureSamplers[mat.normalTextureId], texCoord).xyz);
 
 	// World position
 	vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
@@ -133,14 +135,14 @@ void main()
 	albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
 	float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
 	float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
-	float cavity = 1.0f; // Temp
-	float ao = 1.0f; // Temp
+	float cavity = texture(textureSamplers[mat.cavityTextureId], texCoord).r;
+	float ao = texture(textureSamplers[mat.aoTextureId], texCoord).r;
 
 
 	float nDotV = max(dot(normal,viewVector), 0.001f);
 	// Calculate how reflective the surface from 4% (Min) to 100%
 	// Mix the minimum reflectiveness (4%) with the current albedo based on the range of 0-1
-	vec3 specularColour = mix(vec3(0.04f,0.04f,0.04f), albedo, metalness);
+	vec3 specularColour = mix(vec3(0.00f,0.00f,0.00f), albedo, metalness);
 
 
 

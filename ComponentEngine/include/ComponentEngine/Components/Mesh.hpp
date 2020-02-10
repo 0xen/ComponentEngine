@@ -48,6 +48,8 @@ namespace ComponentEngine
 		std::string metalic_texture;
 		std::string roughness_texture;
 		std::string normal_texture;
+		std::string cavity_texture;
+		std::string ao_texture;
 	};
 	inline bool operator< (const MaterialDefintion &m1, const MaterialDefintion &m2)
 	{
@@ -57,7 +59,21 @@ namespace ComponentEngine
 			{
 				if (m1.roughness_texture == m2.roughness_texture)
 				{
-					return m1.normal_texture < m2.normal_texture;
+					if (m1.normal_texture == m2.normal_texture)
+					{
+						if (m1.cavity_texture == m2.cavity_texture)
+						{
+							return m1.ao_texture < m2.ao_texture;
+						}
+						else
+						{
+							return m1.cavity_texture < m2.cavity_texture;
+						}
+					}
+					else
+					{
+						return m1.normal_texture < m2.normal_texture;
+					}
 				}
 				else
 				{
@@ -126,6 +142,8 @@ namespace ComponentEngine
 			DropBoxInstance<FileForms> metalic_texture;
 			DropBoxInstance<FileForms> roughness_texture;
 			DropBoxInstance<FileForms> normal_texture;
+			DropBoxInstance<FileForms> cavity_texture;
+			DropBoxInstance<FileForms> ao_texture;
 		};
 
 		std::vector<MaterialFileForms> m_materials;

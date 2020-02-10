@@ -120,7 +120,7 @@ Vertex unpackVertex(uint index, uint vertexOffset)
 }
 
 // Number of vec4 values used to represent a material
-const int sizeofMat = 6;
+const int sizeofMat = 7;
 
 WaveFrontMaterial unpackMaterial(int matIndex)
 {
@@ -131,6 +131,7 @@ WaveFrontMaterial unpackMaterial(int matIndex)
   vec4 d3 = materials.m[sizeofMat * matIndex + 3];
   vec4 d4 = materials.m[sizeofMat * matIndex + 4];
   vec4 d5 = materials.m[sizeofMat * matIndex + 5];
+  vec4 d6 = materials.m[sizeofMat * matIndex + 6];
 
   m.ambient = vec3(d0.x, d0.y, d0.z);
   m.diffuse = vec3(d0.w, d1.x, d1.y);
@@ -146,6 +147,8 @@ WaveFrontMaterial unpackMaterial(int matIndex)
   m.metalicTextureId = floatBitsToInt(d5.r);
   m.roughnessTextureId = floatBitsToInt(d5.g);
   m.normalTextureId = floatBitsToInt(d5.b);
+  m.cavityTextureId = floatBitsToInt(d5.a);
+  m.aoTextureId = floatBitsToInt(d6.r);
 
   return m;
 }

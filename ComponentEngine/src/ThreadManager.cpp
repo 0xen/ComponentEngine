@@ -185,9 +185,9 @@ void ThreadManager::Worker(unsigned int id)
 			};
 		}
 
+
 		m_workerTask[id]->task(m_workerTask[id]->lastDelta);
 
-		
 
 		{
 			std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);

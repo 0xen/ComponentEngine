@@ -6,9 +6,11 @@
 
 layout(location = 0) rayPayloadInNV RayPayload rayPayload;
 
+layout(binding=5, set = 0) readonly uniform CameraBuffer {Camera camera; };
+
 void main()
 {
-	const float brightness = 1.0f;
+	const float brightness = camera.globalIlluminationBrightness;
 
 	
    	// View-independent background gradient to simulate a basic sky background

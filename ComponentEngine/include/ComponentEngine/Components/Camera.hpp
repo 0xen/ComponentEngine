@@ -73,6 +73,8 @@ namespace ComponentEngine
 		static std::vector<Camera*> m_global_cameras;
 
 		float m_near_clip;
+
+
 		float m_far_clip;
 		float m_fov;
 
@@ -88,7 +90,12 @@ namespace ComponentEngine
 
 			glm::vec3 maxRecursionDepthColor;
 
+
 			unsigned int recursionCount;
+
+			float globalIlluminationBrightness;
+			float globalIlluminationReflectionMissBrightness;
+
 			// Camera Settings
 			unsigned int samplesPerFrame;
 			float aperture;

@@ -300,6 +300,82 @@ void ComponentEngine::Mesh::Display()
 				}
 
 
+				{ // normal_texture
+					ImGui::PushID(&fileForms.cavity_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.cavity_texture;
+					if (UIManager::DropBox("Cavity Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.cavity_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.cavity_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.cavityTextureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
+
+
+				{ // normal_texture
+					ImGui::PushID(&fileForms.ao_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.ao_texture;
+					if (UIManager::DropBox("AO Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.ao_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.ao_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.aoTextureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
+
+
 				ImGui::TreePop();
 			}
 
@@ -357,6 +433,8 @@ void ComponentEngine::Mesh::Load(std::ifstream & in)
 		definition.metalic_texture = Common::ReadString(in);
 		definition.roughness_texture = Common::ReadString(in);
 		definition.normal_texture = Common::ReadString(in);
+		definition.cavity_texture = Common::ReadString(in);
+		definition.ao_texture = Common::ReadString(in);
 	}
 
 	if (path.size()> 0)
@@ -392,6 +470,8 @@ void ComponentEngine::Mesh::Save(std::ofstream & out)
 			Common::Write(out, definition.metalic_texture);
 			Common::Write(out, definition.roughness_texture);
 			Common::Write(out, definition.normal_texture);
+			Common::Write(out, definition.cavity_texture);
+			Common::Write(out, definition.ao_texture);
 		}
 	}
 
@@ -599,6 +679,11 @@ void ComponentEngine::Mesh::LoadModel()
 				else
 					material.normalTextureID = 0; // Set to default white texture
 
+
+				material.cavityTextureID = 0; // Set to default white texture
+				material.aoTextureID = 0; // Set to default white texture
+
+
 				engine->RegisterMaterial(materialDefinition, material);
 				materialDefintionMap[i] = engine->GetMaterialOffset(materialDefinition);
 			}
@@ -702,6 +787,8 @@ void ComponentEngine::Mesh::UpdateMaterials()
 		ChangePath(m_materials[i].metalic_texture, definition.metalic_texture);
 		ChangePath(m_materials[i].roughness_texture, definition.roughness_texture);
 		ChangePath(m_materials[i].normal_texture, definition.normal_texture);
+		ChangePath(m_materials[i].cavity_texture, definition.cavity_texture);
+		ChangePath(m_materials[i].ao_texture, definition.ao_texture);
 	}
 
 	

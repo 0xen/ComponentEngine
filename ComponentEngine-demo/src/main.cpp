@@ -90,7 +90,6 @@ int main(int argc, char **argv)
 			//engine->LoadScene("../Room.obj");
 			engine->LoadScene("../Head.bin");
 		});
-
 	}
 
 	while (engine->Running())
