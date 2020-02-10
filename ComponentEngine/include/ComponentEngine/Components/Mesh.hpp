@@ -42,6 +42,39 @@ namespace ComponentEngine
 	struct FileForms;
 
 	class Transformation;
+	struct MaterialDefintion
+	{
+		std::string diffuse_texture;
+		std::string metalic_texture;
+		std::string roughness_texture;
+		std::string normal_texture;
+	};
+	inline bool operator< (const MaterialDefintion &m1, const MaterialDefintion &m2)
+	{
+		if (m1.diffuse_texture == m2.diffuse_texture)
+		{
+			if (m1.metalic_texture == m2.metalic_texture)
+			{
+				if (m1.roughness_texture == m2.roughness_texture)
+				{
+					return m1.normal_texture < m2.normal_texture;
+				}
+				else
+				{
+					return m1.roughness_texture < m2.roughness_texture;
+				}
+			}
+			else
+			{
+				return m1.metalic_texture < m2.metalic_texture;
+			}
+		}
+		else
+		{
+			return m1.diffuse_texture < m2.diffuse_texture;
+		}
+	}
+
 
 	class Mesh : public MsgRecive<RenderStatus>, public UI , public IO, public Logic,
 		public MsgRecive<OnComponentEnter<Transformation>>, public MsgRecive<OnComponentExit<Transformation>>
@@ -73,14 +106,29 @@ namespace ComponentEngine
 
 		friend class Engine;
 	private:
-		void InstanciateModel();
+		void ChangePath(DropBoxInstance<FileForms>& p, std::string path);
+		void InstanciateModel(std::vector<MaterialDefintion> definitions);
 
-		// Key: File path, Value: Model instance
-		static std::map<std::string, VulkanModelPool*> m_mesh_instances;
-		static std::vector<std::string> m_meshes_loading;
-		static std::map<std::string, std::vector<Mesh*>> m_pending_models;
+		void UpdateMaterials();
+		
+		void SetMaterial(int index, MaterialDefintion definition);
+
 
 		DropBoxInstance<FileForms> m_file_path;
+
+
+
+
+
+		struct MaterialFileForms
+		{
+			DropBoxInstance<FileForms> diffuse_texture;
+			DropBoxInstance<FileForms> metalic_texture;
+			DropBoxInstance<FileForms> roughness_texture;
+			DropBoxInstance<FileForms> normal_texture;
+		};
+
+		std::vector<MaterialFileForms> m_materials;
 
 		unsigned int m_hit_group;
 
@@ -91,10 +139,24 @@ namespace ComponentEngine
 		// Index for the current mesh in the position array
 		unsigned int m_mesh_index;
 		bool m_loaded;
-
+		std::array<int, 8> m_materials_offsets;
 		// How many slots we will reserve 
 		static const unsigned int m_buffer_size_step;
 
 		enteez::Entity * m_entity;
+		std::vector<MaterialDefintion> loading_definitions;
+	};
+	struct Pending
+	{
+		Mesh* mesh;
+		std::vector<MaterialDefintion> definitions;
+	};
+	struct MeshInstance
+	{
+		std::vector<Pending> pending_models;
+		VulkanModelPool* mesh_instance;
+		std::array<int, 8> defaultMaterialMap;
+		int materialCount;
+		bool loading;
 	};
 }

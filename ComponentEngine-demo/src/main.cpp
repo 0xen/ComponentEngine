@@ -93,8 +93,6 @@ int main(int argc, char **argv)
 
 	}
 
-
-
 	while (engine->Running())
 	{
 		engine->Update();

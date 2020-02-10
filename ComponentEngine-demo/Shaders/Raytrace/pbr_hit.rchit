@@ -27,8 +27,9 @@ void main()
 	
   	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 
-  
-  	WaveFrontMaterial mat = unpackMaterial(v1.matIndex);
+    
+    int materialIndex = materials_mapping.map[(MaxMaterialsPerModel * gl_InstanceID) + v1.matIndex];
+  	WaveFrontMaterial mat = unpackMaterial(materialIndex);
 
 
 	// Calculate normal

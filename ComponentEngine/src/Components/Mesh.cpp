@@ -25,12 +25,12 @@ using namespace ComponentEngine;
 
 const unsigned int Mesh::m_buffer_size_step = 100;
 
-std::map<std::string, VulkanModelPool*> ComponentEngine::Mesh::m_mesh_instances;
-std::vector<std::string> ComponentEngine::Mesh::m_meshes_loading;
-std::map<std::string, std::vector<Mesh*>> ComponentEngine::Mesh::m_pending_models;
+// Key: File path, Value: Model instance
+std::map<std::string, MeshInstance> m_mesh_instances;
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 {
+	m_materials_offsets = { 0 };
 	m_loaded = false;
 	m_vertex_count = 0;
 	m_hit_group = 0;
@@ -39,6 +39,7 @@ ComponentEngine::Mesh::Mesh(enteez::Entity* entity) : m_entity(entity)
 
 ComponentEngine::Mesh::Mesh(enteez::Entity* entity, std::string path) : /*MsgSend(entity),*/ m_entity(entity)
 {
+	m_materials_offsets = { 0 };
 	m_loaded = false;
 	m_vertex_count = 0;
 	m_hit_group = 0;
@@ -140,6 +141,174 @@ void ComponentEngine::Mesh::Display()
 			ImGui::EndCombo();
 		}
 
+
+		for (int i = 0 ; i < m_materials.size(); i++)
+		{
+			MaterialFileForms& fileForms = m_materials[i];
+			ImGui::PushID(&fileForms);
+
+			bool open = ImGui::TreeNodeEx("Folder", ImGuiTreeNodeFlags_None, "%i", i);
+
+			if (open)
+			{
+				{ // diffuse_texture
+					ImGui::PushID(&fileForms.diffuse_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.diffuse_texture;
+					if (UIManager::DropBox("Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.diffuse_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.diffuse_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.textureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
+
+				{ // metalic_texture
+					ImGui::PushID(&fileForms.metalic_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.metalic_texture;
+					if (UIManager::DropBox("Metallic Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.metalic_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.metalic_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.metalicTextureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
+
+				{ // roughness_texture
+					ImGui::PushID(&fileForms.roughness_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.roughness_texture;
+					if (UIManager::DropBox("Roughness Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.roughness_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.roughness_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.roughnessTextureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
+
+				{ // normal_texture
+					ImGui::PushID(&fileForms.normal_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.normal_texture;
+					if (UIManager::DropBox("Normal Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.normal_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.normal_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.normalTextureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
+
+
+				ImGui::TreePop();
+			}
+
+
+			ImGui::PopID();
+		}
+
+		
+
 		ImGui::PopID();
 	}
 
@@ -172,10 +341,32 @@ void ComponentEngine::Mesh::Load(std::ifstream & in)
 {
 	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Mesh, m_hit_group), SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group));
 	std::string path = Common::ReadString(in);
+
+	// Material count
+	int materialCount = 0;
+	ComponentEngine::Common::Read(in, &materialCount, sizeof(int));
+
+	std::vector<MaterialDefintion> definitions;
+	definitions.resize(materialCount);
+
+	for (int i = 0; i < materialCount; i++)
+	{
+		MaterialDefintion& definition = definitions[i];
+
+		definition.diffuse_texture = Common::ReadString(in);
+		definition.metalic_texture = Common::ReadString(in);
+		definition.roughness_texture = Common::ReadString(in);
+		definition.normal_texture = Common::ReadString(in);
+	}
+
 	if (path.size()> 0)
 	{
 		ChangePath(path);
+		loading_definitions = definitions;
 		LoadModel();
+
+
+
 	}
 }
 
@@ -184,6 +375,29 @@ void ComponentEngine::Mesh::Save(std::ofstream & out)
 	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Mesh, m_hit_group), SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group));
 
 	Common::Write(out, m_file_path.data.longForm);
+
+
+	if (m_file_path.data.longForm.size() > 0)
+	{
+
+		// Material count
+		int materialCount = m_mesh_instances[m_file_path.data.longForm].materialCount;
+		Common::Write(out, &materialCount, sizeof(int));
+
+		for (int i = 0; i < materialCount; i++)
+		{
+			MaterialDefintion definition = Engine::Singlton()->GetMaterialDefinition(m_materials_offsets[i]);
+
+			Common::Write(out, definition.diffuse_texture);
+			Common::Write(out, definition.metalic_texture);
+			Common::Write(out, definition.roughness_texture);
+			Common::Write(out, definition.normal_texture);
+		}
+	}
+
+
+
+
 }
 
 unsigned int ComponentEngine::Mesh::PayloadSize()
@@ -198,12 +412,22 @@ bool ComponentEngine::Mesh::DynamiclySized()
 
 void ComponentEngine::Mesh::Update(float frame_time)
 {
-	if (m_loaded)m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+	if (m_loaded)
+	{
+		m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+
+		m_model->SetData(1, m_materials_offsets);
+	}
 }
 
 void ComponentEngine::Mesh::EditorUpdate(float frame_time)
 {
-	if(m_loaded)m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+	if (m_loaded)
+	{
+		m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+
+		m_model->SetData(1, m_materials_offsets);
+	}
 }
 
 void ComponentEngine::Mesh::LoadModel()
@@ -226,18 +450,25 @@ void ComponentEngine::Mesh::LoadModel()
 
 		engine->GetModelLoadMutex().lock();
 
-		bool loading = std::find(m_meshes_loading.begin(), m_meshes_loading.end(), m_file_path.data.longForm) != m_meshes_loading.end();
 		bool notLoaded = m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end();
-		if (loading)
+		bool loading = false;
+		if (!notLoaded)
 		{
-			m_pending_models[m_file_path.data.longForm].push_back(this);
-			engine->GetModelLoadMutex().unlock();
-			return;
-		} 
-		else if (notLoaded)
+			loading = m_mesh_instances[m_file_path.data.longForm].loading;
+			if (loading)
+			{
+				Pending pendingModel;
+				pendingModel.mesh = this;
+				pendingModel.definitions = loading_definitions;
+				m_mesh_instances[m_file_path.data.longForm].pending_models.push_back(pendingModel);
+				engine->GetModelLoadMutex().unlock();
+				return;
+			}
+		}
+		else
 		{
 			// Tell the system we are loading the mesh
-			m_meshes_loading.push_back(m_file_path.data.longForm);
+			m_mesh_instances[m_file_path.data.longForm].loading = true;
 		}
 		engine->GetModelLoadMutex().unlock();
 
@@ -255,10 +486,8 @@ void ComponentEngine::Mesh::LoadModel()
 
 			std::vector<uint32_t>& all_indexs = engine->GetGlobalIndexArray();
 			std::vector<MeshVertex>& all_vertexs = engine->GetGlobalVertexArray();
-			std::vector<MatrialObj>& materials = engine->GetGlobalMaterialArray();
-			std::vector<VkDescriptorImageInfo>& texture_descriptors = engine->GetTextureDescriptors();
-			std::vector<VulkanTextureBuffer*>& textures = engine->GetTextures();
 			VulkanBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
+			VulkanBufferPool* material_mapping_pool = engine->GetMaterialMappingPool();
 
 
 			{
@@ -267,6 +496,9 @@ void ComponentEngine::Mesh::LoadModel()
 				if (!file.is_open())
 				{
 					engine->Log("Could not find model");
+					engine->GetModelLoadMutex().lock();
+					m_mesh_instances[m_file_path.data.longForm].loading = false;
+					engine->GetModelLoadMutex().unlock();
 					return;
 				}
 				file.close();
@@ -276,230 +508,132 @@ void ComponentEngine::Mesh::LoadModel()
 			ObjLoader<MeshVertex> loader;
 			loader.loadModel(m_file_path.data.longForm);
 
-			engine->GetModelLoadMutex().lock();
-
-			unsigned int& used_vertex = engine->GetUsedVertex();
-			unsigned int& used_index = engine->GetUsedIndex();
-			unsigned int& used_materials = engine->GetUsedMaterials();
+			unsigned int vertexStart = 0;
+			unsigned int indexStart = 0;
 
 			uint32_t m_nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
 			uint32_t m_nbIndices = static_cast<uint32_t>(loader.m_indices.size());
 
-			unsigned int vertexStart = used_vertex;
-			unsigned int indexStart = used_index;
 
-			for (uint32_t& index : loader.m_indices)
-			{
-				all_indexs[used_index] = index;
-				used_index++;
+
+			{ // Load the verticies and indicies into memory
+				engine->GetModelLoadMutex().lock();
+
+				unsigned int& used_vertex = engine->GetUsedVertex();
+				unsigned int& used_index = engine->GetUsedIndex();
+
+				vertexStart = used_vertex;
+				indexStart = used_index;
+
+
+				for (uint32_t& index : loader.m_indices)
+				{
+					all_indexs[used_index] = index;
+					used_index++;
+				}
+
+				for (MeshVertex& vertex : loader.m_vertices)
+				{
+					all_vertexs[used_vertex] = vertex;
+					used_vertex++;
+				}
+
+				engine->GetModelLoadMutex().unlock();
 			}
 
-			for (MeshVertex& vertex : loader.m_vertices)
-			{
-				vertex.matID += used_materials;
-				all_vertexs[used_vertex] = vertex;
-				used_vertex++;
-			}
 
-
-			unsigned int offset = texture_descriptors.size();
-
-
-			std::vector<bool> loadedTextures(loader.m_textures.size());
+			std::vector<int> loadedTextures(loader.m_textures.size());
 			for (int i = 0; i < loader.m_textures.size(); i++)
 			{
 				std::stringstream ss;
 				ss << m_dir << loader.m_textures[i];
 
-				VulkanTextureBuffer* texture = engine->LoadTexture(ss.str());
-				loadedTextures[i] = texture != nullptr;
-				if (loadedTextures[i])
-				{
-					textures.push_back(texture);
-
-					texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
-				}
+				engine->LoadTexture(ss.str());
+				loadedTextures[i] = engine->GetTextureOffset(ss.str());
 			}
 
 
-			for (auto& material : loader.m_materials)
+			m_materials.clear();
+			m_materials.resize(loader.m_materials.size());
+
+
+			std::array<int, 8> materialDefintionMap;
+
+
+			for (int i = 0; i < loader.m_materials.size(); i++)
 			{
-				if (material.textureID >= 0 && loadedTextures[material.textureID])
-					material.textureID += offset;
+				MatrialObj material = loader.m_materials[i];
+				MaterialFileForms& fileForm = m_materials[i];
+				MaterialDefintion materialDefinition;
+
+
+				if (material.textureID >= 0 && loadedTextures[material.textureID] >= 0)
+				{
+					materialDefinition.diffuse_texture = loader.m_textures[material.textureID];
+					material.textureID = loadedTextures[material.textureID];
+				}
 				else
 					material.textureID = 0; // Set to default white texture
 
-				if (material.metalicTextureID >= 0 && loadedTextures[material.metalicTextureID])
-					material.metalicTextureID += offset;
+				if (material.metalicTextureID >= 0 && loadedTextures[material.metalicTextureID] >= 0)
+				{
+					materialDefinition.metalic_texture = loader.m_textures[material.metalicTextureID];
+					material.metalicTextureID = loadedTextures[material.metalicTextureID];
+				}
 				else
 					material.metalicTextureID = 1; // Set to default black texture
 
-				if (material.roughnessTextureID >= 0 && loadedTextures[material.roughnessTextureID])
-					material.roughnessTextureID += offset;
+				if (material.roughnessTextureID >= 0 && loadedTextures[material.roughnessTextureID] >= 0)
+				{
+					materialDefinition.roughness_texture = loader.m_textures[material.roughnessTextureID];
+					material.roughnessTextureID = loadedTextures[material.roughnessTextureID];
+				}
 				else
 					material.roughnessTextureID = 0; // Set to default white texture
 
-				if (material.normalTextureID >= 0 && loadedTextures[material.normalTextureID])
-					material.normalTextureID += offset;
+				if (material.normalTextureID >= 0 && loadedTextures[material.normalTextureID] >= 0)
+				{
+					materialDefinition.normal_texture = loader.m_textures[material.normalTextureID];
+					material.normalTextureID = loadedTextures[material.normalTextureID];
+				}
 				else
 					material.normalTextureID = 0; // Set to default white texture
 
-				materials[used_materials] = material;
-
-				used_materials++;
+				engine->RegisterMaterial(materialDefinition, material);
+				materialDefintionMap[i] = engine->GetMaterialOffset(materialDefinition);
 			}
 
-			m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
+			m_mesh_instances[m_file_path.data.longForm].mesh_instance = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
 
-			m_mesh_instances[m_file_path.data.longForm]->AttachBufferPool(0, position_buffer_pool);
+			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(0, position_buffer_pool);
 
-
-
-			as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm], m_hit_group);
+			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(1, material_mapping_pool);
 
 
-
-			m_meshes_loading.erase(std::find(m_meshes_loading.begin(), m_meshes_loading.end(), m_file_path.data.longForm));
-
-			for (Mesh* mesh : m_pending_models[m_file_path.data.longForm])
-			{
-				mesh->InstanciateModel();
-			}
-			m_pending_models[m_file_path.data.longForm].clear();
-			m_pending_models.erase(m_pending_models.find(m_file_path.data.longForm));
-
-
+			engine->GetModelLoadMutex().lock();
+			as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm].mesh_instance, m_hit_group);
 			engine->GetModelLoadMutex().unlock();
+
+			{ // Finish, clean up and setup pending models
+				engine->GetModelLoadMutex().lock();
+				m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap = materialDefintionMap;
+				m_mesh_instances[m_file_path.data.longForm].loading = false;
+				m_mesh_instances[m_file_path.data.longForm].materialCount = loader.m_materials.size();
+
+				for (Pending pendingMesh : m_mesh_instances[m_file_path.data.longForm].pending_models)
+				{
+					pendingMesh.mesh->InstanciateModel(pendingMesh.definitions);
+				}
+
+				m_mesh_instances[m_file_path.data.longForm].pending_models.clear();
+				engine->GetModelLoadMutex().unlock();
+			}
+
 		}
 
-		InstanciateModel();
+		InstanciateModel(loading_definitions);
 
 	},"ModelLoader");
-
-
-	
-	/*
-	VulkanAcceleration* as = engine->GetTopLevelAS();
-
-	if (m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end())
-	{
-		VulkanVertexBuffer* vertexBuffer = engine->GetGlobalVertexBufer();
-		VulkanIndexBuffer* indexBuffer = engine->GetGlobalIndexBuffer();
-
-		std::vector<uint32_t>& all_indexs = engine->GetGlobalIndexArray();
-		std::vector<MeshVertex>& all_vertexs = engine->GetGlobalVertexArray();
-		std::vector<MatrialObj>& materials = engine->GetGlobalMaterialArray();
-		std::vector<VkDescriptorImageInfo>& texture_descriptors = engine->GetTextureDescriptors();
-		std::vector<VulkanTextureBuffer*>& textures = engine->GetTextures();
-		VulkanBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
-
-		unsigned int& used_vertex = engine->GetUsedVertex();
-		unsigned int& used_index = engine->GetUsedIndex();
-		unsigned int& used_materials = engine->GetUsedMaterials();
-
-		{
-			std::ifstream file(m_file_path.data.longForm, std::ios::ate | std::ios::binary);
-			if (!file.is_open())
-			{
-				return;
-			}
-			file.close();
-		}
-
-		ObjLoader<MeshVertex> loader;
-		loader.loadModel(m_file_path.data.longForm);
-
-		uint32_t m_nbVertices = static_cast<uint32_t>(loader.m_vertices.size());
-		uint32_t m_nbIndices = static_cast<uint32_t>(loader.m_indices.size());
-
-		unsigned int vertexStart = used_vertex;
-		unsigned int indexStart = used_index;
-
-		for (uint32_t& index : loader.m_indices)
-		{
-			all_indexs[used_index] = index;
-			used_index++;
-		}
-
-		for (MeshVertex& vertex : loader.m_vertices)
-		{
-			vertex.matID += used_materials;
-			all_vertexs[used_vertex] = vertex;
-			used_vertex++;
-		}
-
-
-		unsigned int offset = texture_descriptors.size();
-
-
-		std::vector<bool> loadedTextures(loader.m_textures.size());
-		for (int i = 0; i <  loader.m_textures.size(); i++)
-		{
-			std::stringstream ss;
-			ss << m_dir << loader.m_textures[i];
-
-			VulkanTextureBuffer* texture = engine->LoadTexture(ss.str());
-			loadedTextures[i] = texture != nullptr;
-			if (loadedTextures[i])
-			{
-				textures.push_back(texture);
-
-				texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
-			}
-		}
-
-
-		for (auto& material : loader.m_materials)
-		{
-			if (material.textureID >= 0 && loadedTextures[material.textureID])
-				material.textureID += offset;
-			else
-				material.textureID = 0; // Set to default white texture
-
-			if (material.metalicTextureID >= 0 && loadedTextures[material.metalicTextureID])
-				material.metalicTextureID += offset;
-			else
-				material.metalicTextureID = 1; // Set to default black texture
-
-			if (material.roughnessTextureID >= 0 && loadedTextures[material.roughnessTextureID])
-				material.roughnessTextureID += offset;
-			else
-				material.roughnessTextureID = 0; // Set to default white texture
-
-			if (material.normalTextureID >= 0 && loadedTextures[material.normalTextureID])
-				material.normalTextureID += offset;
-			else
-				material.normalTextureID = 0; // Set to default white texture
-
-			materials[used_materials] = material;
-
-			used_materials++;
-		}
-
-		m_mesh_instances[m_file_path.data.longForm] = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
-
-		m_mesh_instances[m_file_path.data.longForm]->AttachBufferPool(0, position_buffer_pool);
-
-
-
-		as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm], m_hit_group);
-	}
-
-	
-	
-	m_model_pool = m_mesh_instances[m_file_path.data.longForm];
-
-	// Create a instance of the model
-	m_model = m_model_pool->CreateModel();
-	
-	m_vertex_count = m_model_pool->GetVertexSize();
-
-	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
-
-
-	engine->UpdateAccelerationDependancys();
-
-	m_loaded = true;*/
 }
 
 void ComponentEngine::Mesh::UnloadModel()
@@ -518,9 +652,16 @@ int ComponentEngine::Mesh::GetUUID()
 	return m_model->GetUUID();
 }
 
-void ComponentEngine::Mesh::InstanciateModel()
+void ComponentEngine::Mesh::ChangePath(DropBoxInstance<FileForms>& p, std::string path)
 {
-	m_model_pool = m_mesh_instances[m_file_path.data.longForm];
+	p = DropBoxInstance<FileForms>("Texture");
+	p.data.GenerateFileForm(path);
+	p.SetMessage(p.data.shortForm);
+}
+
+void ComponentEngine::Mesh::InstanciateModel(std::vector<MaterialDefintion> definitions)
+{
+	m_model_pool = m_mesh_instances[m_file_path.data.longForm].mesh_instance;
 
 	// Create a instance of the model
 	m_model = m_model_pool->CreateModel();
@@ -529,8 +670,91 @@ void ComponentEngine::Mesh::InstanciateModel()
 
 	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
 
+	m_model->SetData(1, m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap);
+
+
+	//ChangePath(fileForm.normal_texture, loader.m_textures[material.normalTextureID]);
+
+	for (int i = 0; i < definitions.size(); i++)
+	{
+		SetMaterial(i, definitions[i]);
+	}
+
+	UpdateMaterials();
 
 	Engine::Singlton()->UpdateAccelerationDependancys();
 
 	m_loaded = true;
+}
+
+void ComponentEngine::Mesh::UpdateMaterials()
+{
+	int materialCount = m_mesh_instances[m_file_path.data.longForm].materialCount;
+	m_materials.resize(materialCount);
+
+
+
+	for (int i = 0; i < materialCount; i++)
+	{
+		MaterialDefintion definition = Engine::Singlton()->GetMaterialDefinition(m_materials_offsets[i]);
+
+		ChangePath(m_materials[i].diffuse_texture, definition.diffuse_texture);
+		ChangePath(m_materials[i].metalic_texture, definition.metalic_texture);
+		ChangePath(m_materials[i].roughness_texture, definition.roughness_texture);
+		ChangePath(m_materials[i].normal_texture, definition.normal_texture);
+	}
+
+	
+}
+
+void ComponentEngine::Mesh::SetMaterial(int index, MaterialDefintion definition)
+{
+	Engine* engine = Engine::Singlton();
+
+	// Get the models global material instance
+	MatrialObj global_material = engine->GetGlobalMaterialArray()[m_materials_offsets[index]];
+	// Load the texture
+	if(definition.diffuse_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss  << definition.diffuse_texture;
+		engine->LoadTexture(ss.str());
+		global_material.textureID = engine->GetTextureOffset(ss.str());
+	}
+	if (definition.metalic_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss  << definition.metalic_texture;
+		engine->LoadTexture(ss.str());
+		global_material.metalicTextureID = engine->GetTextureOffset(ss.str());
+	}
+	if (definition.roughness_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss  << definition.roughness_texture;
+		engine->LoadTexture(ss.str());
+		global_material.roughnessTextureID = engine->GetTextureOffset(ss.str());
+	}
+	if (definition.normal_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss  << definition.normal_texture;
+		engine->LoadTexture(ss.str());
+		global_material.normalTextureID = engine->GetTextureOffset(ss.str());
+	}
+
+
+	// Register the new material combination
+	engine->RegisterMaterial(definition, global_material);
+	m_materials_offsets[index] = engine->GetMaterialOffset(definition);
+
+
+	// Set the models new materials
+	m_model->SetData(1, m_materials_offsets);
+
+
 }

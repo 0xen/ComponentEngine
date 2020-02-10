@@ -39,10 +39,15 @@ indices;
 layout(binding = 2, set = 1) buffer MatColorBufferObject { vec4[] m; }
 materials;
 
-layout(binding = 0, set = 2) uniform sampler2D[] textureSamplers;
-
 layout(binding = 3, set = 1) buffer Lights { vec4 l[]; }
 lights;
+
+uint MaxMaterialsPerModel = 8;
+
+layout(binding = 4, set = 1) buffer MaterialsMapping { int map[]; }
+materials_mapping;
+
+layout(binding = 0, set = 2) uniform sampler2D[] textureSamplers;
 
 layout(binding = 0, set = 3) buffer ModelPos { mat4 m[]; }
 models;

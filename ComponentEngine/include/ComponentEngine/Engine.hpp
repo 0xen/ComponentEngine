@@ -107,6 +107,7 @@ namespace ComponentEngine
 	class MenuElement;
 	// Found in Components/Light.hpp
 	struct LightData;
+	struct MaterialDefintion;
 
 
 	static const std::string EngineName = "Component Engine";
@@ -158,10 +159,20 @@ namespace ComponentEngine
 		VulkanDescriptorSet* GetCameraDescriptorSet();
 		// Get the texture map descriptor pool
 		VulkanDescriptorPool* GetTextureMapsPool();
+
+		MaterialDefintion GetMaterialDefinition(int index);
+
+		void RegisterMaterial(MaterialDefintion definition, MatrialObj material);
+		// Get the textures offset in the texture array
+		int GetMaterialOffset(MaterialDefintion definition);
+
+		// Get the textures offset in the texture array
+		int GetTextureOffset(std::string path);
 		// Load a texture, if the texture is already loaded, get the texture instance
 		VulkanTextureBuffer* LoadTexture(std::string path);
 		// Load a texture from a data pointer
 		VulkanTextureBuffer* LoadTexture(unsigned int width, unsigned int height, char* data);
+
 		// Get the current scene name and directory
 		std::string GetCurrentScene();
 		// Get the current scene directory
@@ -209,8 +220,12 @@ namespace ComponentEngine
 		VulkanVertexBuffer* GetGlobalVertexBufer();
 		// Get the global index buffer that stores all primary index data
 		VulkanIndexBuffer* GetGlobalIndexBuffer();
+		// Get the uniform buffer that maps models to there materials
+		VulkanUniformBuffer* GetMaterialMappingBuffer();
 		// Get the uniform buffer that stored all material data
 		VulkanUniformBuffer* GetMaterialBuffer();
+		// Get the local material mapping array
+		std::vector<std::array<int, 8>>& GetGlobalMaterialMappingArray();
 		// Get the local vertex array data
 		std::vector<MeshVertex>& GetGlobalVertexArray();
 		// Get the local index array data
@@ -221,8 +236,12 @@ namespace ComponentEngine
 		std::vector<VkDescriptorImageInfo>& GetTextureDescriptors();
 		// Get the local texture buffer array
 		std::vector<VulkanTextureBuffer*>& GetTextures();
+		// How many materials can each model have
+		int GetMaxMaterialsPerModel();
 		// Get the allocation pool for model positions
 		VulkanBufferPool* GetPositionBufferPool();
+		// Get the allocation pool for model positions
+		VulkanBufferPool* GetMaterialMappingPool();
 		// Get the allocation pool for lights
 		VulkanBufferPool* GetLightBufferPool();
 		// Get the raytracing top level acceleration structure
@@ -424,6 +443,8 @@ namespace ComponentEngine
 
 		ordered_lock m_thread_data_lock;
 		ordered_lock m_model_load_lock;
+		ordered_lock m_texture_load_lock;
+		ordered_lock m_material_load_lock;
 
 		std::vector<ConsoleMessage> m_console;
 		//std::vector<ThreadData*> m_thread_data;
@@ -458,8 +479,16 @@ namespace ComponentEngine
 
 		VulkanAcceleration* m_top_level_acceleration;
 		
+		std::map<std::string, int> m_texture_mapping;
 		std::vector<VulkanTextureBuffer*> m_textures;
 		std::vector<VkDescriptorImageInfo> m_texture_descriptors;
+
+
+		std::map<MaterialDefintion, int> m_material_mapping;
+
+		std::vector<std::array<int, 8>> m_materials_vertex_mapping;
+		VulkanBufferPool* m_materials_vertex_mapping_buffer_pool;
+
 		std::vector<MatrialObj> m_materials;
 
 		unsigned int m_used_vertex = 0;
@@ -469,7 +498,7 @@ namespace ComponentEngine
 		const unsigned int m_vertex_max = 1000000;
 		const unsigned int m_index_max = 1000000;
 		const unsigned int m_max_texture_descriptors = 1000;
-		const unsigned int m_max_materials = 1000;
+		const unsigned int m_max_materials = 200;
 
 		std::vector<MeshVertex> m_all_vertexs;
 		std::vector<uint32_t> m_all_indexs;
@@ -481,6 +510,9 @@ namespace ComponentEngine
 
 		VulkanVertexBuffer* m_vertexBuffer;
 		VulkanIndexBuffer* m_indexBuffer;
+
+		const unsigned int m_maxMaterialsPerModel = 8;
+		VulkanUniformBuffer* m_materialMappingBuffer;
 		VulkanUniformBuffer* m_materialbuffer;
 
 		glm::mat4* m_model_position_array;

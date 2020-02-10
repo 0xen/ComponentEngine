@@ -297,6 +297,7 @@ void ComponentEngine::Engine::UpdateSceneBuffers()
 	}
 
 	m_model_position_buffer->SetData(BufferSlot::Primary);
+	m_materialMappingBuffer->SetData(BufferSlot::Primary);
 	m_light_buffer->SetData(BufferSlot::Primary);
 
 	GetRendererMutex().unlock();
@@ -340,8 +341,8 @@ void ComponentEngine::Engine::RenderFrame()
 {
 	// If we do not have a camera, break
 	if (m_main_camera == nullptr)return;
-	TransferImGui();
 	GetRendererMutex().lock();
+	TransferImGui();
 	// Rebuild the render pass for ImGui UI Data
 	m_raytrace_renderpass->RequestRebuildCommandBuffers();
 
@@ -700,9 +701,75 @@ VulkanDescriptorPool * ComponentEngine::Engine::GetTextureMapsPool()
 	return m_texture_maps_pool;
 }
 
+MaterialDefintion ComponentEngine::Engine::GetMaterialDefinition(int index)
+{
+	for (auto& it : m_material_mapping)
+	{
+		if (it.second == index)
+		{
+			return it.first;
+		}
+	}
+	return MaterialDefintion();
+}
+
+void ComponentEngine::Engine::RegisterMaterial(MaterialDefintion definition, MatrialObj material)
+{
+	m_material_load_lock.lock();
+	if (m_material_mapping.find(definition) != m_material_mapping.end())
+	{
+		m_materials[m_material_mapping[definition]] = material;
+		m_material_load_lock.unlock();
+		return;
+	}
+
+	m_materials[m_used_materials] = material;
+	m_material_mapping[definition] = m_used_materials;
+	m_used_materials++;
+	m_material_load_lock.unlock();
+}
+
+int ComponentEngine::Engine::GetMaterialOffset(MaterialDefintion definition)
+{
+	m_material_load_lock.lock();
+	if (m_material_mapping.find(definition) != m_material_mapping.end())
+	{
+		int index = m_material_mapping[definition];
+		m_material_load_lock.unlock();
+		return index;
+	}
+	m_material_load_lock.unlock();
+	return -1;
+}
+
+
+int ComponentEngine::Engine::GetTextureOffset(std::string path)
+{
+	m_texture_load_lock.lock();
+	// If the texture already exists, find the existing one and use it
+	if (m_texture_mapping.find(path) != m_texture_mapping.end())
+	{
+		int temp = m_texture_mapping[path];
+		m_texture_load_lock.unlock();
+		return temp;
+	}
+	m_texture_load_lock.unlock();
+	return 0;
+}
+
 // Load a texture, if the texture is already loaded, get the texture instance
 VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 {
+	m_texture_load_lock.lock();
+	// If the texture already exists, find the existing one and use it
+	if (m_texture_mapping.find(path) != m_texture_mapping.end())
+	{
+		VulkanTextureBuffer* temp = m_textures[m_texture_mapping[path]];
+		m_texture_load_lock.unlock();
+		return temp;
+	}
+	m_texture_load_lock.unlock();
+
 	std::vector<unsigned char> image; //the raw pixels
 	unsigned width;
 	unsigned height;
@@ -715,13 +782,25 @@ VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 		return nullptr;
 	}
 	// Create and store the texture on the graphics card
+	GetRendererMutex().lock();
 	VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
 	texture->SetData(BufferSlot::Primary);
+	GetRendererMutex().unlock();
 	{
 		std::stringstream ss;
 		ss << "Loaded texture" << path;
 		Log(ss.str(), Info);
 	}
+
+
+	m_texture_load_lock.lock();
+	m_texture_mapping[path] = m_textures.size();
+
+	// Define the texture and its descriptor
+	m_textures.push_back(texture);
+	m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+	m_texture_load_lock.unlock();
+
 	return texture;
 }
 
@@ -897,10 +976,20 @@ VulkanIndexBuffer * ComponentEngine::Engine::GetGlobalIndexBuffer()
 	return m_indexBuffer;
 }
 
+VulkanUniformBuffer * ComponentEngine::Engine::GetMaterialMappingBuffer()
+{
+	return m_materialMappingBuffer;
+}
+
 // Get the uniform buffer that stored all material data
 VulkanUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
 {
 	return m_materialbuffer;
+}
+
+std::vector<std::array<int, 8>>& ComponentEngine::Engine::GetGlobalMaterialMappingArray()
+{
+	return m_materials_vertex_mapping;
 }
 
 // Get the local vertex array data
@@ -933,10 +1022,20 @@ std::vector<VulkanTextureBuffer*>& ComponentEngine::Engine::GetTextures()
 	return m_textures;
 }
 
+int ComponentEngine::Engine::GetMaxMaterialsPerModel()
+{
+	return m_maxMaterialsPerModel;
+}
+
 // Get the allocation pool for model positions
 VulkanBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
 {
 	return m_position_buffer_pool;
+}
+
+VulkanBufferPool * ComponentEngine::Engine::GetMaterialMappingPool()
+{
+	return m_materials_vertex_mapping_buffer_pool;
 }
 
 VulkanBufferPool * ComponentEngine::Engine::GetLightBufferPool()
@@ -1012,6 +1111,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	m_light_buffer->SetData(BufferSlot::Primary);
 	m_model_position_buffer->SetData(BufferSlot::Primary);
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
+	m_materialMappingBuffer->SetData(BufferSlot::Primary);
 
 	m_top_level_acceleration->Build();
 
@@ -1030,6 +1130,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
 		m_RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
 		m_RTModelPoolSet->AttachBuffer(3, m_light_buffer);
+		m_RTModelPoolSet->AttachBuffer(4, m_materialMappingBuffer);
 
 		m_RTModelPoolSet->UpdateSet();
 	}
@@ -1457,9 +1558,14 @@ void ComponentEngine::Engine::InitRenderer()
 
 
 		m_materials.resize(m_max_materials);
-
 		m_materialbuffer = m_renderer->CreateUniformBuffer(m_materials.data(), BufferChain::Single, sizeof(MatrialObj), m_materials.size(), true);
 		m_materialbuffer->SetData(BufferSlot::Primary);
+
+		m_materials_vertex_mapping.resize(m_max_materials);
+		m_materialMappingBuffer = m_renderer->CreateUniformBuffer(m_materials_vertex_mapping.data(), BufferChain::Single, sizeof(std::array<int, 8>), m_materials_vertex_mapping.size(), true);
+		m_materialMappingBuffer->SetData(BufferSlot::Primary);
+
+		m_materials_vertex_mapping_buffer_pool = new VulkanBufferPool(m_materialMappingBuffer);
 
 
 		{
@@ -1468,6 +1574,7 @@ void ComponentEngine::Engine::InitRenderer()
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 3),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 4),
 				});
 
 			m_RTModelPoolSet = RTModelPool->CreateDescriptorSet();
@@ -1476,6 +1583,7 @@ void ComponentEngine::Engine::InitRenderer()
 			m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
 			m_RTModelPoolSet->AttachBuffer(2, m_materialbuffer);
 			m_RTModelPoolSet->AttachBuffer(3, m_light_buffer);
+			m_RTModelPoolSet->AttachBuffer(4, m_materialMappingBuffer);
 
 
 			m_RTModelPoolSet->UpdateSet();
