@@ -149,6 +149,7 @@ WaveFrontMaterial unpackMaterial(int matIndex)
   m.normalTextureId = floatBitsToInt(d5.b);
   m.cavityTextureId = floatBitsToInt(d5.a);
   m.aoTextureId = floatBitsToInt(d6.r);
+  m.heightTextureId = floatBitsToInt(d6.g);
 
   return m;
 }

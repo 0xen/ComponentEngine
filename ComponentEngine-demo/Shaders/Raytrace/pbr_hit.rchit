@@ -6,7 +6,8 @@
 #include "HitgroupHelpers.glsl"
 
 
-vec3 GenerateNormal(vec3 modelNormal, vec3 position, vec3 tangent, vec3 cameraDir,mat3 modelMatrix, int normalTextureId,inout vec2 UV, bool parallax)
+vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
+	mat3 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
 {
 	const float parallaxDepth = 0.06f;
 
@@ -19,14 +20,14 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 position, vec3 tangent, vec3 cameraDi
 	{
 		// Get camera direction in model space
 		mat3 invWorldMatrix = transpose(modelMatrix);
-		vec3 cameraModelDir = normalize(invWorldMatrix*cameraDir);
+		vec3 cameraModelDir = normalize(cameraDir * invWorldMatrix);
 
 		// Calculate direction to offset UVs (x and y of camera direction in tangent space)
 		mat3 tangentMatrix = transpose(invTangentMatrix);
-		vec2 textureOffsetDir = (tangentMatrix*cameraModelDir).xy;
+		vec2 textureOffsetDir = (cameraModelDir * tangentMatrix).xy;
 
 		// Offset UVs in that direction to account for depth (using height map and some geometry)
-		float texDepth = parallaxDepth ;//* (HeightMap.Sample(TrilinearWrap, UV).r - 0.5f);
+		float texDepth = parallaxDepth * (texture(textureSamplers[heightTextureID], UV).r - 0.5f);
 		UV += texDepth * textureOffsetDir;
 	}
 
@@ -35,7 +36,7 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 position, vec3 tangent, vec3 cameraDi
 	textureNormal.y = -textureNormal.y;
 
 	// Convert normal from tangent space to world space
-	return normalize(modelMatrix * (invTangentMatrix * textureNormal) );
+	return normalize((textureNormal * invTangentMatrix) * modelMatrix);
 }
 
 vec3 GenerateTangent(vec3 normal)
@@ -56,6 +57,32 @@ vec3 GenerateTangent(vec3 normal)
 
 	return normalize(tangent);
 
+}
+
+vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
+{
+
+	vec3 edge1 = v2 - v1;
+	vec3 edge2 = v3 - v1;
+
+	float s1 = u2.x - u1.x;
+	float s2 = u3.x - u1.x;
+	float t1 = u2.y - u1.y;
+	float t2 = u3.y - u1.y;
+
+
+
+	vec3 tangent;
+	float denom = s1 * t2 - s2 * t1;
+	if (!(abs(denom) < 0.00000001))
+	{
+		tangent = (t2 * edge1 - t1 * edge2) / (s1 * t2 - s2 * t1);
+	}
+	else
+	{
+		tangent = vec3(1.0f,0.0f,0.0f);
+	}
+	return tangent;
 }
 
 void main()
@@ -102,17 +129,31 @@ void main()
 	// World position
 	vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
 
-	vec3 viewVector = normalize(gl_WorldRayOriginNV - origin);
+	vec3 viewVector = normalize(gl_WorldRayDirectionNV * gl_HitTNV);
 
-	vec3 tangent = GenerateTangent(f_normal);
+	//vec3 tangent = normalize(GenerateTangent(v0.nrm) * barycentrics.x + GenerateTangent(v1.nrm)
+	// * barycentrics.y + GenerateTangent(v2.nrm) * barycentrics.z);
+
+	vec3 vertexTangent = GenerateTangent(v0.pos, v1.pos, v2.pos,
+		v0.texCoord, v1.texCoord, v2.texCoord);
+
+	vec3 v0t = normalize(vertexTangent - (dot(v0.nrm, vertexTangent)* v0.nrm));
+	vec3 v1t = normalize(vertexTangent - (dot(v1.nrm, vertexTangent)* v1.nrm));
+	vec3 v2t = normalize(vertexTangent - (dot(v2.nrm, vertexTangent)* v2.nrm));
+
+	vec3 fTangent = normalize(v0t * barycentrics.x + v1t * barycentrics.y + v2t * barycentrics.z);
+	
+
+
+	//vec3 tangent = GenerateTangent(f_normal);
 
 	//vec3 normal = f_normal * normalize(texture(textureSamplers[mat.normalTextureId], texCoord).xyz) * modelMatrix;
 
-	vec3 normal = GenerateNormal(f_normal, origin, tangent, viewVector, 
-		modelMatrix, mat.normalTextureId, texCoord, true);
+	vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
+		modelMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
 
 	/*vec3 normal = GenerateNormal(f_normal, origin, tangent, viewVector, 
-		modelMatrix, mat.normalTextureId, texCoord, false);*/
+		modelMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, false);*/
 
 
 
@@ -199,16 +240,18 @@ void main()
 
 
 
-	    vec3 l = origin - light.position;
+	    vec3 l = light.position - origin;
 
 	    float distance =  length(l);
 
+	    /*if(dot(normal,normalize(l))<0)
+	    	continue;*/
 
-	    isShadowed = true;
+	    /*isShadowed = true;
 
 	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
 	            0xFF, 0, 0,
-	            SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, l, distance, 2);
+	            SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, l, distance, 2);*/
 
 
 
@@ -222,12 +265,12 @@ void main()
 			l *= rdist;
 
 			// Calculate light intensity
-	        float  li = light.intensity * rdist * rdist;
+	        float li = light.intensity * rdist * rdist;
 			// Lights color
 			vec3 lc = light.color;
 
 		  	// Halfway vector (normal halfway between view and light vector)
-	        vec3 h = normalize(l + viewVector);
+	        vec3 h = normalize(l + viewVector);//################################
 
 
 			float ndotv = dot(normal, viewVector);
@@ -277,8 +320,6 @@ void main()
 
 
 	    }
-
-
 	}
 
 
@@ -286,153 +327,6 @@ void main()
 	colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
 
 	inRayPayload.colour.rgb = colour;
-
-
-
-	/*
-	vec3 globalIll = camera.maxRecursionDepthColor;
-	vec3 globalIll2 = camera.maxRecursionDepthColor;
-
-
-	if(currentResursion>0)
-	{
-		rayPayload.recursion = currentResursion - 1;
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, MISS_SHADER_INDEX, origin, 0.00001f, normal, 1000.0, 1);
-
-		globalIll = rayPayload.colour.xyz;
-
-
-		rayPayload.recursion = currentResursion - 1;
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, MISS_SHADER_INDEX, origin, 0.00001f, reflectVec, 1000.0, 1);
-
-		globalIll2 = rayPayload.colour.xyz;
-
-
-		globalIll2.x = pow(globalIll2.x, 2) * 2;
-		globalIll2.y = pow(globalIll2.y, 2) * 2;
-		globalIll2.z = pow(globalIll2.z, 2) * 2;
-	}
-	inRayPayload.recursion = currentResursion;
-
-
-
-
-	// Texture maps             
-	vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
-	albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
-	float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
-	float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
-	float cavity = texture(textureSamplers[mat.cavityTextureId], texCoord).r;
-	float ao = texture(textureSamplers[mat.aoTextureId], texCoord).r;
-
-
-	float nDotV = max(dot(normal,viewVector), 0.001f);
-	// Calculate how reflective the surface from 4% (Min) to 100%
-	// Mix the minimum reflectiveness (4%) with the current albedo based on the range of 0-1
-	vec3 specularColour = mix(vec3(0.00f,0.00f,0.00f), albedo, metalness);
-
-
-
-
-
-
-
-
-
-
-	// At a glancing angle, how much should we increase the reflection
-	// Microfacet specular - fresnel term - Slide 21
-	vec3 F = specularColour + (1 - specularColour) * pow(max(1.0f - nDotV, 0.0f), 5.0f);
-
-
-	vec3 colour = ((albedo  * (globalIll * ((1 - F) * (1 - roughness)))
-	) + (F * (1 - roughness) * globalIll2)
-	) * ao;
-
-
-
-	for(uint i = 0; i < 100; i ++)
-	{
-		// Lighting Calc
-		Light light = unpackLight(i);
-
-		if(light.alive==0)
-		{
-		    continue;
-		}
-
-
-
-
-		uint sbtRecordOffset = 0;
-		uint sbtRecordStride = 0;
-
-
-	    vec3 l = light.position - origin;
-
-
-	    if(dot(normal,normalize(l))<0)
-	    	continue;
-
-	    float rdist = 1 / length(l);
-
-
-	    isShadowed = true;
-
-	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-	            0xFF, 0, 0,
-	            SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, l, length(l), 2);
-
-
-	    if (!isShadowed)
-	    {
-	        float  li = light.intensity * rdist * rdist;
-	        vec3 lc = light.color;
-	    
-	    
-	        // Vector that is half way between the view and the light
-	        vec3 h = normalize(l + viewVector);
-	    
-	        float nDotL = max(dot(normal,normalize(l)), 0.001f);
-	        float nDotH = max(dot(normal,h), 0.001f);
-	    
-	    
-	        // Lambert diffuse - Slide 13
-	        vec3 lambert = albedo / PI; // PI used for conservation of energy
-	    
-	    
-	        // Reflected light - Microfacet
-	        // Microfacet specular - normal distribution term - Slide 15-17
-	        float alpha = max(roughness * roughness, 2.0e-3f); // Dividing by alpha in the dn term so don't allow it to reach 0
-	        float alpha2 = alpha * alpha;
-	        float nDotH2 = nDotH * nDotH;
-	        float dn = nDotH2 * (alpha2 - 1) + 1;
-	        float D = alpha2 / (PI * dn * dn);
-	    
-	    
-	        // Microfacet specular - geometry term - Slide 23
-	        float k = (roughness + 1);
-	        k = k * k / 8;
-	        float gV = nDotV / (nDotV * (1 - k) + k);
-	        float gL = nDotL / (nDotL * (1 - k) + k);
-	        float G = gV * gL;
-	    
-	        // BRDF - Slide 14 & 24 - Lambert is the diffuse term
-	        vec3 brdf = lambert + F * G * D / (4 * nDotL * nDotV);
-	    
-	        colour += PI * li * lc * cavity * brdf * nDotL;
-	    
-	    }
-
-	}
-
-
-	colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
-
-
-
-
-	inRayPayload.colour.rgb = colour;*/
 }
 
 

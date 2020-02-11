@@ -25,11 +25,7 @@ layout (constant_id = 0) const int MISS_SHADER_INDEX = 0;
 
 void main() 
 {
-	// Provide the system a random seed to base all the random functions from
-	uint pixelRandomSeed = 12;
-
-	// Calculate a random location within the pixel area so that each pixel instance is not in the same place and they blue together slightly
-	const vec2 pixel = vec2(gl_LaunchIDNV.x + RandomFloat(pixelRandomSeed), gl_LaunchIDNV.y + RandomFloat(pixelRandomSeed));
+	const vec2 pixel = vec2(gl_LaunchIDNV.x, gl_LaunchIDNV.y);
 	// Get the UV coordinate for the screenspace
     const vec2 uv = (pixel / gl_LaunchSizeNV.xy) * 2.0 - 1.0;
 
@@ -45,94 +41,23 @@ void main()
 	// Generate Initial Probing ray
 	vec4 origin = camera.viewInverse * vec4(0,0, 0, 1);
 	vec4 target = camera.projInverse * (vec4(uv.x, uv.y, 1, 1));
-	vec4 direction = camera.viewInverse * vec4(normalize(target.xyz * camera.focusDistance), 0);
+	vec4 direction = normalize(camera.viewInverse * vec4(normalize(target.xyz * camera.focusDistance), 0));
 
 	ray.recursion = 1;
 	ray.depth = 0.0f;
-	ray.depthTest = true;
+    // Dissable the depth test as this is a single ray pass
+	ray.depthTest = false;
 
 	// Spawn the ray that tests for the depth of the scene
     traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV , 0xFF, 0, 0,
         MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
 
-    // Dissable the depth test for the next rays
-	ray.depthTest = false;
 
-	// Load the accumilated pixels of the pixel
-	vec3 accumulatedColor = imageLoad(accumilationImage, ivec2(gl_LaunchIDNV.xy)).rgb;
-
-	// Get the depth of the scene from the last frame
-	float lastDepth = imageLoad(rayDepthImage ,ivec2(gl_LaunchIDNV.xy)).r;
-
-	// Has the depth of the pixel changed enough to trigger a screen redraw
-	if(ray.depth > lastDepth + camera.movementTolerance || ray.depth < lastDepth - camera.movementTolerance)
-	{
-    	imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(0));
-    	accumulatedColor = vec3(0);
-	}
+    color = ray.colour.rgb;
 
 	// Store the newly generated depth
     imageStore(rayDepthImage, ivec2(gl_LaunchIDNV.xy), vec4(ray.depth));
 
-    // // Get the total samples we can do
-    const uint maxSamples = camera.totalSampleCount;
-
-    // Samples we have left to do
-	uint overalSampleCount = imageLoad(sampleImage ,ivec2(gl_LaunchIDNV.xy)).r;
-	// How many samples we can do per frame
-	uint samplesPerFrame = camera.samplesPerFrame;
-
-	// How many samples should we do this frame
-	uint toSample = maxSamples - overalSampleCount > samplesPerFrame ? samplesPerFrame : maxSamples - overalSampleCount;
-	
-	// Should we keep accumilating
-	const bool accumulate = toSample < maxSamples;
-
-	
-
-    // Generate a random seem for the ray
-    ray.randomSeed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), overalSampleCount);
-
-	// Loop through for the amount of samples we want to preform on the pixel.
-	// This is done for depth of field (Bokah) effect.
-	for (uint s = 0; s < toSample; ++s)
-	{
-		vec2 offset = camera.aperture/2 * RandomInUnitDisk(ray.randomSeed);
-		vec4 origin = camera.viewInverse * vec4(offset, 0, 1);
-		vec4 target = camera.projInverse * (vec4(uv.x, uv.y, 1, 1));
-		vec4 direction = camera.viewInverse * vec4(normalize(target.xyz * camera.focusDistance - vec3(offset, 0)), 0);
-		
-
-		ray.recursion = camera.recursionCount - 1;
-		ray.depth = 0.0f;
-
-	    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV , 0xFF, 0, 0,
-	        MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
-
-	    const vec3 hitColor = ray.colour.rgb;
-
-		color += hitColor;
-	}
-
-
-
-	accumulatedColor += color;
-
-
-	color = accumulatedColor / (overalSampleCount + toSample);
-
-
 
     imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(color,1.0f));
-
-
-
-
-    
-	if(accumulate)
-	{
-    	imageStore(sampleImage, ivec2(gl_LaunchIDNV.xy), uvec4(overalSampleCount + toSample));
-    	imageStore(accumilationImage, ivec2(gl_LaunchIDNV.xy), vec4(accumulatedColor,1.0f));
-	}
-
 }

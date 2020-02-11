@@ -70,4 +70,5 @@ struct WaveFrontMaterial
   int normalTextureId;
   int cavityTextureId;
   int aoTextureId;
+  int heightTextureId;
 };
