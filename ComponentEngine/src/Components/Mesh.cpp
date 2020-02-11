@@ -375,6 +375,42 @@ void ComponentEngine::Mesh::Display()
 					ImGui::PopID();
 				}
 
+				{ // normal_texture
+					ImGui::PushID(&fileForms.height_texture);
+					DropBoxInstance<FileForms> tempFilePath = fileForms.height_texture;
+					if (UIManager::DropBox("Height Texture", "File", tempFilePath))
+					{
+						if (tempFilePath.data.extension == ".png" && fileForms.height_texture.data.longForm != tempFilePath.data.longForm)
+						{
+							Engine* engine = Engine::Singlton();
+							// Load the material definition
+							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
+							// Set the new texture
+							definition.height_texture = tempFilePath.data.longForm;
+
+
+							// Get the models global material instance
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							// Load the texture
+							engine->LoadTexture(tempFilePath.data.longForm);
+							// Get the texture id and store it in the material
+							global_material.heightTextureID = engine->GetTextureOffset(tempFilePath.data.longForm);
+
+							// Register the new material combination
+							engine->RegisterMaterial(definition, global_material);
+							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
+
+							// Set the models new materials
+							m_model->SetData(1, m_materials_offsets);
+
+							// Tell the GPU of the update
+							engine->UpdateAccelerationDependancys();
+
+							UpdateMaterials();
+						}
+					}
+					ImGui::PopID();
+				}
 
 				ImGui::TreePop();
 			}
@@ -435,6 +471,7 @@ void ComponentEngine::Mesh::Load(std::ifstream & in)
 		definition.normal_texture = Common::ReadString(in);
 		definition.cavity_texture = Common::ReadString(in);
 		definition.ao_texture = Common::ReadString(in);
+		definition.height_texture = Common::ReadString(in);
 	}
 
 	if (path.size()> 0)
@@ -472,6 +509,7 @@ void ComponentEngine::Mesh::Save(std::ofstream & out)
 			Common::Write(out, definition.normal_texture);
 			Common::Write(out, definition.cavity_texture);
 			Common::Write(out, definition.ao_texture);
+			Common::Write(out, definition.height_texture);
 		}
 	}
 
@@ -682,6 +720,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 				material.cavityTextureID = 0; // Set to default white texture
 				material.aoTextureID = 0; // Set to default white texture
+				material.aoTextureID = 0; // Set to default white texture
 
 
 				engine->RegisterMaterial(materialDefinition, material);
@@ -789,6 +828,7 @@ void ComponentEngine::Mesh::UpdateMaterials()
 		ChangePath(m_materials[i].normal_texture, definition.normal_texture);
 		ChangePath(m_materials[i].cavity_texture, definition.cavity_texture);
 		ChangePath(m_materials[i].ao_texture, definition.ao_texture);
+		ChangePath(m_materials[i].height_texture, definition.height_texture);
 	}
 
 	
@@ -829,9 +869,33 @@ void ComponentEngine::Mesh::SetMaterial(int index, MaterialDefintion definition)
 	{
 
 		std::stringstream ss;
-		ss  << definition.normal_texture;
+		ss << definition.normal_texture;
 		engine->LoadTexture(ss.str());
 		global_material.normalTextureID = engine->GetTextureOffset(ss.str());
+	}
+	if (definition.cavity_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss << definition.cavity_texture;
+		engine->LoadTexture(ss.str());
+		global_material.cavityTextureID = engine->GetTextureOffset(ss.str());
+	}
+	if (definition.ao_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss << definition.ao_texture;
+		engine->LoadTexture(ss.str());
+		global_material.aoTextureID = engine->GetTextureOffset(ss.str());
+	}
+	if (definition.height_texture.size()>0)
+	{
+
+		std::stringstream ss;
+		ss << definition.height_texture;
+		engine->LoadTexture(ss.str());
+		global_material.heightTextureID = engine->GetTextureOffset(ss.str());
 	}
 
 

@@ -50,6 +50,7 @@ namespace ComponentEngine
 		std::string normal_texture;
 		std::string cavity_texture;
 		std::string ao_texture;
+		std::string height_texture;
 	};
 	inline bool operator< (const MaterialDefintion &m1, const MaterialDefintion &m2)
 	{
@@ -63,7 +64,14 @@ namespace ComponentEngine
 					{
 						if (m1.cavity_texture == m2.cavity_texture)
 						{
-							return m1.ao_texture < m2.ao_texture;
+							if (m1.ao_texture == m2.ao_texture)
+							{
+								return m1.height_texture < m2.height_texture;
+							}
+							else
+							{
+								return m1.ao_texture < m2.ao_texture;
+							}
 						}
 						else
 						{
@@ -144,6 +152,7 @@ namespace ComponentEngine
 			DropBoxInstance<FileForms> normal_texture;
 			DropBoxInstance<FileForms> cavity_texture;
 			DropBoxInstance<FileForms> ao_texture;
+			DropBoxInstance<FileForms> height_texture;
 		};
 
 		std::vector<MaterialFileForms> m_materials;
