@@ -647,7 +647,7 @@ void ComponentEngine::Mesh::LoadModel()
 				for (uint32_t& index : loader.m_indices)
 				{
 					all_indexs[used_index] = index;
-					used_index++;
+					used_index++; 
 				}
 
 				for (MeshVertex& vertex : loader.m_vertices)

@@ -25,7 +25,8 @@ void ComponentEngine::MouseDrag::Update(float frame_time)
 
 	if(engine->MouseKeyDown(0) && Engine::Singlton()->GetHoveredWindowName() == "PlayWindow")
 	{
-		engine->GrabMouse(true);
+		Transformation* trans = &m_entity->GetComponent<Transformation>();
+		/*engine->GrabMouse(true);
 
 		glm::vec2 mousePosition = engine->GetLastMouseMovment();
 
@@ -51,9 +52,9 @@ void ComponentEngine::MouseDrag::Update(float frame_time)
 
 		glm::mat4 view = glm::inverse(glm::lookAt(translation + offset, translation + offset + -direction, glm::vec3(0, 1, 0)));
 		view[3] -= glm::vec4(offset, 0);
-		trans->SetLocalMat4(view);
+		trans->SetLocalMat4(view);*/
 
-
+		trans->RotateWorldY(0.03f);
 	}
 	else
 	{

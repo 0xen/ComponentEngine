@@ -51,8 +51,8 @@ namespace ComponentEngine
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
 
-		virtual void Load(std::ifstream& in) ;
-		virtual void Save(std::ofstream& out) ;
+		virtual void Load(std::ifstream& in);
+		virtual void Save(std::ofstream& out);
 		virtual unsigned int PayloadSize();
 		virtual bool DynamiclySized();
 
