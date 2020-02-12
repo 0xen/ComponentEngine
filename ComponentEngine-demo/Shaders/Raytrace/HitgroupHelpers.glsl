@@ -52,7 +52,10 @@ layout(binding = 0, set = 2) uniform sampler2D[] textureSamplers;
 layout(binding = 0, set = 3) buffer ModelPos { mat4 m[]; }
 models;
 
-layout(binding = 1, set = 3) buffer ModelOffsets { uint o[]; }
+layout(binding = 1, set = 3) buffer ModelPosIT { mat4 m[]; }
+modelsIT;
+
+layout(binding = 2, set = 3) buffer ModelOffsets { uint o[]; }
 offsets;
 
 

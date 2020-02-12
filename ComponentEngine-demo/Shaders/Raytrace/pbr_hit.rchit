@@ -28,7 +28,7 @@
 }*/
 
 vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
-	mat3 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
+	mat4 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
 {
 		const float parallaxDepth = 0.06f;
 
@@ -40,7 +40,7 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	if (parallax)
 	{
 		// Get camera direction in model space
-		mat3 invWorldMatrix = transpose(modelMatrix);
+		mat3 invWorldMatrix = transpose(mat3(modelMatrix));
 		vec3 cameraModelDir = normalize(cameraDir * invWorldMatrix);
 
 		// Calculate direction to offset UVs (x and y of camera direction in tangent space)
@@ -57,7 +57,7 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	textureNormal.y = -textureNormal.y;
 
 	// Convert normal from tangent space to world space
-	return normalize((textureNormal * invTangentMatrix) * modelMatrix);
+	return normalize(modelMatrix * vec4(invTangentMatrix * textureNormal,0.0f)).xyz;
 }
 
 vec3 GenerateTangent(vec3 normal)
@@ -144,6 +144,8 @@ void main()
 
 
 	mat4 modelMatrix = models.m[o.position];
+	mat4 modelMatrixIT = modelsIT.m[o.position];
+
 
 	//vec3 normal = normalize(modelMatrix * (f_normal * texture_normal));
 
@@ -188,16 +190,35 @@ void main()
 
 
 
-	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
+	//const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 	vec3 f_normal = normalize(v0.nrm * barycentrics.x + v1.nrm * barycentrics.y + v2.nrm * barycentrics.z);
-	vec3 normal = normalize(gl_ObjectToWorldNV * vec4(f_normal,0)).xyz;
+	//mat4 inverseTrans = modelMatrix;
+
+
+
+	// WORKING
+	//vec3 normal = normalize(modelMatrixIT * vec4(f_normal,0.0f)).xyz;
+
+	/*normal.x*=-1.0f;
+	float t = normal.y;
+	normal.y = normal.z;
+	normal.z = t;*/
+
+
+	//vec3 normal = normalize(f_normal).xyz;
+
+	/*vec3 normal = vec3(
+		inverseTrans[0][0] * f_normal.x + inverseTrans[2][0] * f_normal.y + inverseTrans[2][0] * f_normal.z,
+		inverseTrans[0][1] * f_normal.x + inverseTrans[2][1] * f_normal.y + inverseTrans[2][1] * f_normal.z,
+		inverseTrans[0][2] * f_normal.x + inverseTrans[2][2] * f_normal.y + inverseTrans[2][2] * f_normal.z
+		);*/
 
 
 	//vec3 normal = GenerateNormal(f_normal, fTangent, mat.heightTextureId,texCoord);
 	
-
-	/*vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
-		test, mat.normalTextureId, mat.heightTextureId, texCoord, true);*/
+	f_normal.x = -f_normal.x;
+	vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
+		modelMatrixIT, mat.normalTextureId, mat.heightTextureId, texCoord, true);
 
 
 	
@@ -373,7 +394,7 @@ void main()
 	colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
 
 	inRayPayload.colour.rgb = colour;
-	inRayPayload.colour.rgb = normal;
+	//inRayPayload.colour.rgb = normal;
 }
 
 

@@ -14,6 +14,7 @@
 #include <renderer\vulkan\VulkanRenderPass.hpp>
 
 #include <imgui.h>
+#include <glm/gtc/matrix_inverse.hpp>
 
 #include <lodepng.h>
 
@@ -528,23 +529,45 @@ bool ComponentEngine::Mesh::DynamiclySized()
 	return true;
 }
 
+glm::mat4 rotation2(1.0f);
 void ComponentEngine::Mesh::Update(float frame_time)
 {
+	glm::mat4 rotation(1.0f);
+	//rotation = glm::rotate(rotation, 180.0f, glm::vec3(0, 1, 0));
+	//rotation = glm::rotate(rotation, 90.0f, glm::vec3(0, 0, 1));
+	rotation2 = glm::rotate(rotation2, 0.1f, glm::vec3(1, 0, 0));
 	if (m_loaded)
 	{
-		m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+		glm::mat4 mat = m_entity->GetComponent<Transformation>().GetMat4();
 
-		m_model->SetData(1, m_materials_offsets);
+		m_model->SetData(0, mat);
+
+		glm::vec4 t = mat[2];
+		mat[2] = mat[1];
+		mat[1] = t;
+
+		m_model->SetData(1, glm::inverseTranspose(mat));
+
+		m_model->SetData(2, m_materials_offsets);
 	}
 }
+
 
 void ComponentEngine::Mesh::EditorUpdate(float frame_time)
 {
 	if (m_loaded)
 	{
-		m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
+		glm::mat4 mat = m_entity->GetComponent<Transformation>().GetMat4();
 
-		m_model->SetData(1, m_materials_offsets);
+		m_model->SetData(0, mat);
+
+		glm::vec4 t = mat[2];
+		mat[2] = mat[1];
+		mat[1] = t;
+
+		m_model->SetData(1, glm::inverseTranspose(mat));
+
+		m_model->SetData(2, m_materials_offsets);
 	}
 }
 
@@ -605,6 +628,7 @@ void ComponentEngine::Mesh::LoadModel()
 			std::vector<uint32_t>& all_indexs = engine->GetGlobalIndexArray();
 			std::vector<MeshVertex>& all_vertexs = engine->GetGlobalVertexArray();
 			VulkanBufferPool* position_buffer_pool = engine->GetPositionBufferPool();
+			VulkanBufferPool* position_buffer_it_pool = engine->GetPositionITBufferPool();
 			VulkanBufferPool* material_mapping_pool = engine->GetMaterialMappingPool();
 
 
@@ -729,9 +753,13 @@ void ComponentEngine::Mesh::LoadModel()
 
 			m_mesh_instances[m_file_path.data.longForm].mesh_instance = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
 
+			// For normal position
 			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(0, position_buffer_pool);
 
-			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(1, material_mapping_pool);
+			// For inverse position
+			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(1, position_buffer_it_pool);
+
+			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(2, material_mapping_pool);
 
 
 			engine->GetModelLoadMutex().lock();

@@ -94,8 +94,8 @@ void ComponentEngine::Camera::Update(float frame_time)
 
 void ComponentEngine::Camera::SetBufferData()
 {
-	m_camera_data.view = m_entity->GetComponent<Transformation>().Get();
-	m_camera_data.viewInverse = m_camera_data.view;// glm::inverse(m_camera_data.view);
+	m_camera_data.view = m_entity->GetComponent<Transformation>().GetMat4();
+	m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
 	m_camera_buffer->SetData(BufferSlot::Secondery);
 }
 
@@ -257,17 +257,18 @@ void ComponentEngine::Camera::UpdateProjection()
 		m_near_clip,
 		m_far_clip
 	);
-	/*m_camera_data.proj[1][1] *= -1;
-
+	m_camera_data.proj[1][1] *= -1;
 	m_camera_data.projInverse = glm::inverse(m_camera_data.proj);
 
+	//m_camera_data.projInverse = glm::inverse(m_camera_data.proj);
+
 	// Need to flip the projection as GLM was made for OpenGL
-	m_camera_data.proj[1][1] *= -1;*/
+	//m_camera_data.proj[1][1] *= -1;*/
 
 
-	m_camera_data.projInverse = m_camera_data.proj;
-	m_camera_data.projInverse[1][1] *= -1;
-	m_camera_data.projInverse = glm::inverse(m_camera_data.projInverse);
+	//m_camera_data.projInverse = m_camera_data.proj;
+	//m_camera_data.projInverse[1][1] *= -1;
+	//m_camera_data.projInverse = glm::inverse(m_camera_data.projInverse);
 
 	SendDataToGPU();
 	Engine::Singlton()->GetLogicMutex().unlock();

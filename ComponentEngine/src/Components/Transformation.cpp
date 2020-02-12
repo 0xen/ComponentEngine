@@ -271,7 +271,8 @@ void ComponentEngine::Transformation::Display()
 		{
 			m_local_mat4 = glm::mat4(1.0f);
 			m_local_mat4 = glm::translate(m_local_mat4, change);
-			m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
+			m_local_mat4 *= glm::toMat4(rotation);
+			//m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
 			m_local_mat4 = glm::scale(m_local_mat4, scale);
 			PushToPositionArray();
 		}
@@ -297,7 +298,8 @@ void ComponentEngine::Transformation::Display()
 
 					glm::quat appliedRot = glm::angleAxis(glm::radians(change[i] - euler[i]), rotAxis);
 
-					m_local_mat4 *= glm::inverse(glm::toMat4(rotation*appliedRot));
+					m_local_mat4 *= glm::toMat4(rotation*appliedRot);
+					//m_local_mat4 *= glm::inverse(glm::toMat4(rotation*appliedRot));
 					m_local_mat4 = glm::scale(m_local_mat4, scale);
 					PushToPositionArray();
 				}
@@ -313,7 +315,8 @@ void ComponentEngine::Transformation::Display()
 		{
 			m_local_mat4 = glm::mat4(1.0f);
 			m_local_mat4 = glm::translate(m_local_mat4, translation);
-			m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
+			//m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
+			m_local_mat4 *= glm::toMat4(rotation);
 			m_local_mat4 = glm::scale(m_local_mat4, change);
 			PushToPositionArray();
 		}

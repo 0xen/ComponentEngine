@@ -297,6 +297,7 @@ void ComponentEngine::Engine::UpdateSceneBuffers()
 	}
 
 	m_model_position_buffer->SetData(BufferSlot::Primary);
+	m_model_position_it_buffer->SetData(BufferSlot::Primary);
 	m_materialMappingBuffer->SetData(BufferSlot::Primary);
 	m_light_buffer->SetData(BufferSlot::Primary);
 
@@ -1033,6 +1034,11 @@ VulkanBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
 	return m_position_buffer_pool;
 }
 
+VulkanBufferPool * ComponentEngine::Engine::GetPositionITBufferPool()
+{
+	return m_position_buffer_it_pool;
+}
+
 VulkanBufferPool * ComponentEngine::Engine::GetMaterialMappingPool()
 {
 	return m_materials_vertex_mapping_buffer_pool;
@@ -1110,6 +1116,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	m_materialbuffer->SetData(BufferSlot::Primary);
 	m_light_buffer->SetData(BufferSlot::Primary);
 	m_model_position_buffer->SetData(BufferSlot::Primary);
+	m_model_position_it_buffer->SetData(BufferSlot::Primary);
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
 	m_materialMappingBuffer->SetData(BufferSlot::Primary);
 
@@ -1145,7 +1152,8 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 
 	{
 		m_RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
-		m_RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
+		m_RTModelInstanceSet->AttachBuffer(1, m_model_position_it_buffer);
+		m_RTModelInstanceSet->AttachBuffer(2, m_offset_allocation_array_buffer);
 		m_RTModelInstanceSet->UpdateSet();
 	}
 
@@ -1606,8 +1614,13 @@ void ComponentEngine::Engine::InitRenderer()
 		// Create buffers for model positions, position allocation pool and offsets
 		m_model_position_array = new glm::mat4[1000];
 		m_model_position_buffer = m_renderer->CreateUniformBuffer(m_model_position_array, BufferChain::Double, sizeof(glm::mat4), 1000, true);
-
 		m_position_buffer_pool = new VulkanBufferPool(m_model_position_buffer);
+
+
+		// Create buffers for model positions, position allocation pool and offsets
+		m_model_position_it_array = new glm::mat4[1000];
+		m_model_position_it_buffer = m_renderer->CreateUniformBuffer(m_model_position_it_array, BufferChain::Double, sizeof(glm::mat4), 1000, true);
+		m_position_buffer_it_pool = new VulkanBufferPool(m_model_position_it_buffer);
 
 
 
@@ -1619,13 +1632,15 @@ void ComponentEngine::Engine::InitRenderer()
 			RTModelInstancePool = m_renderer->CreateDescriptorPool({
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 0),
 				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 1),
+				m_renderer->CreateDescriptor(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, 2),
 				});
 
 
 			m_RTModelInstanceSet = static_cast<VulkanDescriptorSet*>(RTModelInstancePool->CreateDescriptorSet());
 
 			m_RTModelInstanceSet->AttachBuffer(0, m_model_position_buffer);
-			m_RTModelInstanceSet->AttachBuffer(1, m_offset_allocation_array_buffer);
+			m_RTModelInstanceSet->AttachBuffer(1, m_model_position_it_buffer);
+			m_RTModelInstanceSet->AttachBuffer(2, m_offset_allocation_array_buffer);
 
 
 			m_RTModelInstanceSet->UpdateSet();

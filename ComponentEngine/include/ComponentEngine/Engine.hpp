@@ -240,6 +240,8 @@ namespace ComponentEngine
 		int GetMaxMaterialsPerModel();
 		// Get the allocation pool for model positions
 		VulkanBufferPool* GetPositionBufferPool();
+
+		VulkanBufferPool* GetPositionITBufferPool();
 		// Get the allocation pool for model positions
 		VulkanBufferPool* GetMaterialMappingPool();
 		// Get the allocation pool for lights
@@ -518,6 +520,10 @@ namespace ComponentEngine
 		glm::mat4* m_model_position_array;
 		VulkanUniformBuffer* m_model_position_buffer;
 		VulkanBufferPool* m_position_buffer_pool;
+
+		glm::mat4* m_model_position_it_array;
+		VulkanUniformBuffer* m_model_position_it_buffer;
+		VulkanBufferPool* m_position_buffer_it_pool;
 
 		struct ModelOffsets
 		{
