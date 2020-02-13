@@ -17,6 +17,7 @@
 #include <KeyboardMovment.hpp>
 #include <MouseDrag.hpp>
 #include <CameraDolly.hpp>
+#include <Rotate.hpp>
 #include <iostream>
 
 using namespace ComponentEngine;
@@ -32,10 +33,12 @@ void RegisterCustomComponents()
 	engine->RegisterComponentBase("Keyboard Movement", KeyboardMovment::EntityHookDefault);
 	engine->RegisterComponentBase("Mouse Drag", MouseDrag::EntityHookDefault);
 	engine->RegisterComponentBase("Camera Dolly", CameraDolly::EntityHookDefault);
+	engine->RegisterComponentBase("Rotate", Rotate::EntityHookDefault);
 
 	engine->RegisterBase<KeyboardMovment, Logic, UI, IO>();
 	engine->RegisterBase<MouseDrag, Logic, UI, IO>();
 	engine->RegisterBase<CameraDolly, Logic, UI, IO>();
+	engine->RegisterBase<Rotate, Logic, UI, IO>();
 }
 
 void AddUIWindows()

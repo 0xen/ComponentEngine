@@ -23,7 +23,7 @@ void ComponentEngine::MouseDrag::Update(float frame_time)
 	Engine* engine = Engine::Singlton();
 
 
-	if(engine->MouseKeyDown(0) && Engine::Singlton()->GetHoveredWindowName() == "PlayWindow")
+	if (engine->MouseKeyDown(0) && Engine::Singlton()->GetHoveredWindowName() == "PlayWindow")
 	{
 		engine->GrabMouse(true);
 
@@ -32,7 +32,7 @@ void ComponentEngine::MouseDrag::Update(float frame_time)
 
 		Transformation* trans = &m_entity->GetComponent<Transformation>();
 
-		glm::mat4 mat4 = trans->GetMat4();
+		glm::mat4 mat4 = trans->GetLocalMat4();
 
 		glm::vec3 direction = mat4[2];
 		glm::vec3 translation = mat4[3];
@@ -69,7 +69,7 @@ void ComponentEngine::MouseDrag::Display()
 {
 
 	ImGui::Text("Rotate Speed");
-	ImGui::DragFloat("##RotateSpeed", &m_rotateSpeed, 0.001, 1.0f);
+	ImGui::DragFloat("##RotateSpeed", &m_rotateSpeed, 0.001, 0.0001f, 1.0f);
 
 
 	ImGui::Text("Flip X");

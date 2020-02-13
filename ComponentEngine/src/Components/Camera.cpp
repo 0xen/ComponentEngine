@@ -94,8 +94,9 @@ void ComponentEngine::Camera::Update(float frame_time)
 
 void ComponentEngine::Camera::SetBufferData()
 {
-	m_camera_data.view = m_entity->GetComponent<Transformation>().GetMat4();
-	m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
+	m_camera_data.view = m_entity->GetComponent<Transformation>().Get();
+	m_camera_data.viewInverse = m_camera_data.view;
+	//m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
 	m_camera_buffer->SetData(BufferSlot::Secondery);
 }
 

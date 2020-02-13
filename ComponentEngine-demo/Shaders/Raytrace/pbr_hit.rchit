@@ -4,28 +4,6 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "HitgroupHelpers.glsl"
-/*vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, int normalTextureId,vec2 UV)
-{
-
-
-	mat4x3 object_to_world = gl_ObjectToWorldNV;
-	vec3 N = normalize(object_to_world * vec4(modelNormal, 0)).xyz;
-	vec3 T = normalize(object_to_world * vec4(tangent, 0)).xyz;
-
-
-
-	T = normalize(T - dot(T, N) * N);
-	vec3 B = cross(N, T);
-
-	const mat3 TBN = mat3(T, B, N);
-
-	vec3 normal_t = normalize(texture(textureSamplers[normalTextureId], UV).xyz * 2.0f - 1.0f);
-	vec3 fN = normalize(TBN * normal_t);
-
-	//world_normal = N;
-
-	return N;
-}*/
 
 vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	mat4 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
@@ -60,25 +38,6 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	return normalize(modelMatrix * vec4(invTangentMatrix * textureNormal,0.0f)).xyz;
 }
 
-vec3 GenerateTangent(vec3 normal)
-{
-	vec3 tangent;
-
-	vec3 c1 = cross(normal, vec3(0.0, 0.0, 1.0));
-	vec3 c2 = cross(normal, vec3(0.0, 1.0, 0.0));
-
-	if (length(c1)>length(c2))
-	{
-	    tangent = c1;
-	}
-	else
-	{
-	    tangent = c2;
-	}
-
-	return normalize(tangent);
-
-}
 
 vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
 {
