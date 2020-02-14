@@ -1023,7 +1023,7 @@ std::vector<VulkanTextureBuffer*>& ComponentEngine::Engine::GetTextures()
 	return m_textures;
 }
 
-int ComponentEngine::Engine::GetMaxMaterialsPerModel()
+const int ComponentEngine::Engine::GetMaxMaterialsPerModel()
 {
 	return m_maxMaterialsPerModel;
 }

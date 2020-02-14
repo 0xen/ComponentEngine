@@ -542,10 +542,6 @@ void ComponentEngine::Mesh::Update(float frame_time)
 
 		m_model->SetData(0, mat);
 
-		glm::vec4 t = mat[2];
-		mat[2] = mat[1];
-		mat[1] = t;
-
 		m_model->SetData(1, glm::inverseTranspose(mat));
 
 		m_model->SetData(2, m_materials_offsets);
@@ -560,10 +556,6 @@ void ComponentEngine::Mesh::EditorUpdate(float frame_time)
 		glm::mat4 mat = m_entity->GetComponent<Transformation>().GetMat4();
 
 		m_model->SetData(0, mat);
-
-		glm::vec4 t = mat[2];
-		mat[2] = mat[1];
-		mat[1] = t;
 
 		m_model->SetData(1, glm::inverseTranspose(mat));
 
@@ -745,6 +737,7 @@ void ComponentEngine::Mesh::LoadModel()
 				material.cavityTextureID = 0; // Set to default white texture
 				material.aoTextureID = 0; // Set to default white texture
 				material.aoTextureID = 0; // Set to default white texture
+				material.heightTextureID = 0; // Set to default white texture
 
 
 				engine->RegisterMaterial(materialDefinition, material);

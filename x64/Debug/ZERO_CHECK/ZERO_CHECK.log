@@ -1,1 +1,130 @@
-﻿
+﻿  Checking Build System
+  CMake is re-running because D:/Users/JKGreen/Documents/GitHub/ComponentEngine/build/ComponentEngine-demo/CMakeFiles/generate.stamp is out-of-date.
+    the file 'D:/Users/JKGreen/Documents/GitHub/ComponentEngine/ComponentEngine-demo/CMakeLists.txt'
+    is newer than 'D:/Users/JKGreen/Documents/GitHub/ComponentEngine/build/ComponentEngine-demo/CMakeFiles/generate.stamp.depend'
+    result='-1'
+  CMake Warning (dev) at CMakeLists.txt:4 (project):
+    Policy CMP0048 is not set: project() command manages VERSION variables.
+    Run "cmake --help-policy CMP0048" for policy details.  Use the cmake_policy
+    command to set the policy and suppress this warning.
+  
+    The following variable(s) would be set to empty:
+  
+      CMAKE_PROJECT_VERSION
+      CMAKE_PROJECT_VERSION_MAJOR
+      CMAKE_PROJECT_VERSION_MINOR
+      CMAKE_PROJECT_VERSION_PATCH
+  This warning is for project developers.  Use -Wno-dev to suppress it.
+  
+  -- Selecting Windows SDK version 10.0.18362.0 to target Windows 10.0.17763.
+  -- Could NOT find PkgConfig (missing: PKG_CONFIG_EXECUTABLE) 
+  -- 0.8.0 :: 8 :: 0 :: 8 :: 2.0
+  -- 
+  -- SDL2 was configured with the following options:
+  -- 
+  -- Platform: Windows-10.0.17763
+  -- 64-bit:   TRUE
+  -- Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Tools/MSVC/14.10.25017/bin/HostX86/x64/cl.exe
+  -- 
+  -- Subsystems:
+  --   Atomic:	ON
+  --   Audio:	ON
+  --   Video:	ON
+  --   Render:	ON
+  --   Events:	ON
+  --   Joystick:	ON
+  --   Haptic:	ON
+  --   Power:	ON
+  --   Threads:	ON
+  --   Timers:	ON
+  --   File:	ON
+  --   Loadso:	ON
+  --   CPUinfo:	ON
+  --   Filesystem:	ON
+  --   Dlopen:	ON
+  -- 
+  -- Options:
+  --   3DNOW                  (Wanted: ON): OFF
+  --   ALSA                   (Wanted: OFF): OFF
+  --   ALSA_SHARED            (Wanted: OFF): OFF
+  --   ALTIVEC                (Wanted: ON): OFF
+  --   ARTS                   (Wanted: OFF): OFF
+  --   ARTS_SHARED            (Wanted: OFF): OFF
+  --   ASSEMBLY               (Wanted: ON): OFF
+  --   ASSERTIONS             (Wanted: auto): auto
+  --   CLOCK_GETTIME          (Wanted: OFF): OFF
+  --   DIRECTFB_SHARED        (Wanted: OFF): OFF
+  --   DIRECTX                (Wanted: ON): ON
+  --   DISKAUDIO              (Wanted: ON): ON
+  --   DUMMYAUDIO             (Wanted: ON): ON
+  --   ESD                    (Wanted: OFF): OFF
+  --   ESD_SHARED             (Wanted: OFF): OFF
+  --   FUSIONSOUND            (Wanted: OFF): OFF
+  --   FUSIONSOUND_SHARED     (Wanted: OFF): OFF
+  --   GCC_ATOMICS            (Wanted: OFF): OFF
+  --   INPUT_TSLIB            (Wanted: OFF): OFF
+  --   JACK                   (Wanted: OFF): OFF
+  --   JACK_SHARED            (Wanted: OFF): OFF
+  --   KMSDRM_SHARED          (Wanted: OFF): OFF
+  --   LIBC                   (Wanted: OFF): ON
+  --   LIBSAMPLERATE          (Wanted: OFF): OFF
+  --   LIBSAMPLERATE_SHARED   (Wanted: OFF): OFF
+  --   MIR_SHARED             (Wanted: OFF): OFF
+  --   MMX                    (Wanted: ON): OFF
+  --   NAS                    (Wanted: OFF): OFF
+  --   NAS_SHARED             (Wanted: OFF): OFF
+  --   OSS                    (Wanted: OFF): OFF
+  --   PTHREADS               (Wanted: OFF): OFF
+  --   PTHREADS_SEM           (Wanted: OFF): OFF
+  --   PULSEAUDIO             (Wanted: OFF): OFF
+  --   PULSEAUDIO_SHARED      (Wanted: OFF): OFF
+  --   RENDER_D3D             (Wanted: ON): ON
+  --   RPATH                  (Wanted: OFF): OFF
+  --   SDL_DLOPEN             (Wanted: ON): OFF
+  --   SDL_STATIC_PIC         (Wanted: OFF): OFF
+  --   SDL_TEST               (Wanted: OFF): OFF
+  --   SNDIO                  (Wanted: OFF): OFF
+  --   SSE                    (Wanted: ON): ON
+  --   SSE2                   (Wanted: ON): ON
+  --   SSE3                   (Wanted: ON): ON
+  --   SSEMATH                (Wanted: ON): OFF
+  --   VIDEO_COCOA            (Wanted: OFF): OFF
+  --   VIDEO_DIRECTFB         (Wanted: OFF): OFF
+  --   VIDEO_DUMMY            (Wanted: ON): ON
+  --   VIDEO_KMSDRM           (Wanted: OFF): OFF
+  --   VIDEO_MIR              (Wanted: OFF): OFF
+  --   VIDEO_OPENGL           (Wanted: ON): ON
+  --   VIDEO_OPENGLES         (Wanted: ON): ON
+  --   VIDEO_RPI              (Wanted: OFF): OFF
+  --   VIDEO_VIVANTE          (Wanted: OFF): OFF
+  --   VIDEO_VULKAN           (Wanted: ON): OFF
+  --   VIDEO_WAYLAND          (Wanted: OFF): OFF
+  --   VIDEO_WAYLAND_QT_TOUCH (Wanted: OFF): OFF
+  --   VIDEO_X11              (Wanted: OFF): OFF
+  --   VIDEO_X11_XCURSOR      (Wanted: OFF): OFF
+  --   VIDEO_X11_XINERAMA     (Wanted: OFF): OFF
+  --   VIDEO_X11_XINPUT       (Wanted: OFF): OFF
+  --   VIDEO_X11_XRANDR       (Wanted: OFF): OFF
+  --   VIDEO_X11_XSCRNSAVER   (Wanted: OFF): OFF
+  --   VIDEO_X11_XSHAPE       (Wanted: OFF): OFF
+  --   VIDEO_X11_XVM          (Wanted: OFF): OFF
+  --   WAYLAND_SHARED         (Wanted: OFF): OFF
+  --   X11_SHARED             (Wanted: OFF): OFF
+  -- 
+  --  CFLAGS:        /DWIN32 /D_WINDOWS /W3
+  --  EXTRA_CFLAGS:  
+  --  EXTRA_LDFLAGS: 
+  --  EXTRA_LIBS:    user32;gdi32;winmm;imm32;ole32;oleaut32;version;uuid;dinput8
+  -- 
+  --  Build Shared Library: ON
+  --  Build Static Library: ON
+  --  Build Static Library with Position Independent Code: OFF
+  -- 
+  CMAKE_EXE_LINKER_FLAGS_DEBUG=/INCREMENTAL:NO /debug /INCREMENTAL
+  OPENGL FOUND
+  opengl32glu32
+  -- GLM is a header only library, no need to build it. Set the option GLM_TEST_ENABLE with ON to build and run the test bench
+  GLM: Visual C++ - MSVC compiler
+  -- Configuring done
+  -- Generating done
+  -- Build files have been written to: D:/Users/JKGreen/Documents/GitHub/ComponentEngine/build

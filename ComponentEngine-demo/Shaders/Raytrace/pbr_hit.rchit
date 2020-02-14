@@ -4,9 +4,31 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "HitgroupHelpers.glsl"
+/*vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, int normalTextureId,vec2 UV)
+{
+
+
+	mat4x3 object_to_world = gl_ObjectToWorldNV;
+	vec3 N = normalize(object_to_world * vec4(modelNormal, 0)).xyz;
+	vec3 T = normalize(object_to_world * vec4(tangent, 0)).xyz;
+
+
+
+	T = normalize(T - dot(T, N) * N);
+	vec3 B = cross(N, T);
+
+	const mat3 TBN = mat3(T, B, N);
+
+	vec3 normal_t = normalize(texture(textureSamplers[normalTextureId], UV).xyz * 2.0f - 1.0f);
+	vec3 fN = normalize(TBN * normal_t);
+
+	//world_normal = N;
+
+	return N;
+}*/
 
 vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
-	mat4 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
+	mat3 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
 {
 		const float parallaxDepth = 0.06f;
 
@@ -19,11 +41,11 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	{
 		// Get camera direction in model space
 		mat3 invWorldMatrix = transpose(mat3(modelMatrix));
-		vec3 cameraModelDir = normalize(cameraDir * invWorldMatrix);
+		vec3 cameraModelDir = normalize(invWorldMatrix * cameraDir);
 
 		// Calculate direction to offset UVs (x and y of camera direction in tangent space)
 		mat3 tangentMatrix = transpose(invTangentMatrix);
-		vec2 textureOffsetDir = (cameraModelDir * tangentMatrix).xy;
+		vec2 textureOffsetDir = (tangentMatrix * cameraModelDir).xy;
 
 		// Offset UVs in that direction to account for depth (using height map and some geometry)
 		float texDepth = parallaxDepth * (texture(textureSamplers[heightTextureID], UV).r - 0.5f);
@@ -32,12 +54,32 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 
 	// Extract normal from map and shift to -1 to 1 range
 	vec3 textureNormal = 2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz) - 1.0f;
-	textureNormal.y = -textureNormal.y;
+	//textureNormal.y = -textureNormal.y;
 
 	// Convert normal from tangent space to world space
-	return normalize(modelMatrix * vec4(invTangentMatrix * textureNormal,0.0f)).xyz;
+	//return normalize((textureNormal * invTangentMatrix) * modelMatrix).xyz;
+	return normalize(modelMatrix * (invTangentMatrix * textureNormal)).xyz;
 }
 
+vec3 GenerateTangent(vec3 normal)
+{
+	vec3 tangent;
+
+	vec3 c1 = cross(normal, vec3(0.0, 0.0, 1.0));
+	vec3 c2 = cross(normal, vec3(0.0, 1.0, 0.0));
+
+	if (length(c1)>length(c2))
+	{
+	    tangent = c1;
+	}
+	else
+	{
+	    tangent = c2;
+	}
+
+	return normalize(tangent);
+
+}
 
 vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
 {
@@ -102,11 +144,9 @@ void main()
 	//vec2 texCoord = vec2(normalize(HitAttribute(vec3(v0.texCoord,0.0f),vec3(v1.texCoord,0.0f),vec3(v2.texCoord,0.0f), attribs))).xy;
 
 
-	mat4 modelMatrix = models.m[o.position];
-	mat4 modelMatrixIT = modelsIT.m[o.position];
+	mat3 modelMatrix = mat3(models.m[o.position]);
+	//modelMatrix = transpose(modelMatrix);
 
-
-	//vec3 normal = normalize(modelMatrix * (f_normal * texture_normal));
 
  
 	          
@@ -156,7 +196,7 @@ void main()
 
 
 	// WORKING
-	//vec3 normal = normalize(modelMatrixIT * vec4(f_normal,0.0f)).xyz;
+	//vec3 normal = normalize(f_normal * modelMatrix).xyz;
 
 	/*normal.x*=-1.0f;
 	float t = normal.y;
@@ -175,9 +215,9 @@ void main()
 
 	//vec3 normal = GenerateNormal(f_normal, fTangent, mat.heightTextureId,texCoord);
 	
-	f_normal.x = -f_normal.x;
+	//f_normal.x = -f_normal.x;
 	vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
-		modelMatrixIT, mat.normalTextureId, mat.heightTextureId, texCoord, true);
+		modelMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
 
 
 	

@@ -237,7 +237,7 @@ namespace ComponentEngine
 		// Get the local texture buffer array
 		std::vector<VulkanTextureBuffer*>& GetTextures();
 		// How many materials can each model have
-		int GetMaxMaterialsPerModel();
+		const int GetMaxMaterialsPerModel();
 		// Get the allocation pool for model positions
 		VulkanBufferPool* GetPositionBufferPool();
 
