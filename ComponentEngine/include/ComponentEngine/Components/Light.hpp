@@ -25,7 +25,9 @@ namespace ComponentEngine
 		int lightType; // Define the type of light. 0: Point light, 1: Directional Light
 		glm::vec3 dir; // Directional light direction
 		int modelID;
-		int padding[3];
+		float shadowRangeStartOffset;
+		float shadowRangeEndOffset;
+		int padding[1];
 	};
 	class Light : public Logic, public IO, public UI
 	{
@@ -51,9 +53,12 @@ namespace ComponentEngine
 	private:
 		glm::vec3 m_offset;
 		float m_intensity;
+		float shadowRangeStartOffset;
+		float shadowRangeEndOffset;
 		glm::vec3 m_color;
 		glm::vec3 m_dir;
 		int m_type;
+		int m_alive;
 		const char* m_light_types[2] = { "Point Light", "Directional Light" };
 
 		unsigned int m_light_allocation;

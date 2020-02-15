@@ -42,7 +42,7 @@ materials;
 layout(binding = 3, set = 1) buffer Lights { vec4 l[]; }
 lights;
 
-uint MaxMaterialsPerModel = 8;
+uint MaxMaterialsPerModel = 64;
 
 layout(binding = 4, set = 1) buffer MaterialsMapping { int map[]; }
 materials_mapping;
@@ -88,6 +88,8 @@ Light unpackLight(uint index)
   l.type = floatBitsToInt(d2.x);
   l.dir = vec3(d2.y,d2.z,d2.w);
   l.modelID = floatBitsToInt(d3.x);
+  l.shadowRangeStartOffset = d3.y;
+  l.shadowRangeEndOffset = d3.z;
 
   return l;
 }

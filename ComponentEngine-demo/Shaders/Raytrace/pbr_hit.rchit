@@ -53,7 +53,7 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	}
 
 	// Extract normal from map and shift to -1 to 1 range
-	vec3 textureNormal = 2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz) - 1.0f;
+	vec3 textureNormal = (2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f;
 	//textureNormal.y = -textureNormal.y;
 
 	// Convert normal from tangent space to world space
@@ -195,8 +195,6 @@ void main()
 
 
 
-	// WORKING
-	//vec3 normal = normalize(f_normal * modelMatrix).xyz;
 
 	/*normal.x*=-1.0f;
 	float t = normal.y;
@@ -216,6 +214,14 @@ void main()
 	//vec3 normal = GenerateNormal(f_normal, fTangent, mat.heightTextureId,texCoord);
 	
 	//f_normal.x = -f_normal.x;
+
+
+	// WORKING Ish
+	//vec3 textureNormal = (2.0f * normalize(texture(textureSamplers[mat.normalTextureId], texCoord).xyz)) - 1.0f;
+	////textureNormal.y = -textureNormal.y;
+	//vec3 normal = normalize(normalize(f_normal + textureNormal) * modelMatrix).xyz;
+
+	// Not working paralax mapping / Normal
 	vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
 		modelMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
 
@@ -277,6 +283,7 @@ void main()
 
 	// Texture maps             
 	vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
+	albedo *= mat.diffuse;
 	albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
 	float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
 	float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
@@ -312,15 +319,15 @@ void main()
 	    //if(dot(normal,normalize(l))<0)
 	    //	continue;
 
-	    //isShadowed = true;
+	    isShadowed = true;
 
-	    //traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-	    //        0xFF, 0, 0,
-	    //        SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, l, distance, 2);
+	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
+	            0xFF, 0, 0,
+	            SHADOW_MISS_SHADER_INDEX, origin, 0.00001f + light.shadowRangeStartOffset, normalize(l), distance + light.shadowRangeEndOffset, 2);
 
 
 
-	    //if (!isShadowed)
+	    if (!isShadowed)
 	    {
 
 		    float rdist = 1.0f / length(l);

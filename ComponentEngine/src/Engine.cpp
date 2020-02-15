@@ -40,6 +40,10 @@
 #include <renderer\vulkan\VulkanComputeProgram.hpp>
 
 #include <lodepng.h>
+#pragma warning (push, 0)       // Cimg library emits distracting warnings so temporarily disable all warnings
+#pragma warning (disable: 4702) // For some reason this warning (unreachable code) needs to be disabled seperately
+#define cimg_use_jpeg  // jpeg support
+#include <CImg.h>
 
 #include <assert.h>
 #include <sstream>
@@ -774,14 +778,53 @@ VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 	std::vector<unsigned char> image; //the raw pixels
 	unsigned width;
 	unsigned height;
-	unsigned error = lodepng::decode(image, width, height, path);
-	if (error)
+
+	std::string ext = std::experimental::filesystem::path(path).extension().string();
+
+	if (ext == ".png")
 	{
-		std::stringstream ss;
-		ss << "Error loading texture: " << lodepng_error_text(error) << " " << path << "("<< error << ")";
-		Log(ss.str(), Error);
+		unsigned error = lodepng::decode(image, width, height, path);
+		if (error)
+		{
+			std::stringstream ss;
+			ss << "Error loading texture: " << lodepng_error_text(error) << " " << path << "(" << error << ")";
+			Log(ss.str(), Error);
+			return nullptr;
+		}
+	}
+	else if (ext == ".jpg")
+	{
+		try
+		{
+			cimg_library::CImg<unsigned char> src(path.c_str());
+			width = src.width();
+			height = src.height();
+			image.resize(width * height * 4);
+			bool hasAlpha = (src.spectrum() == 4);
+			for (uint32_t x = 0; x < width; ++x)
+			{
+				for (uint32_t y = 0; y < height; ++y)
+				{
+					int index = (x + (y * width)) * 4;
+					image[index] = src(x, y, 0);
+					image[index + 1] = src(x, y, 1);
+					image[index + 2] = src(x, y, 2);
+					image[index + 3] = (hasAlpha ? src(x, y, 3) : 255);
+				}
+			}
+		}
+		catch (const cimg_library::CImgIOException&) // CImg constructor throws an exception - some kind of image error
+		{
+			Log("Unable to load image!", Error);
+			return nullptr;
+		}
+	}
+	else
+	{
+		Log("Unsupported image file format", Error);
 		return nullptr;
 	}
+	
 	// Create and store the texture on the graphics card
 	GetRendererMutex().lock();
 	VulkanTextureBuffer* texture = m_renderer->CreateTextureBuffer(image.data(), VkFormat::VK_FORMAT_R8G8B8A8_UNORM, width, height);
@@ -988,7 +1031,7 @@ VulkanUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
 	return m_materialbuffer;
 }
 
-std::vector<std::array<int, 8>>& ComponentEngine::Engine::GetGlobalMaterialMappingArray()
+std::vector<std::array<int, 64>>& ComponentEngine::Engine::GetGlobalMaterialMappingArray()
 {
 	return m_materials_vertex_mapping;
 }
@@ -1027,7 +1070,7 @@ const int ComponentEngine::Engine::GetMaxMaterialsPerModel()
 {
 	return m_maxMaterialsPerModel;
 }
-
+// Axis align filtering : Soft shadow
 // Get the allocation pool for model positions
 VulkanBufferPool * ComponentEngine::Engine::GetPositionBufferPool()
 {
@@ -1517,6 +1560,13 @@ void ComponentEngine::Engine::InitRenderer()
 		m_textures.push_back(texture);
 		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 	}
+	{
+		// Load a default normal texture
+		char imageData[4] = { 0,255,0,255 };
+		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
+		m_textures.push_back(texture);
+		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+	}
 
 	{
 		
@@ -1570,7 +1620,8 @@ void ComponentEngine::Engine::InitRenderer()
 		m_materialbuffer->SetData(BufferSlot::Primary);
 
 		m_materials_vertex_mapping.resize(m_max_materials);
-		m_materialMappingBuffer = m_renderer->CreateUniformBuffer(m_materials_vertex_mapping.data(), BufferChain::Single, sizeof(std::array<int, 8>), m_materials_vertex_mapping.size(), true);
+
+		m_materialMappingBuffer = m_renderer->CreateUniformBuffer(m_materials_vertex_mapping.data(), BufferChain::Single, sizeof(std::array<int, 64>), m_materials_vertex_mapping.size(), true);
 		m_materialMappingBuffer->SetData(BufferSlot::Primary);
 
 		m_materials_vertex_mapping_buffer_pool = new VulkanBufferPool(m_materialMappingBuffer);

@@ -691,7 +691,7 @@ void ComponentEngine::Mesh::LoadModel()
 			m_materials.resize(loader.m_materials.size());
 
 
-			std::array<int, 8> materialDefintionMap;
+			std::array<int, 64> materialDefintionMap;
 
 
 			for (int i = 0; i < loader.m_materials.size(); i++)
@@ -703,7 +703,9 @@ void ComponentEngine::Mesh::LoadModel()
 
 				if (material.textureID >= 0 && loadedTextures[material.textureID] >= 0)
 				{
-					materialDefinition.diffuse_texture = loader.m_textures[material.textureID];
+					std::stringstream ss;
+					ss << m_dir << loader.m_textures[material.textureID];
+					materialDefinition.diffuse_texture = ss.str();
 					material.textureID = loadedTextures[material.textureID];
 				}
 				else
@@ -711,7 +713,9 @@ void ComponentEngine::Mesh::LoadModel()
 
 				if (material.metalicTextureID >= 0 && loadedTextures[material.metalicTextureID] >= 0)
 				{
-					materialDefinition.metalic_texture = loader.m_textures[material.metalicTextureID];
+					std::stringstream ss;
+					ss << m_dir << loader.m_textures[material.metalicTextureID];
+					materialDefinition.metalic_texture = ss.str();
 					material.metalicTextureID = loadedTextures[material.metalicTextureID];
 				}
 				else
@@ -719,7 +723,9 @@ void ComponentEngine::Mesh::LoadModel()
 
 				if (material.roughnessTextureID >= 0 && loadedTextures[material.roughnessTextureID] >= 0)
 				{
-					materialDefinition.roughness_texture = loader.m_textures[material.roughnessTextureID];
+					std::stringstream ss;
+					ss << m_dir << loader.m_textures[material.roughnessTextureID];
+					materialDefinition.roughness_texture = ss.str();
 					material.roughnessTextureID = loadedTextures[material.roughnessTextureID];
 				}
 				else
@@ -727,11 +733,13 @@ void ComponentEngine::Mesh::LoadModel()
 
 				if (material.normalTextureID >= 0 && loadedTextures[material.normalTextureID] >= 0)
 				{
-					materialDefinition.normal_texture = loader.m_textures[material.normalTextureID];
+					std::stringstream ss;
+					ss << m_dir << loader.m_textures[material.normalTextureID];
+					materialDefinition.normal_texture = ss.str();
 					material.normalTextureID = loadedTextures[material.normalTextureID];
 				}
 				else
-					material.normalTextureID = 0; // Set to default white texture
+					material.normalTextureID = 2; // Set to default normal texture
 
 
 				material.cavityTextureID = 0; // Set to default white texture
@@ -817,6 +825,7 @@ void ComponentEngine::Mesh::InstanciateModel(std::vector<MaterialDefintion> defi
 
 	m_model->SetData(1, m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap);
 
+	m_materials_offsets = m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap;
 
 	//ChangePath(fileForm.normal_texture, loader.m_textures[material.normalTextureID]);
 

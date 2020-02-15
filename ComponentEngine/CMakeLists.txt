@@ -10,6 +10,7 @@ set(common_headers
     include/ComponentEngine/tiny_obj_loader.h
     include/ComponentEngine/obj_loader.h
     ../../lodepng/lodepng.h
+    ../third_party/cimg/CImg.h
 
 
     include/ComponentEngine/Engine.hpp
@@ -184,10 +185,6 @@ set(imgui_headers
     ../third_party/imgui/imconfig.h
     ../third_party/imgui/imgui.h
     ../third_party/imgui/imgui_internal.h
-    #../third_party/imgui/stb_rect_pack.h
-    #../third_party/imgui/stb_textedit.h
-    #../third_party/imgui/stb_truetype.h
-    #../third_party/imgui/examples/imgui_impl_sdl.h
 )
 list(APPEND source ${imgui_src})
 list(APPEND headers ${imgui_headers})
@@ -212,12 +209,13 @@ target_link_libraries( ${project_name} optimized ../../../EnteeZ/build/EnteeZ/Re
 target_link_libraries(${project_name} BulletDynamics)
 target_link_libraries(${project_name} BulletCollision)
 target_link_libraries(${project_name} LinearMath)
+target_link_libraries(${project_name} jpeg)
 
 #target_link_libraries(${project_name} glslang SPIRV)
 
 find_package(Vulkan)
 
 if(Vulkan_FOUND)
-	target_include_directories(${project_name} PRIVATE Vulkan::Vulkan)
-	target_link_libraries(${project_name} Vulkan::Vulkan)
+    target_include_directories(${project_name} PRIVATE Vulkan::Vulkan)
+    target_link_libraries(${project_name} Vulkan::Vulkan)
 endif()

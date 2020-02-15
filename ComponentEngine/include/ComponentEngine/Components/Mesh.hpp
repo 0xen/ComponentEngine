@@ -166,7 +166,7 @@ namespace ComponentEngine
 		// Index for the current mesh in the position array
 		unsigned int m_mesh_index;
 		bool m_loaded;
-		std::array<int, 8> m_materials_offsets;
+		std::array<int, 64> m_materials_offsets;
 		// How many slots we will reserve 
 		static const unsigned int m_buffer_size_step;
 
@@ -182,7 +182,7 @@ namespace ComponentEngine
 	{
 		std::vector<Pending> pending_models;
 		VulkanModelPool* mesh_instance;
-		std::array<int, 8> defaultMaterialMap;
+		std::array<int, 64> defaultMaterialMap;
 		int materialCount;
 		bool loading;
 	};

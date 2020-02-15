@@ -33,6 +33,7 @@ function(add_subdirectory_with_folder _folder_name _folder)
 endfunction()
 
 
+add_subdirectory_with_folder("Third Party/libjpeg-master" third_party/libjpeg-master)
 add_subdirectory_with_folder("Third Party/SDL2" third_party/SDL2)
 add_subdirectory_with_folder("Third Party/bullet3" third_party/bullet3)
 #add_subdirectory_with_folder("Third Party/glslang" third_party/glslang)
@@ -42,8 +43,10 @@ add_subdirectory_with_folder("Third Party/bullet3" third_party/bullet3)
 
 
 
+include_directories(third_party/libjpeg-master)
 include_directories(third_party/SDL2/include)
 include_directories(third_party/bullet3/src)
+include_directories(third_party/cimg)
 #include_directories(third_party/glslang)
 
 include_directories(third_party/imgui)

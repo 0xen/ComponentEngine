@@ -35,6 +35,8 @@ struct Light
   int type;
   vec3 dir;
   int modelID;
+  float shadowRangeStartOffset;
+  float shadowRangeEndOffset;
 };
 
 struct Offsets

@@ -16,7 +16,10 @@ ComponentEngine::Light::Light(enteez::Entity * entity)
 	m_intensity = 100.0f;
 	m_color = glm::vec3(1.0f);
 	m_type = 0;
+	m_alive = 1;
 	m_dir = glm::normalize(glm::vec3(1.0f, 1.0f, -1.0f));
+	shadowRangeStartOffset = 0;
+	shadowRangeEndOffset = 0;
 
 	//m_light_pool = Engine::Singlton()->GetLightBufferPool();
 	m_light_allocation = Engine::Singlton()->GetLightBufferPool()->Allocate();
@@ -36,10 +39,12 @@ void ComponentEngine::Light::Update(float frame_time)
 	data->position = m_entity->GetComponent<Transformation>().GetWorldPosition() + m_offset;
 	data->intensity = m_intensity;
 	data->color = m_color;
-	data->alive = 1;
+	data->alive = m_alive;
 	data->lightType = m_type;
 	data->dir = m_dir;
 	data->modelID = -1;
+	data->shadowRangeStartOffset = shadowRangeStartOffset;
+	data->shadowRangeEndOffset = shadowRangeEndOffset;
 	if (m_entity->HasComponent<Mesh>())
 	{
 		data->modelID = m_entity->GetComponent<Mesh>().GetUUID();
@@ -73,6 +78,16 @@ void ComponentEngine::Light::Display()
 
 	ImGui::Text("Intensity");
 	if (ImGui::DragFloat("##LightIntensity", (float*)&m_intensity, 0.5f, 0.0f, 10000.0f))
+	{
+		Engine::Singlton()->ResetViewportBuffers();
+	}
+	ImGui::Text("ShadowRange Start Offset");
+	if (ImGui::DragFloat("##ShadowRangeStart", (float*)&shadowRangeStartOffset, 0.1f, -1000.0f, 1000.0f))
+	{
+		Engine::Singlton()->ResetViewportBuffers();
+	}
+	ImGui::Text("ShadowRange End Offset");
+	if (ImGui::DragFloat("##ShadowRangeEnd", (float*)&shadowRangeEndOffset, 0.1f, -1000.0f, 1000.0f))
 	{
 		Engine::Singlton()->ResetViewportBuffers();
 	}
