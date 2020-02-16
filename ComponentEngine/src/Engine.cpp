@@ -775,6 +775,18 @@ VulkanTextureBuffer* ComponentEngine::Engine::LoadTexture(std::string path)
 	}
 	m_texture_load_lock.unlock();
 
+	{
+		// Make sure the file exists
+		std::ifstream file(path, std::ios::ate | std::ios::binary);
+		if (!file.is_open())
+		{
+			Log("Could not find the texture");
+			file.close();
+			return nullptr;
+		}
+		file.close();
+	}
+
 	std::vector<unsigned char> image; //the raw pixels
 	unsigned width;
 	unsigned height;
