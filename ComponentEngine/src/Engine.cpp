@@ -1562,7 +1562,14 @@ void ComponentEngine::Engine::InitRenderer()
 	}
 	{
 		// Load a default normal texture
-		char imageData[4] = { 0,255,0,255 };
+		char imageData[4] = { 127,127,255,255 };
+		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
+		m_textures.push_back(texture);
+		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
+	}
+	{
+		// Load a default height texture
+		char imageData[4] = { 127,127,127,255 };
 		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
 		m_textures.push_back(texture);
 		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));

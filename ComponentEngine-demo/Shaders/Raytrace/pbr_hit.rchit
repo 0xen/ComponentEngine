@@ -28,13 +28,9 @@
 }*/
 
 vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
-	mat3 modelMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
+	mat3 modelMatrix,mat3 invTangentMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
 {
-		const float parallaxDepth = 0.06f;
-
-	// Calculate inverse tangent matrix
-	vec3 biTangent = cross(modelNormal, tangent);
-	mat3 invTangentMatrix = mat3(tangent, biTangent, modelNormal);
+	const float parallaxDepth = 0.06f;
 
 	// Parallax mapping. Comment out for plain normal mapping
 	if (parallax)
@@ -53,37 +49,18 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	}
 
 	// Extract normal from map and shift to -1 to 1 range
-	vec3 textureNormal = (2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f;
-	//textureNormal.y = -textureNormal.y;
+	vec3 textureNormal = normalize((2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f);
+	textureNormal.y = -textureNormal.y;
 
 	// Convert normal from tangent space to world space
 	//return normalize((textureNormal * invTangentMatrix) * modelMatrix).xyz;
 	return normalize(modelMatrix * (invTangentMatrix * textureNormal)).xyz;
 }
 
-vec3 GenerateTangent(vec3 normal)
-{
-	vec3 tangent;
-
-	vec3 c1 = cross(normal, vec3(0.0, 0.0, 1.0));
-	vec3 c2 = cross(normal, vec3(0.0, 1.0, 0.0));
-
-	if (length(c1)>length(c2))
-	{
-	    tangent = c1;
-	}
-	else
-	{
-	    tangent = c2;
-	}
-
-	return normalize(tangent);
-
-}
-
 vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
 {
 
+	vec3 tangent;
 	vec3 edge1 = v2 - v1;
 	vec3 edge2 = v3 - v1;
 
@@ -94,7 +71,6 @@ vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
 
 
 
-	vec3 tangent;
 	float denom = (s1 * t2) - (s2 * t1);
 	if (!(abs(denom) < 0.00001))
 	{
@@ -145,8 +121,6 @@ void main()
 
 
 	mat3 modelMatrix = mat3(models.m[o.position]);
-	//modelMatrix = transpose(modelMatrix);
-
 
  
 	          
@@ -166,64 +140,20 @@ void main()
 
 	vec3 fTangent = normalize(HitBarycentrics(v0t, v1t,v2t, barycentrics));
 	
-	//vec3 f_normal = normalize(HitBarycentrics(v0.nrm, v1.nrm, v2.nrm, barycentrics));
-
-
-	//vec3 tangent = GenerateTangent(f_normal);
-
-	//modelMatrix = inverse(modelMatrix);
-	//modelMatrix = transpose(modelMatrix);
-
-	//vec3 normal = normalize(f_normal * mat3(modelMatrix));
-
-	// Working ish
-	/*mat3 test = mat3(
-		vec3(gl_ObjectToWorldNV[0][0],gl_ObjectToWorldNV[1][0],gl_ObjectToWorldNV[2][0]),
-		vec3(gl_ObjectToWorldNV[0][1],gl_ObjectToWorldNV[1][1],gl_ObjectToWorldNV[2][1]),
-		vec3(gl_ObjectToWorldNV[0][2],gl_ObjectToWorldNV[1][2],gl_ObjectToWorldNV[2][2])
-		);
-
-
-	vec3 normal = normalize(test * f_normal).xyz;*/
-
-
 
 
 	//const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 	vec3 f_normal = normalize(v0.nrm * barycentrics.x + v1.nrm * barycentrics.y + v2.nrm * barycentrics.z);
-	//mat4 inverseTrans = modelMatrix;
-
-
-
-
-	/*normal.x*=-1.0f;
-	float t = normal.y;
-	normal.y = normal.z;
-	normal.z = t;*/
-
-
-	//vec3 normal = normalize(f_normal).xyz;
-
-	/*vec3 normal = vec3(
-		inverseTrans[0][0] * f_normal.x + inverseTrans[2][0] * f_normal.y + inverseTrans[2][0] * f_normal.z,
-		inverseTrans[0][1] * f_normal.x + inverseTrans[2][1] * f_normal.y + inverseTrans[2][1] * f_normal.z,
-		inverseTrans[0][2] * f_normal.x + inverseTrans[2][2] * f_normal.y + inverseTrans[2][2] * f_normal.z
-		);*/
-
-
-	//vec3 normal = GenerateNormal(f_normal, fTangent, mat.heightTextureId,texCoord);
 	
-	//f_normal.x = -f_normal.x;
 
+	//Calculate inverse tangent matrix
+	vec3 biTangent = cross(f_normal, fTangent);
+	mat3 invTangentMatrix = mat3(fTangent, biTangent, f_normal);
 
-	// WORKING Ish
-	//vec3 textureNormal = (2.0f * normalize(texture(textureSamplers[mat.normalTextureId], texCoord).xyz)) - 1.0f;
-	////textureNormal.y = -textureNormal.y;
-	//vec3 normal = normalize(normalize(f_normal + textureNormal) * modelMatrix).xyz;
-
-	// Not working paralax mapping / Normal
 	vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
-		modelMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
+		modelMatrix,invTangentMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
+
+
 
 
 	
@@ -293,7 +223,7 @@ void main()
 
 	// Should be replaced
 	//
-	vec3 AmbientColour = vec3(0.5f,0.5f,0.5f);
+	vec3 AmbientColour = vec3(0.3f,0.3f,0.3f);
 	//
 
 	vec3 colour = (albedo * AmbientColour) * ao;

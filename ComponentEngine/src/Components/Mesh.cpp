@@ -744,8 +744,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 				material.cavityTextureID = 0; // Set to default white texture
 				material.aoTextureID = 0; // Set to default white texture
-				material.aoTextureID = 0; // Set to default white texture
-				material.heightTextureID = 0; // Set to default white texture
+				material.heightTextureID = 3; // Set to default white texture
 
 
 				engine->RegisterMaterial(materialDefinition, material);
