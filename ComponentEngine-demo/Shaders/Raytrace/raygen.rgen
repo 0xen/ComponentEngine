@@ -53,7 +53,7 @@ void main()
         MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
 
 
-    color = /*vec3(1,1,1);*/ray.colour.rgb;
+    color = ray.colour.rgb;
 
 	// Store the newly generated depth
     imageStore(rayDepthImage, ivec2(gl_LaunchIDNV.xy), vec4(ray.depth));
