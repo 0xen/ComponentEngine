@@ -1043,7 +1043,7 @@ VulkanUniformBuffer * ComponentEngine::Engine::GetMaterialBuffer()
 	return m_materialbuffer;
 }
 
-std::vector<std::array<int, 64>>& ComponentEngine::Engine::GetGlobalMaterialMappingArray()
+std::vector<std::array<int, 512>>& ComponentEngine::Engine::GetGlobalMaterialMappingArray()
 {
 	return m_materials_vertex_mapping;
 }
@@ -1640,7 +1640,7 @@ void ComponentEngine::Engine::InitRenderer()
 
 		m_materials_vertex_mapping.resize(m_max_materials);
 
-		m_materialMappingBuffer = m_renderer->CreateUniformBuffer(m_materials_vertex_mapping.data(), BufferChain::Single, sizeof(std::array<int, 64>), m_materials_vertex_mapping.size(), true);
+		m_materialMappingBuffer = m_renderer->CreateUniformBuffer(m_materials_vertex_mapping.data(), BufferChain::Single, sizeof(std::array<int, 512>), m_materials_vertex_mapping.size(), true);
 		m_materialMappingBuffer->SetData(BufferSlot::Primary);
 
 		m_materials_vertex_mapping_buffer_pool = new VulkanBufferPool(m_materialMappingBuffer);

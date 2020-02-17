@@ -225,7 +225,7 @@ namespace ComponentEngine
 		// Get the uniform buffer that stored all material data
 		VulkanUniformBuffer* GetMaterialBuffer();
 		// Get the local material mapping array
-		std::vector<std::array<int, 64>>& GetGlobalMaterialMappingArray();
+		std::vector<std::array<int, 512>>& GetGlobalMaterialMappingArray();
 		// Get the local vertex array data
 		std::vector<MeshVertex>& GetGlobalVertexArray();
 		// Get the local index array data
@@ -488,7 +488,7 @@ namespace ComponentEngine
 
 		std::map<MaterialDefintion, int> m_material_mapping;
 
-		std::vector<std::array<int, 64>> m_materials_vertex_mapping;
+		std::vector<std::array<int, 512>> m_materials_vertex_mapping;
 		VulkanBufferPool* m_materials_vertex_mapping_buffer_pool;
 
 		std::vector<MatrialObj> m_materials;
@@ -513,7 +513,7 @@ namespace ComponentEngine
 		VulkanVertexBuffer* m_vertexBuffer;
 		VulkanIndexBuffer* m_indexBuffer;
 
-		const unsigned int m_maxMaterialsPerModel = 64;
+		const unsigned int m_maxMaterialsPerModel = 512;
 		VulkanUniformBuffer* m_materialMappingBuffer;
 		VulkanUniformBuffer* m_materialbuffer;
 

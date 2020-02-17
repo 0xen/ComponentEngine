@@ -212,7 +212,8 @@ void main()
   	// PBR lab sheet
 
 	// Texture maps             
-	vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
+	vec4 albedoF = texture(textureSamplers[mat.textureId], texCoord).rgba;
+	vec3 albedo = albedoF.xyz;
 	albedo *= mat.diffuse;
 	albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
 	float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
@@ -220,6 +221,18 @@ void main()
 	float cavity = texture(textureSamplers[mat.cavityTextureId], texCoord).r;
 	float ao = texture(textureSamplers[mat.aoTextureId], texCoord).r;
 
+	if(albedoF.a < 0.9f)
+	{
+
+		rayPayload.recursion = currentResursion - 1;
+
+		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,
+		 0xff, 0, 0, 0, origin, 0.00001f, gl_WorldRayDirectionNV, 1000.0, 1);
+
+
+		inRayPayload.colour.rgb = rayPayload.colour.rgb;
+		return;
+	}
 
 	// Should be replaced
 	//

@@ -691,7 +691,7 @@ void ComponentEngine::Mesh::LoadModel()
 			m_materials.resize(loader.m_materials.size());
 
 
-			std::array<int, 64> materialDefintionMap;
+			std::array<int, 512> materialDefintionMap;
 
 
 			for (int i = 0; i < loader.m_materials.size(); i++)
