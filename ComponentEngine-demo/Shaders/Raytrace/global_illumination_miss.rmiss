@@ -9,14 +9,6 @@ layout(binding=5, set = 0) readonly uniform CameraBuffer {Camera camera; };
 
 void main()
 {
-	//const float brightness = 0.3f;
-	/*const float brightness = camera.globalIlluminationReflectionMissBrightness;
-
-
-	rayPayload.colour.rgb = vec3(1.0f,1.0f,1.0f);
-	rayPayload.colour.rgb *= brightness;*/
-
-
 	const float brightness = camera.globalIlluminationReflectionMissBrightness;
 
 	
@@ -28,4 +20,6 @@ void main()
 	rayPayload.colour.rgb = (1.0-t) * gradientEnd + t * gradientStart;
 	rayPayload.colour.rgb *= brightness;
 	rayPayload.depth += length(gl_WorldRayOriginNV) + gl_WorldRayDirectionNV.x + gl_WorldRayDirectionNV.y;
+	
+	rayPayload.responce = 0;
 }

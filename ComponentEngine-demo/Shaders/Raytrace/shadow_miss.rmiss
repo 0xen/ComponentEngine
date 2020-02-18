@@ -1,9 +1,12 @@
 #version 460
 #extension GL_NV_ray_tracing : require
+#extension GL_GOOGLE_include_directive : require
 
-layout(location = 2) rayPayloadInNV bool isShadowed;
+#include "Structures.glsl"
+
+layout(location = 1) rayPayloadInNV RayPayload inRayPayload;
 
 void main()
 {
-	isShadowed = false;
+	inRayPayload.responce = 0;
 }

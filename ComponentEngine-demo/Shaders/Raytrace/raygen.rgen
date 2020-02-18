@@ -23,6 +23,10 @@ layout(location = 0) rayPayloadNV RayPayload ray;
 
 layout (constant_id = 0) const int MISS_SHADER_INDEX = 0;
 
+
+
+
+
 void main() 
 {
 	const vec2 pixel = vec2(gl_LaunchIDNV.x, gl_LaunchIDNV.y);
@@ -43,17 +47,44 @@ void main()
 	vec4 target = camera.projInverse * (vec4(uv.x, uv.y, 1, 1));
   	vec4 direction = camera.viewInverse * vec4(normalize(target.xyz), 0);
 
-	ray.recursion = 1;
+
 	ray.depth = 0.0f;
     // Dissable the depth test as this is a single ray pass
 	ray.depthTest = false;
 
-	// Spawn the ray that tests for the depth of the scene
-    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV , 0xFF, 0, 0,
-        MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0 /*payload*/);
+    // Total recursions allowed, this is for every hit, including transparancy
+   	uint maxRecursion = 50;
+   	uint maxOpaque = 3;
+
+   	while(true)
+   	{
+
+	   	traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,
+			0xFF, 0, 0, MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0);
 
 
-    color = ray.colour.rgb;
+		if(ray.responce==0) // Got Color, Exit
+		{
+    		color = ray.colour.rgb;
+			break;
+		}
+		else if(ray.responce==2)
+		{
+			direction = vec4(ray.direction,0.0f);
+			origin = vec4(ray.origin,0.0f);
+			maxRecursion--;
+		}
+
+		if(maxRecursion<=0)break;
+   	}
+
+
+	
+
+
+
+
+
 
 	// Store the newly generated depth
     imageStore(rayDepthImage, ivec2(gl_LaunchIDNV.xy), vec4(ray.depth));

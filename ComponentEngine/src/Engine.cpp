@@ -60,7 +60,7 @@ bool ComponentEngine::Engine::IsRunning()
 	return m_running == EngineStates::Running;
 }
 
-ComponentEngine::Engine::Engine() : m_maxRecursionDepth(10)
+ComponentEngine::Engine::Engine() : m_maxRecursionDepth(30)
 {
 	// Reset key codes
 	for (int i = 0; i < 256; i++)
@@ -1743,26 +1743,6 @@ void ComponentEngine::Engine::InitRenderer()
 			true
 			};
 			m_default_light_color_shader = AddHitShaderPipeline(defaultHitgroup, {});
-		}
-
-		{
-			HitShaderPipeline defaultHitgroup{ "Glass",
-			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.glass" },
-			},
-			true
-			};
-			m_glass_shader = AddHitShaderPipeline(defaultHitgroup, {});
-		}
-
-		{
-			HitShaderPipeline defaultHitgroup{ "Textured-NoReflect",
-			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.textured" },
-			},
-			true
-			};
-			m_textured_default_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader });
 		}
 
 

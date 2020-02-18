@@ -8,6 +8,12 @@
 
 void main()
 {
+	
+	if(inRayPayload.responce == 1)
+	{
+		inRayPayload.responce = 0;
+		return;
+	}
 
 	inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
 	
@@ -26,10 +32,13 @@ void main()
 		if(light.modelID >= 0 && light.modelID == gl_InstanceID)
 		{
 			inRayPayload.colour.xyz = light.color;
+			inRayPayload.responce = 0;
 			return;
 		}
 	}
 
+	inRayPayload.colour.xyz = vec3(1,0,1);
+	inRayPayload.responce = 0;
 
 }
 

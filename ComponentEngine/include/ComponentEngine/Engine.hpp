@@ -550,10 +550,6 @@ namespace ComponentEngine
 		unsigned int m_default_textured_pbr_shader;
 		// Default single color shader
 		unsigned int m_default_light_color_shader;
-		// 
-		unsigned int m_glass_shader;
-		// 
-		unsigned int m_textured_default_shader;
 
 		const unsigned int m_maxRecursionDepth;
 

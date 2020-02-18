@@ -4,28 +4,6 @@
 #extension GL_GOOGLE_include_directive : require
 
 #include "HitgroupHelpers.glsl"
-/*vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, int normalTextureId,vec2 UV)
-{
-
-
-	mat4x3 object_to_world = gl_ObjectToWorldNV;
-	vec3 N = normalize(object_to_world * vec4(modelNormal, 0)).xyz;
-	vec3 T = normalize(object_to_world * vec4(tangent, 0)).xyz;
-
-
-
-	T = normalize(T - dot(T, N) * N);
-	vec3 B = cross(N, T);
-
-	const mat3 TBN = mat3(T, B, N);
-
-	vec3 normal_t = normalize(texture(textureSamplers[normalTextureId], UV).xyz * 2.0f - 1.0f);
-	vec3 fN = normalize(TBN * normal_t);
-
-	//world_normal = N;
-
-	return N;
-}*/
 
 vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 	mat3 modelMatrix,mat3 invTangentMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
@@ -91,8 +69,6 @@ vec3 HitBarycentrics(vec3 a, vec3 b, vec3 c, vec3 bary)
 
 void main()
 {
-	rayPayload.depthTest = inRayPayload.depthTest;
-	
 	const float PI = 3.14159265359f;
 	const float GAMMA = 2.2f;
 
@@ -117,7 +93,50 @@ void main()
 	const vec3 barycentrics = vec3(1.0 - attribs.x - attribs.y, attribs.x, attribs.y);
 	vec2 texCoord = v0.texCoord * barycentrics.x + v1.texCoord * barycentrics.y +
 		                        v2.texCoord * barycentrics.z;
-	//vec2 texCoord = vec2(normalize(HitAttribute(vec3(v0.texCoord,0.0f),vec3(v1.texCoord,0.0f),vec3(v2.texCoord,0.0f), attribs))).xy;
+
+
+	// World position
+	vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
+
+
+	vec4 albedoWithAlpha = texture(textureSamplers[mat.textureId], texCoord).rgba;
+	if(inRayPayload.responce == 1)
+	{
+		if(albedoWithAlpha.a < 0.9f)
+		{
+			rayPayload.responce = 1; // We are doing a shadow test
+
+			float distanceFromStart = length(gl_WorldRayOriginNV - origin);
+			float distanceToLight = gl_RayTmaxNV - distanceFromStart;
+
+		    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xFF, 0, 0, 
+		    	SHADOW_MISS_SHADER_INDEX, origin,
+		             0.00001f, gl_WorldRayDirectionNV, distanceToLight,1);
+
+		    inRayPayload.responce = rayPayload.responce;
+		}
+		else
+		{
+			inRayPayload.responce = 1;
+		}
+		return;
+	}
+	if(albedoWithAlpha.a < 0.9f)
+	{
+		inRayPayload.responce = 2;
+		inRayPayload.origin = origin;
+		inRayPayload.direction = gl_WorldRayDirectionNV;
+		return;
+	}
+
+
+
+
+
+
+
+
+
 
 
 	mat3 modelMatrix = mat3(models.m[o.position]);
@@ -125,8 +144,6 @@ void main()
  
 	          
 
-	// World position
-	vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
 
 	vec3 viewVector = normalize(gl_WorldRayDirectionNV);
 
@@ -154,85 +171,20 @@ void main()
 		modelMatrix,invTangentMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
 
 
-
-
-	
-
 	// Calculate the reflection angle
 	vec3 reflectVec = reflect(-viewVector, normal);
-	const uint currentResursion = inRayPayload.recursion;
-
-
-	if(inRayPayload.depthTest)
-	{
-		inRayPayload.depth += length(gl_WorldRayDirectionNV * gl_HitTNV);
-		if(currentResursion>0)
-		{	
-			//rayPayload.depthTest = true;
-			rayPayload.depth = 0;
-			rayPayload.recursion = currentResursion - 1;
-			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xff, 0, 0, 0, origin, 0.00001f, normal, 1000.0, 1);
-
-			inRayPayload.depth += rayPayload.depth;
-
-
-			rayPayload.depth = 0;
-			rayPayload.recursion = currentResursion - 1;
-			traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,0xff, 0, 0, 0, origin, 0.00001f, reflectVec, 1000.0, 1);
-
-			inRayPayload.depth += rayPayload.depth;
-		}
-		inRayPayload.recursion = currentResursion;
-
-		for(uint i = 0 ; i < 100; i ++)
-		{
-			// Lighting Calc
-			Light light = unpackLight(i);
-
-			if(light.alive==0)
-			{
-			    continue;
-			}
-
-		    vec3 l = light.position - origin;
-
-		    if(dot(normal,normalize(l))<0)
-		    	continue;
-
-			inRayPayload.depth += length(l);
-		}
-
-		inRayPayload.colour.xyz = camera.maxRecursionDepthColor;
-		return;
-	}
-
-
-
 
   	// PBR lab sheet
 
-	// Texture maps             
-	vec4 albedoF = texture(textureSamplers[mat.textureId], texCoord).rgba;
-	vec3 albedo = albedoF.xyz;
+	// Texture maps      
+	vec3 albedo = albedoWithAlpha.xyz;
+	//vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
 	albedo *= mat.diffuse;
 	albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
 	float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
 	float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
 	float cavity = texture(textureSamplers[mat.cavityTextureId], texCoord).r;
 	float ao = texture(textureSamplers[mat.aoTextureId], texCoord).r;
-
-	if(albedoF.a < 0.9f)
-	{
-
-		rayPayload.recursion = currentResursion - 1;
-
-		traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,
-		 0xff, 0, 0, 0, origin, 0.00001f, gl_WorldRayDirectionNV, 1000.0, 1);
-
-
-		inRayPayload.colour.rgb = rayPayload.colour.rgb;
-		return;
-	}
 
 	// Should be replaced
 	//
@@ -262,15 +214,18 @@ void main()
 	    //if(dot(normal,normalize(l))<0)
 	    //	continue;
 
-	    isShadowed = true;
+		
 
-	    traceNV(topLevelAS, gl_RayFlagsTerminateOnFirstHitNV|gl_RayFlagsOpaqueNV|gl_RayFlagsSkipClosestHitShaderNV, 
-	            0xFF, 0, 0,
-	            SHADOW_MISS_SHADER_INDEX, origin, 0.00001f + light.shadowRangeStartOffset, normalize(l), distance + light.shadowRangeEndOffset, 2);
+		rayPayload.responce = 1; // We are doing a shadow test
+
+	    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 
+	            0xFF, 0, 0, SHADOW_MISS_SHADER_INDEX, origin,
+	             0.00001f + light.shadowRangeStartOffset,
+	              normalize(l), distance + light.shadowRangeEndOffset, 1);
 
 
 
-	    if (!isShadowed)
+	    if (rayPayload.responce==0)
 	    {
 
 		    float rdist = 1.0f / length(l);
@@ -342,8 +297,10 @@ void main()
 
 	colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
 
+	// Respond saying we are done
+	inRayPayload.responce = 0;
 	inRayPayload.colour.rgb = colour;
-	//inRayPayload.colour.rgb = normal;
+	//inRayPayload.colour.rgb = normal;*/
 }
 
 

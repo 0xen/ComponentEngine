@@ -1,0 +1,9 @@
+SpeedTree Assets
+
+v1: Initial release
+
+v2:
+- Converted materials to Metal/Rough for Falcor 3.0
+- Applied material alpha masks to BaseColor texture's alpha channel
+- Changed texture suffixes to BaseColor, Specular, Normal
+- Recalculated vertex normals

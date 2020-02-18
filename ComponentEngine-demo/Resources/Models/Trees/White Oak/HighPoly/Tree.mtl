@@ -1,0 +1,58 @@
+# Blender MTL File: 'None'
+# Material Count: 4
+
+newmtl Cap_02
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Cap_02_Normal.jpg
+map_Kd Textures\\T_Cap_02_BaseColor.jpg
+map_Ks Textures\\T_Cap_02_Specular.jpg
+map_d Textures\\T_Cap_02_BaseColor.jpg
+
+newmtl WhiteOakBark
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_WhiteOakBark_Normal.jpg
+map_Kd Textures\\T_WhiteOakBark_BaseColor.jpg
+map_Ks Textures\\T_WhiteOakBark_Specular.jpg
+map_d Textures\\T_WhiteOakBark_BaseColor.jpg
+
+newmtl White_Oak_Leaves_Hero_1
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_White_Oak_Leaves_Hero_1_Normal.jpg
+map_Kd Textures\\T_White_Oak_Leaves_Hero_1_BaseColor.png
+map_Ks Textures\\T_White_Oak_Leaves_Hero_1_Specular.jpg
+map_d Textures\\T_White_Oak_Leaves_Hero_1_BaseColor.jpg
+
+newmtl White_Oak_Leaves_Hero_3
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_White_Oak_Leaves_Hero_3_Normal.jpg
+map_Kd Textures\\T_White_Oak_Leaves_Hero_3_BaseColor.png
+map_Ks Textures\\T_White_Oak_Leaves_Hero_3_Specular.jpg
+map_d Textures\\T_White_Oak_Leaves_Hero_3_BaseColor.jpg

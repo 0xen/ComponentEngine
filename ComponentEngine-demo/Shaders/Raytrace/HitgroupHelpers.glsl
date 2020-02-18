@@ -12,14 +12,11 @@
 
 layout(location = 0) rayPayloadInNV RayPayload inRayPayload;
 
-
 ////////////////////
 // Shader outputs //
 ////////////////////
 
 layout(location = 1) rayPayloadNV RayPayload rayPayload;
-
-layout(location = 2) rayPayloadNV bool isShadowed;
 
 
 ///////////////////////////
@@ -42,7 +39,7 @@ materials;
 layout(binding = 3, set = 1) buffer Lights { vec4 l[]; }
 lights;
 
-uint MaxMaterialsPerModel = 64;
+uint MaxMaterialsPerModel = 512;
 
 layout(binding = 4, set = 1) buffer MaterialsMapping { int map[]; }
 materials_mapping;

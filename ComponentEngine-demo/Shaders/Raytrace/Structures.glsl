@@ -19,11 +19,30 @@ struct Camera
 
 struct RayPayload
 {
-	vec4 colour; // Color.xyz + distance
+  /* Color Sampling
+  0: Got Color, Exit
+  1: Shadow Test
+  2: Hit Full Transparent
+  */
+  /* Shadow
+  0: Not Shadow
+  1: Shadow
+  */
+  uint responce;
+  uint recursion;
+  vec4 colour;
+  uint randomSeed;
+  bool depthTest;
+  float depth;
+
+  vec3 origin;
+  vec3 direction;
+
+	/*vec4 colour;
 	uint recursion;
 	uint randomSeed;
   bool depthTest;
-  float depth;
+  float depth;*/
 };
 
 struct Light
