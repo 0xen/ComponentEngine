@@ -1,0 +1,67 @@
+# Blender MTL File: 'None'
+# Material Count: 5
+
+newmtl Azalea_Leaves_1
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\T_Azalea_Leaves_1_BaseColor.png
+map_Ks Textures\\T_Azalea_Leaves_1_Specular.jpg
+map_d Textures\\T_Azalea_Leaves_1_BaseColor.png
+
+newmtl Azalea_Leaves_2
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\T_Azalea_Leaves_2_BaseColor.png
+map_Ks Textures\\T_Azalea_Leaves_2_Specular.jpg
+map_d Textures\\T_Azalea_Leaves_2_BaseColor.png
+
+newmtl Cap_01
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\T_Cap_01_BaseColor.jpg
+map_Ks Textures\\T_Cap_01_Specular.jpg
+map_d Textures\\T_Cap_01_BaseColor.jpg
+
+newmtl FlowerStem_05
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\T_FlowerStem_05_BaseColor.jpg
+map_Ks Textures\\T_FlowerStem_05_Specular.jpg
+map_d Textures\\T_FlowerStem_05_BaseColor.jpg
+
+newmtl Pink_Flower
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd Textures\\T_Pink_Flower_BaseColor.png
+map_Ks Textures\\T_Pink_Flower_Specular.jpg
+map_d Textures\\T_Pink_Flower_BaseColor.png

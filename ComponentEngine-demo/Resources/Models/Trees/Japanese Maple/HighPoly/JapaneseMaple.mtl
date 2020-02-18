@@ -1,0 +1,58 @@
+# Blender MTL File: 'None'
+# Material Count: 4
+
+newmtl Cap_02
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Cap_02_Normal.png
+map_Kd Textures\\T_Cap_02_BaseColor.jpg
+map_Ks Textures\\T_Cap_02_Specular.jpg
+map_d Textures\\T_Cap_02_BaseColor.jpg
+
+newmtl JapaneseMapleBark
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_JapaneseMapleBark_Normal.png
+map_Kd Textures\\T_JapaneseMapleBark_BaseColor.jpg
+map_Ks Textures\\T_JapaneseMapleBark_Specular.jpg
+map_d Textures\\T_JapaneseMapleBark_BaseColor.jpg
+
+newmtl JapaneseMapleLeaf_1
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_JapaneseMapleLeaf_1_Normal.png
+map_Kd Textures\\T_JapaneseMapleLeaf_1_BaseColor.png
+map_Ks Textures\\T_JapaneseMapleLeaf_1_Specular.jpg
+map_d Textures\\T_JapaneseMapleLeaf_1_BaseColor.png
+
+newmtl JapaneseMapleLeaf_2
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_JapaneseMapleLeaf_2_Normal.png
+map_Kd Textures\\T_JapaneseMapleLeaf_2_BaseColor.png
+map_Ks Textures\\T_JapaneseMapleLeaf_2_Specular.jpg
+map_d Textures\\T_JapaneseMapleLeaf_2_BaseColor.png

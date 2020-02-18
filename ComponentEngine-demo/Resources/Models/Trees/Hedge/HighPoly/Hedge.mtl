@@ -1,0 +1,67 @@
+# Blender MTL File: 'None'
+# Material Count: 5
+
+newmtl Bark.001
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Bark_Normal.png
+map_Kd Textures\\T_Bark_BaseColor.jpg
+map_Ks Textures\\T_Bark_Specular.jpg
+
+newmtl Default
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+
+newmtl Hedge_Base
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Hedge_Base_Normal.png
+map_Kd Textures\\T_Hedge_Base_BaseColor.png
+map_Ks Textures\\T_Hedge_Base_Specular.jpg
+map_d Textures\\T_Hedge_Base_BaseColor.png
+
+newmtl Hedge_Leaves_1
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Hedge_Leaves_1_Normal.png
+map_Kd Textures\\T_Hedge_Leaves_1_BaseColor.png
+map_Ks Textures\\T_Hedge_Leaves_1_Specular.jpg
+map_d Textures\\T_Hedge_Leaves_1_BaseColor.png
+
+newmtl Hedge_Leaves_3
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Hedge_Leaves_3_Normal.png
+map_Kd Textures\\T_Hedge_Leaves_3_BaseColor.png
+map_Ks Textures\\T_Hedge_Leaves_3_Specular.jpg
+map_d Textures\\T_Hedge_Leaves_3_BaseColor.png

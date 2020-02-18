@@ -1,0 +1,43 @@
+# Blender MTL File: 'None'
+# Material Count: 3
+
+newmtl Boston_Fern_Fiddlehead
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Boston_Fern_Fiddlehead_Normal.png
+map_Kd Textures\\T_Boston_Fern_Fiddlehead_BaseColor.png
+map_Ks Textures\\T_Boston_Fern_Fiddlehead_Specular.jpg
+map_d Textures\\T_Boston_Fern_Fiddlehead_BaseColor.png
+
+newmtl Boston_Fern_Leaflets_1
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Boston_Fern_Leaflets_1_Normal.png
+map_Kd Textures\\T_Boston_Fern_Leaflets_1_BaseColor.png
+map_Ks Textures\\T_Boston_Fern_Leaflets_1_Specular.jpg
+map_d Textures\\T_Boston_Fern_Leaflets_1_BaseColor.png
+
+newmtl Boston_Fern_Stem
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Boston_Fern_Stem_Normal.png
+map_Kd Textures\\T_Boston_Fern_Stem_BaseColor.jpg
+map_Ks Textures\\T_Boston_Fern_Stem_Specular.jpg

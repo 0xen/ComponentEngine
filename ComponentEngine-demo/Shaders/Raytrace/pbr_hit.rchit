@@ -109,7 +109,7 @@ void main()
 			float distanceFromStart = length(gl_WorldRayOriginNV - origin);
 			float distanceToLight = gl_RayTmaxNV - distanceFromStart;
 
-		    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 0xFF, 0, 0, 
+		    traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 0xFF, 0, 0, 
 		    	SHADOW_MISS_SHADER_INDEX, origin,
 		             0.00001f, gl_WorldRayDirectionNV, distanceToLight,1);
 
@@ -218,7 +218,7 @@ void main()
 
 		rayPayload.responce = 1; // We are doing a shadow test
 
-	    traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 
+	    traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 
 	            0xFF, 0, 0, SHADOW_MISS_SHADER_INDEX, origin,
 	             0.00001f + light.shadowRangeStartOffset,
 	              normalize(l), distance + light.shadowRangeEndOffset, 1);

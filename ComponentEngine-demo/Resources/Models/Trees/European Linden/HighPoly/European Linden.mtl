@@ -1,0 +1,58 @@
+# Blender MTL File: 'None'
+# Material Count: 4
+
+newmtl Cap_03.001
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Cap_03_Normal.png
+map_Kd Textures\\T_Cap_03_BaseColor.jpg
+map_Ks Textures\\T_Cap_03_Specular.jpg
+map_d Textures\\T_Cap_03_BaseColor.jpg
+
+newmtl EuropeanLindenBark
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_EuropeanLindenBark_Normal.png
+map_Kd Textures\\T_EuropeanLindenBark_BaseColor.jpg
+map_Ks Textures\\T_EuropeanLindenBark_Specular.jpg
+map_d Textures\\T_EuropeanLindenBark_BaseColor.jpg
+
+newmtl EuropeanLindenLeaf
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_EuropeanLindenLeaf_Normal.png
+map_Kd Textures\\T_EuropeanLindenLeaf_BaseColor.png
+map_Ks Textures\\T_EuropeanLindenLeaf_Specular.jpg
+map_d Textures\\T_EuropeanLindenLeaf_BaseColor.png
+
+newmtl EuropeanLindenLeaf_2
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_EuropeanLindenLeaf_2_Normal.png
+map_Kd Textures\\T_EuropeanLindenLeaf_2_BaseColor.png
+map_Ks Textures\\T_EuropeanLindenLeaf_2_Specular.jpg
+map_d Textures\\T_EuropeanLindenLeaf_2_BaseColor.png

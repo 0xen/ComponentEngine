@@ -365,7 +365,9 @@ void ComponentEngine::Engine::RenderFrame()
 	}
 
 	// Update all renderer's via there Update function
+	GetModelLoadMutex().lock();
 	m_top_level_acceleration->Update();
+	GetModelLoadMutex().unlock();
 	// Call the main engines render pass
 	m_raytrace_renderpass->Render();
 	GetRendererMutex().unlock();

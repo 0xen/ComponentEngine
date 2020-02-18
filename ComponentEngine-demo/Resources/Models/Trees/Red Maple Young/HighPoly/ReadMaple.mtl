@@ -1,0 +1,71 @@
+# Blender MTL File: 'None'
+# Material Count: 5
+
+newmtl Bark
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Bark_Normal.png
+map_Kd Textures\\T_Bark_BaseColor.jpg
+map_Ks Textures\\T_Bark_Specular.jpg
+
+newmtl Cap_03
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Cap_03_Normal.png
+map_Kd Textures\\T_Cap_03_BaseColor.jpg
+map_Ks Textures\\T_Cap_03_Specular.jpg
+map_d Textures\\T_Cap_03_BaseColor.jpg
+
+newmtl Cards
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Cards_Normal.png
+map_Kd Textures\\T_Cards_BaseColor.png
+map_Ks Textures\\T_Cards_Specular.jpg
+map_d Textures\\T_Cards_BaseColor.png
+
+newmtl Leaves
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Leaves_Normal.png
+map_Kd Textures\\T_Leaves_BaseColor.png
+map_Ks Textures\\T_Leaves_Specular.jpg
+map_d Textures\\T_Leaves_BaseColor.png
+
+newmtl Leaves_2
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Leaves_2_Normal.png
+map_Kd Textures\\T_Leaves_2_BaseColor.png
+map_Ks Textures\\T_Leaves_2_Specular.jpg
+map_d Textures\\T_Leaves_2_BaseColor.png

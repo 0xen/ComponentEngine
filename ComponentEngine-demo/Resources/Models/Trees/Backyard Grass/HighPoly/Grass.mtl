@@ -1,0 +1,44 @@
+# Blender MTL File: 'None'
+# Material Count: 3
+
+newmtl Grass_blades
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Grass_blades_Normal.png
+map_Kd Textures\\T_Grass_blades_BaseColor.png
+map_Ks Textures\\T_Grass_blades_Specular.jpg
+map_d Textures\\T_Grass_blades_BaseColor.png
+
+newmtl Grass_blades_2
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Grass_blades_2_Normal.png
+map_Kd Textures\\T_Grass_blades_2_BaseColor.png
+map_Ks Textures\\T_Grass_blades_2_Specular.jpg
+map_d Textures\\T_Grass_blades_2_BaseColor.png
+
+newmtl Grass_blades_3
+Ns 179.999996
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+norm Textures\\T_Grass_blades_3_Normal.png
+map_Kd Textures\\T_Grass_blades_3_BaseColor.png
+map_Ks Textures\\T_Grass_blades_3_Specular.jpg
+map_d Textures\\T_Grass_blades_3_BaseColor.png
