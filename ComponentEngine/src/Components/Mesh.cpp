@@ -164,10 +164,10 @@ void ComponentEngine::Mesh::Display()
 							MaterialDefintion definition = engine->GetMaterialDefinition(m_materials_offsets[i]);
 							// Set the new texture
 							definition.diffuse_texture = tempFilePath.data.longForm;
-
+							
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material
@@ -204,7 +204,7 @@ void ComponentEngine::Mesh::Display()
 
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material
@@ -241,7 +241,7 @@ void ComponentEngine::Mesh::Display()
 
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material
@@ -278,7 +278,7 @@ void ComponentEngine::Mesh::Display()
 
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material
@@ -316,7 +316,7 @@ void ComponentEngine::Mesh::Display()
 
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material
@@ -354,7 +354,7 @@ void ComponentEngine::Mesh::Display()
 
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material
@@ -391,7 +391,7 @@ void ComponentEngine::Mesh::Display()
 
 
 							// Get the models global material instance
-							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[i];
+							MatrialObj global_material = Engine::Singlton()->GetGlobalMaterialArray()[m_materials_offsets[i]];
 							// Load the texture
 							engine->LoadTexture(tempFilePath.data.longForm);
 							// Get the texture id and store it in the material

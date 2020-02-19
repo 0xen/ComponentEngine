@@ -59,7 +59,7 @@ void main()
    	while(true)
    	{
 
-	   	traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV,
+	   	traceNV(topLevelAS, gl_RayFlagsOpaqueNV /*| gl_RayFlagsCullBackFacingTrianglesNV*/,
 			0xFF, 0, 0, MISS_SHADER_INDEX, origin.xyz, tmin, direction.xyz, tmax, 0);
 
 
@@ -68,7 +68,7 @@ void main()
     		color = ray.colour.rgb;
 			break;
 		}
-		else if(ray.responce==2)
+		else if(ray.responce==2) // Hit Full Transparent
 		{
 			direction = vec4(ray.direction,0.0f);
 			origin = vec4(ray.origin,0.0f);
