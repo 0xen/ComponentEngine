@@ -91,6 +91,7 @@ namespace ComponentEngine
 			glm::vec3 maxRecursionDepthColor;
 
 
+			unsigned int dofRecursionCount;
 			unsigned int recursionCount;
 
 			float globalIlluminationBrightness;

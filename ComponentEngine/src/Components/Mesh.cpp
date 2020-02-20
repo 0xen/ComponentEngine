@@ -178,7 +178,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -215,7 +218,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -252,7 +258,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -289,7 +298,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -327,7 +339,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -365,7 +380,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -402,7 +420,10 @@ void ComponentEngine::Mesh::Display()
 							m_materials_offsets[i] = engine->GetMaterialOffset(definition);
 
 							// Set the models new materials
+
+							Engine::Singlton()->GetModelLoadMutex().lock();
 							m_model->SetData(1, m_materials_offsets);
+							Engine::Singlton()->GetModelLoadMutex().unlock();
 
 							// Tell the GPU of the update
 							engine->UpdateAccelerationDependancys();
@@ -792,7 +813,10 @@ void ComponentEngine::Mesh::UnloadModel()
 {
 	if (m_loaded)
 	{
+
+		Engine::Singlton()->GetModelLoadMutex().lock();
 		m_model->Remove();
+		Engine::Singlton()->GetModelLoadMutex().unlock();
 		Engine::Singlton()->UpdateAccelerationDependancys();
 		m_loaded = false;
 	}
@@ -815,16 +839,20 @@ void ComponentEngine::Mesh::InstanciateModel(std::vector<MaterialDefintion> defi
 {
 	m_model_pool = m_mesh_instances[m_file_path.data.longForm].mesh_instance;
 
-	// Create a instance of the model
-	m_model = m_model_pool->CreateModel();
-
 	m_vertex_count = m_model_pool->GetVertexSize();
+
+	// Create a instance of the model
+
+	Engine::Singlton()->GetModelLoadMutex().lock();
+	m_model = m_model_pool->CreateModel();
 
 	m_model->SetData(0, m_entity->GetComponent<Transformation>().Get());
 
 	m_model->SetData(1, m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap);
 
 	m_materials_offsets = m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap;
+
+	Engine::Singlton()->GetModelLoadMutex().unlock();
 
 	//ChangePath(fileForm.normal_texture, loader.m_textures[material.normalTextureID]);
 
@@ -934,7 +962,9 @@ void ComponentEngine::Mesh::SetMaterial(int index, MaterialDefintion definition)
 
 
 	// Set the models new materials
+	Engine::Singlton()->GetModelLoadMutex().lock();
 	m_model->SetData(1, m_materials_offsets);
+	Engine::Singlton()->GetModelLoadMutex().unlock();
 
 
 }

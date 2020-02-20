@@ -23,7 +23,8 @@ ComponentEngine::Camera::Camera()
 	m_camera_data.totalSamples = 20;
 	m_camera_data.globalIlluminationBrightness = 0.8f;
 	m_camera_data.globalIlluminationReflectionMissBrightness = 0.75f;
-	m_camera_data.recursionCount = 3;
+	m_camera_data.recursionCount = Engine::Singlton()->GetRaytracerRecursionDepth();
+	m_camera_data.dofRecursionCount = 3;
 	m_camera_data.aperture = 0.002f;
 	m_camera_data.focusDistance = 0.5f;
 	m_camera_data.movmentTollarance = 0.0001f;
@@ -51,7 +52,8 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 	m_camera_data.totalSamples = 20;
 	m_camera_data.globalIlluminationBrightness = 0.8f;
 	m_camera_data.globalIlluminationReflectionMissBrightness = 0.75f;
-	m_camera_data.recursionCount = 3;
+	m_camera_data.recursionCount = Engine::Singlton()->GetRaytracerRecursionDepth();
+	m_camera_data.dofRecursionCount = 3;
 	m_camera_data.aperture = 0.002f;
 	m_camera_data.focusDistance = 0.5f;
 	m_camera_data.movmentTollarance = 0.0001f;
@@ -176,11 +178,11 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 		SendDataToGPU();
 	}
 
-	ImGui::Text("Recursion Count");
+	ImGui::Text("DOF Recursion Count");
 	int RecursionCount = m_camera_data.recursionCount;
 	if (ImGui::DragInt("##cameraRecursionCount", &RecursionCount, 0.05f, 1, Engine::Singlton()->GetRaytracerRecursionDepth()))
 	{
-		m_camera_data.recursionCount = RecursionCount;
+		m_camera_data.dofRecursionCount = RecursionCount;
 		SendDataToGPU();
 	}
 

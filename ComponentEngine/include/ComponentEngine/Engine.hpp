@@ -547,11 +547,16 @@ namespace ComponentEngine
 		//
 		unsigned int m_shadow_miss_shader;
 		// Default textured PBR shader
-		unsigned int m_default_textured_pbr_shader;
+		unsigned int m_default_opaque_pbr_shader;
+		// Default textured PBR shader
+		unsigned int m_default_translucent_pbr_shader;
+		// Default textured PBR shader
+		unsigned int m_default_transparent_pbr_shader;
+
 		// Default single color shader
 		unsigned int m_default_light_color_shader;
 
-		const unsigned int m_maxRecursionDepth;
+		unsigned int m_maxRecursionDepth;
 
 		// Used to store the acumilated image from multiple render passes
 		VulkanTextureBuffer* m_accumilation_texture_buffer = nullptr;

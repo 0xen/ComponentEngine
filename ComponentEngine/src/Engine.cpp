@@ -22,6 +22,7 @@
 
 #include <renderer\VertexBase.hpp>
 
+#include <renderer\vulkan\VulkanPhysicalDevice.hpp>
 #include <renderer\vulkan\VulkanFlags.hpp>
 #include <renderer\vulkan\VulkanRaytracePipeline.hpp>
 #include <renderer\vulkan\VulkanAcceleration.hpp>
@@ -60,7 +61,7 @@ bool ComponentEngine::Engine::IsRunning()
 	return m_running == EngineStates::Running;
 }
 
-ComponentEngine::Engine::Engine() : m_maxRecursionDepth(30)
+ComponentEngine::Engine::Engine()
 {
 	// Reset key codes
 	for (int i = 0; i < 256; i++)
@@ -1177,7 +1178,9 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
 	m_materialMappingBuffer->SetData(BufferSlot::Primary);
 
+	Engine::Singlton()->GetModelLoadMutex().lock();
 	m_top_level_acceleration->Build();
+	Engine::Singlton()->GetModelLoadMutex().unlock();
 
 	{
 		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
@@ -1518,6 +1521,8 @@ void ComponentEngine::Engine::InitRenderer()
 	m_renderer = new VulkanRenderer();
 	m_renderer->Start(m_window_handle, VulkanFlags::Raytrace);
 
+	m_maxRecursionDepth = m_renderer->GetDevice()->GetVulkanPhysicalDevice()->GetPhysicalDeviceRayTracingProperties()->maxRecursionDepth - 1;
+
 	// Get the swapchain and render pass instances we need
 	m_swapchain = m_renderer->GetSwapchain();
 
@@ -1728,13 +1733,31 @@ void ComponentEngine::Engine::InitRenderer()
 		m_shadow_miss_shader = AddMissShader("../Shaders/Raytrace/shader_build/rmiss.shadow_miss", {});
 
 		{
-			HitShaderPipeline defaultHitgroup{ "PBR-Metal",
+			HitShaderPipeline defaultHitgroup{ "Opaque PBR",
 			{
-				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.pbr_hit" },
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.opaque_pbr_hit" },
 			},
 			true
 			};
-			m_default_textured_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader, m_global_illumination_miss_shader });
+			m_default_opaque_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader, m_global_illumination_miss_shader });
+		}
+		{
+			HitShaderPipeline defaultHitgroup{ "Translucent PBR",
+			{
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.translucent_pbr_hit" },
+			},
+			true
+			};
+			m_default_translucent_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader, m_global_illumination_miss_shader });
+		}
+		{
+			HitShaderPipeline defaultHitgroup{ "Transparent PBR",
+			{
+				{ VkShaderStageFlagBits::VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV, "../Shaders/Raytrace/shader_build/rchit.transparent_pbr_hit" },
+			},
+			true
+			};
+		m_default_transparent_pbr_shader = AddHitShaderPipeline(defaultHitgroup, { m_shadow_miss_shader, m_global_illumination_miss_shader });
 		}
 
 		{

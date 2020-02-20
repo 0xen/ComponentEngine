@@ -7,6 +7,7 @@ struct Camera
     vec3 maxRecursionDepthColor;
     
     uint recursionCount;
+    uint dofRecursionCount;
     float globalIlluminationBrightness;
     float globalIlluminationReflectionMissBrightness;
     // Camera Settings
@@ -23,6 +24,7 @@ struct RayPayload
   0: Got Color, Exit
   1: Shadow Test
   2: Hit Full Transparent
+  3: Transparent Color
   */
   /* Shadow
   0: Not Shadow
@@ -34,6 +36,7 @@ struct RayPayload
   uint randomSeed;
   bool depthTest;
   float depth;
+  float power;
 
   vec3 origin;
   vec3 direction;

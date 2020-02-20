@@ -61,10 +61,12 @@ layout (constant_id = 0) const uint SHADOW_MISS_SHADER_INDEX = 0;
 layout (constant_id = 1) const uint MISS_SHADER_INDEX = 0;
 
 
+const float PI = 3.14159265359f;
+const float GAMMA = 2.2f;
 
 
-/////////////////////////////////
-// Structure Unpacking Helpers //
+  /////////////////////////////////
+ // Structure Unpacking Helpers //
 /////////////////////////////////
 
 
@@ -154,4 +156,175 @@ WaveFrontMaterial unpackMaterial(int matIndex)
   m.heightTextureId = floatBitsToInt(d6.g);
 
   return m;
+}
+
+
+  //////////////////////////
+ // Helper RTX Functions //
+//////////////////////////
+
+
+bool SpawnShadowRay(vec3 origin, vec3 direction, float length)
+{
+  rayPayload.responce = 1; // We are doing a shadow test
+  rayPayload.depth = length;
+  traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 
+          0xFF, 0, 0, SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, direction, length, 1);
+
+
+  return rayPayload.responce==0;
+}
+
+
+void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness,float cavity, 
+                    vec3 origin, vec3 normal, vec3 viewVector)
+{
+  for(uint i = 0; i < 100; i ++)
+  {
+    // Lighting Calc
+    Light light = unpackLight(i);
+
+    if(light.alive==0)
+    {
+        continue;
+    }
+
+
+
+
+    vec3 l = light.position - origin;
+
+    float distance =  length(l);
+
+    if(dot(normal,normalize(l))<0)
+      continue;
+    rayPayload.colour = vec4(light.color,0.0f);
+    rayPayload.recursion = camera.recursionCount;
+    if (SpawnShadowRay(origin,normalize(l),distance))
+    {
+
+      float rdist = 1.0f / length(l);
+
+
+      // Normalizing light
+      l *= rdist;
+
+      // Calculate light intensity
+        float li = light.intensity * rdist * rdist;
+      // Lights color
+      vec3 lc = rayPayload.colour.rgb;
+
+      // Halfway vector (normal halfway between view and light vector)
+      vec3 h = normalize(l + viewVector);
+
+
+      float ndotv = dot(normal, viewVector);
+      if (ndotv < 0) ndotv = 0.001f;
+
+      float ndotl = dot(normal, l);
+      if (ndotl < 0) ndotl = 0.001f; 
+
+      float ndoth = dot(normal, h);
+      if (ndoth < 0) ndoth = 0.001f;
+
+
+
+      vec3 flambert = albedo / PI;
+
+
+      float ldoth = dot(l, h);
+
+      float nonMetalSpecular = 0.04f;
+      vec3 cSpec = mix(vec3(nonMetalSpecular,nonMetalSpecular,nonMetalSpecular), albedo, metalness); 
+      vec3 FSCHLICK = cSpec + (1.0f - cSpec) * ((1.0f - (ldoth)) * 
+      (1.0f - (ldoth)) * (1.0f - (ldoth)) * (1.0f - (ldoth)) * (1.0f - (ldoth)));
+
+
+      float ndothSquare = ndoth * ndoth;
+      float alpha = roughness * roughness;
+      float asquare = alpha * alpha;
+      float innerBracket = ndothSquare * (asquare - 1.0f) + 1.0f;
+      float normdistri = asquare / (PI *  (innerBracket * innerBracket));
+
+
+      float gone = ndotv / (ndotv * (1.0f - roughness / 2.0f) + roughness / 2.0f);
+      float gtwo = ndotl / (ndotl * (1.0f - roughness / 2.0f) + roughness / 2.0f);
+      float gdone = gone * gtwo;
+
+
+      vec3 notend = (FSCHLICK * gdone * normdistri) / (4.0f * (ndotl) * (ndotv));
+
+      vec3 f = flambert + notend;
+
+
+
+      colour += PI * f * ((li * cavity) * lc) * ndotl;
+
+
+
+    }
+  }
+}
+
+
+vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
+  mat3 modelMatrix,mat3 invTangentMatrix, int normalTextureId, int heightTextureID,inout vec2 UV, bool parallax)
+{
+  const float parallaxDepth = 0.06f;
+
+  // Parallax mapping. Comment out for plain normal mapping
+  if (parallax)
+  {
+    // Get camera direction in model space
+    mat3 invWorldMatrix = transpose(mat3(modelMatrix));
+    vec3 cameraModelDir = normalize(invWorldMatrix * cameraDir);
+
+    // Calculate direction to offset UVs (x and y of camera direction in tangent space)
+    mat3 tangentMatrix = transpose(invTangentMatrix);
+    vec2 textureOffsetDir = (tangentMatrix * cameraModelDir).xy;
+
+    // Offset UVs in that direction to account for depth (using height map and some geometry)
+    float texDepth = parallaxDepth * (texture(textureSamplers[heightTextureID], UV).r - 0.5f);
+    UV += texDepth * textureOffsetDir;
+  }
+
+  // Extract normal from map and shift to -1 to 1 range
+  vec3 textureNormal = normalize((2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f);
+  //textureNormal.y = -textureNormal.y;
+
+  // Convert normal from tangent space to world space
+  //return normalize((textureNormal * invTangentMatrix) * modelMatrix).xyz;
+  return normalize(modelMatrix * (invTangentMatrix * textureNormal)).xyz;
+}
+
+vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
+{
+
+  vec3 tangent;
+  vec3 edge1 = v2 - v1;
+  vec3 edge2 = v3 - v1;
+
+  float s1 = u2.x - u1.x;
+  float s2 = u3.x - u1.x;
+  float t1 = u2.y - u1.y;
+  float t2 = u3.y - u1.y;
+
+
+
+  float denom = (s1 * t2) - (s2 * t1);
+  if (!(abs(denom) < 0.00001))
+  {
+    tangent = ((t2 * edge1) - (t1 * edge2)) / ((s1 * t2) - (s2 * t1));
+  }
+  else
+  {
+    tangent = vec3(1.0f,0.0f,0.0f);
+  }
+  return tangent;
+}
+
+vec3 HitBarycentrics(vec3 a, vec3 b, vec3 c, vec3 bary)
+{
+  //return a + bary.x * (b - a) + bary.y * (c - a);
+  return a * bary.x + b * bary.y + c * bary.z;
 }
