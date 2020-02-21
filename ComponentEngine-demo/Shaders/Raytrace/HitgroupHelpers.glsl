@@ -164,7 +164,7 @@ WaveFrontMaterial unpackMaterial(int matIndex)
 //////////////////////////
 
 
-bool SpawnShadowRay(vec3 origin, vec3 direction, float length)
+uint SpawnShadowRay(vec3 origin, vec3 direction, float length)
 {
   rayPayload.responce = 1; // We are doing a shadow test
   rayPayload.depth = length;
@@ -172,7 +172,7 @@ bool SpawnShadowRay(vec3 origin, vec3 direction, float length)
           0xFF, 0, 0, SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, direction, length, 1);
 
 
-  return rayPayload.responce==0;
+  return rayPayload.responce;
 }
 
 
@@ -198,9 +198,44 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
 
     if(dot(normal,normalize(l))<0)
       continue;
+
+
+
+
+
+    uint maxRecursion = 50;
+    uint maxOpaque = 3;
+
+    float colorPower = 1.0f;
+
+
     rayPayload.colour = vec4(light.color,0.0f);
     rayPayload.recursion = camera.recursionCount;
-    if (SpawnShadowRay(origin,normalize(l),distance))
+
+    vec3 shadowRayOrigin = origin;
+    vec3 shadowRayDirection = normalize(l);
+    float shadowRayDistance = distance;
+    uint responce = 0;
+    while(true)
+    {
+      responce = SpawnShadowRay(shadowRayOrigin,shadowRayDirection,shadowRayDistance);
+      if (responce == 2) // Transparent
+      {
+          maxRecursion--;
+          shadowRayOrigin = rayPayload.origin;
+          shadowRayDirection = rayPayload.direction;
+          shadowRayDistance = rayPayload.depth;
+      }
+      else
+      {
+        // We have hit the light or hit a solid object
+        break;
+      }
+      // We have went through too many transparent objects, give up
+      if(maxRecursion<=0)break;
+    }
+
+    if (responce == 0)
     {
 
       float rdist = 1.0f / length(l);

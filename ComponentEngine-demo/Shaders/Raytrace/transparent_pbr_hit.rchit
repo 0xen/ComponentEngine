@@ -43,18 +43,15 @@ void main()
 	vec4 albedoWithAlpha = texture(textureSamplers[mat.textureId], texCoord).rgba;
 	if(inRayPayload.responce == 1) // Shadow Test
 	{
-
 		float distanceFromStart = length(gl_WorldRayDirectionNV * gl_HitTNV);
 		float distanceToLight = inRayPayload.depth - distanceFromStart;
+	    inRayPayload.depth = distanceToLight;
+	    inRayPayload.origin = origin;
+	    inRayPayload.direction = gl_WorldRayDirectionNV;
+		inRayPayload.responce = 2;
 
-    	rayPayload.colour = vec4(albedoWithAlpha.rgb,0.0f);
-
-		SpawnShadowRay(origin, gl_WorldRayDirectionNV, distanceToLight);
-
-    	inRayPayload.colour *= inRayPayload.colour * rayPayload.colour;
+    	inRayPayload.colour *= inRayPayload.colour * vec4(albedoWithAlpha.rgb,0.0f);
     	inRayPayload.colour *= 1.0f - opacity;
-	    inRayPayload.responce = rayPayload.responce;
-
 		return;
 	}
 

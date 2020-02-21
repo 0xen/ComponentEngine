@@ -45,22 +45,10 @@ void main()
 		{
 			float distanceFromStart = length(gl_WorldRayDirectionNV * gl_HitTNV);
 			float distanceToLight = inRayPayload.depth - distanceFromStart;
-
-	    	
-			rayPayload.recursion = inRayPayload.recursion;
-			if(rayPayload.recursion>0)
-			{
-				rayPayload.colour = inRayPayload.colour;
-				rayPayload.recursion--;
-				SpawnShadowRay(origin, gl_WorldRayDirectionNV, distanceToLight);
-			}
-			inRayPayload.recursion = rayPayload.recursion;
-
-			inRayPayload.colour = rayPayload.colour;
-
-
-		    inRayPayload.responce = rayPayload.responce;
-
+		    inRayPayload.depth = distanceToLight;
+		    inRayPayload.origin = origin;
+		    inRayPayload.direction = gl_WorldRayDirectionNV;
+			inRayPayload.responce = 2;
 		}
 		else
 		{
