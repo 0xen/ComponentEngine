@@ -168,8 +168,19 @@ uint SpawnShadowRay(vec3 origin, vec3 direction, float length)
 {
   rayPayload.responce = 1; // We are doing a shadow test
   rayPayload.depth = length;
-  traceNV(topLevelAS, gl_RayFlagsOpaqueNV | gl_RayFlagsCullBackFacingTrianglesNV, 
+  traceNV(topLevelAS, gl_RayFlagsOpaqueNV, 
           0xFF, 0, 0, SHADOW_MISS_SHADER_INDEX, origin, 0.00001f, direction, length, 1);
+
+
+  return rayPayload.responce;
+}
+
+uint SpawnShadowRay(vec3 origin, vec3 direction, float length, uint flags)
+{
+  rayPayload.responce = 1; // We are doing a shadow test
+  rayPayload.depth = length;
+  traceNV(topLevelAS, gl_RayFlagsOpaqueNV | flags, 
+          0xFF, 0, 0, SHADOW_MISS_SHADER_INDEX, origin, 0.001f, direction, length, 1);
 
 
   return rayPayload.responce;
@@ -200,40 +211,54 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
       continue;
 
 
-
-
-
-    uint maxRecursion = 50;
-    uint maxOpaque = 3;
-
-    float colorPower = 1.0f;
-
-
     rayPayload.colour = vec4(light.color,0.0f);
-    rayPayload.recursion = camera.recursionCount;
+
+    uint responce = 0;
 
     vec3 shadowRayOrigin = origin;
     vec3 shadowRayDirection = normalize(l);
     float shadowRayDistance = distance;
-    uint responce = 0;
-    while(true)
+    uint maxRecursion = 50;
+
+    rayPayload.recursion = camera.recursionCount;
+    
+
+    if(inRayPayload.depth < 20.0f) // Should we use accurate shadows?
     {
-      responce = SpawnShadowRay(shadowRayOrigin,shadowRayDirection,shadowRayDistance);
-      if (responce == 2) // Transparent
+       uint flags = gl_RayFlagsCullBackFacingTrianglesNV;
+
+      if(inRayPayload.depth < 10.0f)
       {
-          maxRecursion--;
-          shadowRayOrigin = rayPayload.origin;
-          shadowRayDirection = rayPayload.direction;
-          shadowRayDistance = rayPayload.depth;
+          flags = 0;
       }
-      else
+
+      while(true)
       {
-        // We have hit the light or hit a solid object
-        break;
+        responce = SpawnShadowRay(shadowRayOrigin,shadowRayDirection,shadowRayDistance,flags);
+        if (responce == 2) // Transparent
+        {
+            maxRecursion--;
+            shadowRayOrigin = rayPayload.origin;
+            shadowRayDirection = rayPayload.direction;
+            shadowRayDistance = rayPayload.depth;
+        }
+        else
+        {
+          // We have hit the light or hit a solid object
+          break;
+        }
+        // We have went through too many transparent objects, give up
+        if(maxRecursion<=0)break;
       }
-      // We have went through too many transparent objects, give up
-      if(maxRecursion<=0)break;
     }
+    else // Use single pass shadows
+    {
+        responce = SpawnShadowRay(shadowRayOrigin,shadowRayDirection,shadowRayDistance);
+        // If it hit a transparent object, override and change to be a shadow
+        if(responce==2)responce=1;
+    }
+
+   
 
     if (responce == 0)
     {

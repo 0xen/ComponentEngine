@@ -8,6 +8,9 @@
 
 void main()
 {
+	float rayDepth = length(gl_WorldRayDirectionNV * gl_HitTNV);
+		
+
 	// Are we doing a shadow test
 	if(inRayPayload.responce == 1)
 	{
@@ -15,6 +18,7 @@ void main()
 		return;
 	}
 
+	inRayPayload.depth += rayDepth;
 
 	Offsets o = unpackOffsets(gl_InstanceID);
 

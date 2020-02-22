@@ -8,6 +8,9 @@
 
 void main()
 {
+	float rayDepth = length(gl_WorldRayDirectionNV * gl_HitTNV);
+	
+
 	const float PI = 3.14159265359f;
 	const float GAMMA = 2.2f;
 
@@ -43,8 +46,7 @@ void main()
 	{
 		if(albedoWithAlpha.a < 0.9f)
 		{
-			float distanceFromStart = length(gl_WorldRayDirectionNV * gl_HitTNV);
-			float distanceToLight = inRayPayload.depth - distanceFromStart;
+			float distanceToLight = inRayPayload.depth - rayDepth;
 		    inRayPayload.depth = distanceToLight;
 		    inRayPayload.origin = origin;
 		    inRayPayload.direction = gl_WorldRayDirectionNV;
@@ -56,6 +58,9 @@ void main()
 		}
 		return;
 	}
+
+	inRayPayload.depth += rayDepth;
+	
 	if(albedoWithAlpha.a < 0.9f)
 	{
 		inRayPayload.responce = 2;

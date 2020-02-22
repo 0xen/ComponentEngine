@@ -8,7 +8,10 @@
 
 void main()
 {
-	float opacity = 0.5f;
+	float rayDepth = length(gl_WorldRayDirectionNV * gl_HitTNV);
+	
+
+	const float opacity = 0.8f;
 
 	const float PI = 3.14159265359f;
 	const float GAMMA = 2.2f;
@@ -43,17 +46,20 @@ void main()
 	vec4 albedoWithAlpha = texture(textureSamplers[mat.textureId], texCoord).rgba;
 	if(inRayPayload.responce == 1) // Shadow Test
 	{
-		float distanceFromStart = length(gl_WorldRayDirectionNV * gl_HitTNV);
-		float distanceToLight = inRayPayload.depth - distanceFromStart;
+		float distanceToLight = inRayPayload.depth - rayDepth;
 	    inRayPayload.depth = distanceToLight;
 	    inRayPayload.origin = origin;
 	    inRayPayload.direction = gl_WorldRayDirectionNV;
 		inRayPayload.responce = 2;
 
-    	inRayPayload.colour *= inRayPayload.colour * vec4(albedoWithAlpha.rgb,0.0f);
-    	inRayPayload.colour *= 1.0f - opacity;
+    	inRayPayload.colour = inRayPayload.colour * vec4(albedoWithAlpha.rgb * (1.0f - opacity),0.0f);
+
+    	//inRayPayload.colour *= inRayPayload.colour * vec4(albedoWithAlpha.rgb,0.0f);
+    	//inRayPayload.colour *= 1.0f - shadowColorTransfurance;
 		return;
 	}
+
+	inRayPayload.depth += rayDepth;
 
 	mat3 modelMatrix = mat3(models.m[o.position]);
 
