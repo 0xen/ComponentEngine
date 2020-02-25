@@ -94,6 +94,55 @@ int main(int argc, char **argv)
 			engine->LoadScene("../Head.bin");
 		});
 	}
+	engine->GetUIManager()->AddMenuElement(new MenuElement("Spawn",
+		{
+			new MenuElement("Large Tree",[&]
+			{
+				Entity* tree = engine->GetEntityManager().CreateEntity("Large Tree");
+				Transformation::EntityHookDefault(*tree);
+				Transformation& transform = tree->GetComponent<Transformation>();
+				float x = ((rand() % 1000) * 0.016f) - 8.0f;
+				float y = ((rand() % 1000) * 0.016f) - 8.0f;
+				transform.Translate(glm::vec3(x, 0, y));
+
+				Mesh::EntityHookDefault(*tree);
+				Mesh& mesh = tree->GetComponent<Mesh>();
+				mesh.ChangePath("../Resources/Models/Trees/Red Maple Young/HighPoly/ReadMaple.obj");
+			}),
+		new MenuElement("Grass",[&]
+			{
+				for (int i = 0; i < 10; i++)
+				{
+					Entity* tree = engine->GetEntityManager().CreateEntity("Grass");
+					Transformation::EntityHookDefault(*tree);
+					Transformation& transform = tree->GetComponent<Transformation>();
+					float x = ((rand() % 1000) * 0.016f) - 8.0f;
+					float y = ((rand() % 1000) * 0.016f) - 8.0f;
+					transform.Translate(glm::vec3(x, 0, y));
+
+					Mesh::EntityHookDefault(*tree);
+					Mesh& mesh = tree->GetComponent<Mesh>();
+					mesh.ChangePath("../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj");
+				}
+			}),
+			new MenuElement("Boston Fern",[&]
+			{
+				for (int i = 0; i < 10; i++)
+				{
+					Entity* tree = engine->GetEntityManager().CreateEntity("Boston Fern");
+					Transformation::EntityHookDefault(*tree);
+					Transformation& transform = tree->GetComponent<Transformation>();
+					float x = ((rand() % 1000) * 0.016f) - 8.0f;
+					float y = ((rand() % 1000) * 0.016f) - 8.0f;
+					transform.Translate(glm::vec3(x, 0, y));
+
+					Mesh::EntityHookDefault(*tree);
+					Mesh& mesh = tree->GetComponent<Mesh>();
+					mesh.ChangePath("../Resources/Models/Trees/Boston Fern/HighPoly/BostonFern.obj");
+				}
+			})
+		}
+	));
 
 	while (engine->Running())
 	{

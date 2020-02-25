@@ -64,6 +64,7 @@ void ComponentEngine::Mesh::ChangePath(std::string path)
 	m_file_path.data.GenerateFileForm(path);
 	m_file_path.SetMessage(m_file_path.data.shortForm);
 	m_dir = Common::GetDir(m_file_path.data.longForm);
+	LoadModel();
 }
 
 enteez::BaseComponentWrapper* ComponentEngine::Mesh::EntityHookDefault(enteez::Entity& entity)
@@ -460,7 +461,6 @@ void ComponentEngine::Mesh::Display()
 			ChangePath(tempFilePath.data.longForm);
 			//m_file_path = tempFilePath;
 			//std::cout << m_file_path.data.longForm << std::endl;
-			LoadModel();
 			engine.GetRendererMutex().unlock();
 			engine.GetLogicMutex().unlock();
 		}
@@ -498,9 +498,8 @@ void ComponentEngine::Mesh::Load(std::ifstream & in)
 
 	if (path.size()> 0)
 	{
-		ChangePath(path);
 		loading_definitions = definitions;
-		LoadModel();
+		ChangePath(path);
 
 
 
@@ -597,7 +596,6 @@ void ComponentEngine::Mesh::LoadModel()
 	Engine::Singlton()->GetThreadManager()->AddTask([&](float delta)
 	{
 		Engine* engine = Engine::Singlton();
-
 
 
 

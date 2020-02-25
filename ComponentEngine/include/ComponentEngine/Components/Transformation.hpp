@@ -50,6 +50,7 @@ namespace ComponentEngine
 		~Transformation();
 		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
+		static bool DisplayTransform(glm::mat4& mat4);
 
 		virtual void Load(std::ifstream& in);
 		virtual void Save(std::ofstream& out);

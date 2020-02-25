@@ -35,6 +35,8 @@ void ComponentEngine::ThreadingWindow::Contents()
 	{
 		std::vector<WorkerTask*>& tasks = Engine::Singlton()->GetThreadManager()->GetSchedualedTasks();
 
+		std::unique_lock<std::mutex> acquire(Engine::Singlton()->GetThreadManager()->m_schedualed_task_lock);
+
 		for (int i = 0; i < tasks.size(); i++)
 		{
 			ImGui::PushID(i);

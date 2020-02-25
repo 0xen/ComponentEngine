@@ -14,17 +14,19 @@ ComponentEngine::Camera::Camera()
 	m_camera_data.view = glm::mat4(1.0f);
 	m_camera_data.viewInverse = m_camera_data.view;// glm::inverse(m_camera_data.view);
 
+	m_requested_reset_viewport_buffer = false;
 	m_near_clip = 0.1f;
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
 	m_camera_data.maxRecursionDepthColor = glm::vec3(0.7f, 0.7f, 0.7f);
 	m_camera_data.samplesPerFrame = 2;
-	m_camera_data.totalSamples = 20;
+	m_camera_data.mode = 0;
+	m_camera_data.dofSampleCount = 10;
 	m_camera_data.globalIlluminationBrightness = 0.8f;
 	m_camera_data.globalIlluminationReflectionMissBrightness = 0.75f;
-	m_camera_data.recursionCount = Engine::Singlton()->GetRaytracerRecursionDepth();
-	m_camera_data.dofRecursionCount = 3;
+	m_camera_data.gpuRecursionCount = Engine::Singlton()->GetRaytracerRecursionDepth();
+	m_camera_data.recursionCount = 50;
 	m_camera_data.aperture = 0.002f;
 	m_camera_data.focusDistance = 0.5f;
 	m_camera_data.movmentTollarance = 0.0001f;
@@ -42,18 +44,19 @@ ComponentEngine::Camera::Camera(enteez::Entity* entity)
 	m_camera_data.viewInverse = m_camera_data.view;// glm::inverse(m_camera_data.view);
 
 
-
+	m_requested_reset_viewport_buffer = false;
 	m_near_clip = 0.1f;
 	m_far_clip = 200.0f;
 	m_fov = 45.0f;
 
 	m_camera_data.maxRecursionDepthColor = glm::vec3(0.7f, 0.7f, 0.7f);
 	m_camera_data.samplesPerFrame = 2;
-	m_camera_data.totalSamples = 20;
+	m_camera_data.mode = 0;
+	m_camera_data.dofSampleCount = 10;
 	m_camera_data.globalIlluminationBrightness = 0.8f;
 	m_camera_data.globalIlluminationReflectionMissBrightness = 0.75f;
-	m_camera_data.recursionCount = Engine::Singlton()->GetRaytracerRecursionDepth();
-	m_camera_data.dofRecursionCount = 3;
+	m_camera_data.gpuRecursionCount = Engine::Singlton()->GetRaytracerRecursionDepth();
+	m_camera_data.recursionCount = 50;
 	m_camera_data.aperture = 0.002f;
 	m_camera_data.focusDistance = 0.5f;
 	m_camera_data.movmentTollarance = 0.0001f;
@@ -100,6 +103,14 @@ void ComponentEngine::Camera::SetBufferData()
 	m_camera_data.viewInverse = m_camera_data.view;
 	//m_camera_data.viewInverse = glm::inverse(m_camera_data.view);
 	m_camera_buffer->SetData(BufferSlot::Secondery);
+
+
+	std::unique_lock<std::mutex> lock(m_reset_viewport_buffers);
+	if (m_requested_reset_viewport_buffer)
+	{
+		m_requested_reset_viewport_buffer = false;
+		Engine::Singlton()->ResetViewportBuffers();
+	}
 }
 
 void ComponentEngine::Camera::BufferTransfer()
@@ -162,6 +173,16 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 
 	Engine::Singlton()->GetLogicMutex().lock();
 
+
+	int mode = m_camera_data.mode;
+	const char* modes[] = { "Single Pass","DOF" };
+	ImGui::Text("Mode");
+	if (ImGui::Combo("##Mode", &mode, modes, 2))
+	{
+		m_camera_data.mode = mode;
+		SendDataToGPU();
+	}
+
 	ImGui::Text("Sample Per Frame");
 	int sampleCount = m_camera_data.samplesPerFrame;
 	if (ImGui::DragInt("##samplePerFrame", &sampleCount, 0.05f, 1, 50))
@@ -170,19 +191,19 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 		SendDataToGPU();
 	}
 
-	ImGui::Text("Total Samples");
-	int totalSamples = m_camera_data.totalSamples;
+	ImGui::Text("DOF Total Samples");
+	int totalSamples = m_camera_data.dofSampleCount;
 	if (ImGui::DragInt("##totalSamples", &totalSamples, 0.05f, 1, 250))
 	{
-		m_camera_data.totalSamples = totalSamples;
+		m_camera_data.dofSampleCount = totalSamples;
 		SendDataToGPU();
 	}
 
-	ImGui::Text("DOF Recursion Count");
+	ImGui::Text("Transparency Recursion Count");
 	int RecursionCount = m_camera_data.recursionCount;
-	if (ImGui::DragInt("##cameraRecursionCount", &RecursionCount, 0.05f, 1, Engine::Singlton()->GetRaytracerRecursionDepth()))
+	if (ImGui::DragInt("##cameraRecursionCount", &RecursionCount, 0.1f, 1, 100))
 	{
-		m_camera_data.dofRecursionCount = RecursionCount;
+		m_camera_data.recursionCount = RecursionCount;
 		SendDataToGPU();
 	}
 
@@ -293,10 +314,32 @@ void ComponentEngine::Camera::SetFOV(float f)
 	m_fov = f;
 }
 
+float ComponentEngine::Camera::GetAperture()
+{
+	return m_camera_data.aperture;
+}
+
+void ComponentEngine::Camera::SetAperture(float a)
+{
+	m_camera_data.aperture = a;
+}
+
+float ComponentEngine::Camera::GetFocusDistance()
+{
+	return m_camera_data.focusDistance;
+}
+
+void ComponentEngine::Camera::SetFocusDistance(float f)
+{
+	m_camera_data.focusDistance = f;
+}
+
 void ComponentEngine::Camera::SendDataToGPU()
 {
 	//Engine::Singlton()->GetRendererMutex().lock();
 	m_camera_buffer->SetData(BufferSlot::Secondery);
-	Engine::Singlton()->ResetViewportBuffers();
+
+	std::unique_lock<std::mutex> lock(m_reset_viewport_buffers);
+	m_requested_reset_viewport_buffer = true;
 	//Engine::Singlton()->GetRendererMutex().unlock();
 }

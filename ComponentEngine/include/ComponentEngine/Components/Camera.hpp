@@ -7,6 +7,8 @@
 #include <ComponentEngine\Components\IO.hpp>
 
 #include <vector>
+#include <thread>
+#include <mutex>
 
 namespace enteez
 {
@@ -34,6 +36,8 @@ namespace ComponentEngine
 
 	class Camera : public Logic, public UI, public TransferBuffers, public IO
 	{
+		std::mutex m_reset_viewport_buffers;
+		bool m_requested_reset_viewport_buffer;
 
 	public:
 		Camera();
@@ -63,6 +67,12 @@ namespace ComponentEngine
 		float GetFOV();
 		void SetFOV(float f);
 
+		float GetAperture();
+		void SetAperture(float a);
+
+		float GetFocusDistance();
+		void SetFocusDistance(float f);
+
 	private:
 
 		void SendDataToGPU();
@@ -90,8 +100,7 @@ namespace ComponentEngine
 
 			glm::vec3 maxRecursionDepthColor;
 
-
-			unsigned int dofRecursionCount;
+			unsigned int gpuRecursionCount;
 			unsigned int recursionCount;
 
 			float globalIlluminationBrightness;
@@ -102,7 +111,8 @@ namespace ComponentEngine
 			float aperture;
 			float focusDistance;
 			float movmentTollarance;
-			unsigned int totalSamples;
+			unsigned int dofSampleCount;
+			unsigned int mode;
 		}m_camera_data;
 	};
 

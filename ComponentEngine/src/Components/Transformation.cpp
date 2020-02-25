@@ -254,12 +254,21 @@ void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, Tra
 
 void ComponentEngine::Transformation::Display()
 {
+	if (DisplayTransform(m_local_mat4))
+	{
+		PushToPositionArray();
+	}
+}
+
+bool ComponentEngine::Transformation::DisplayTransform(glm::mat4 & mat4)
+{
+	bool changed = false;
 	glm::vec3 scale;
 	glm::quat rotation;
 	glm::vec3 translation;
 	glm::vec3 skew;
 	glm::vec4 perspective;
-	glm::decompose(m_local_mat4, scale, rotation, translation, skew, perspective);
+	glm::decompose(mat4, scale, rotation, translation, skew, perspective);
 	rotation = glm::conjugate(rotation);
 
 	ImGui::PushItemWidth(ImGui::GetWindowContentRegionWidth() - 10);
@@ -269,11 +278,11 @@ void ComponentEngine::Transformation::Display()
 		glm::vec3 change = translation;
 		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			m_local_mat4 = glm::mat4(1.0f);
-			m_local_mat4 = glm::translate(m_local_mat4, change);
-			m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
-			m_local_mat4 = glm::scale(m_local_mat4, scale);
-			PushToPositionArray();
+			mat4 = glm::mat4(1.0f);
+			mat4 = glm::translate(mat4, change);
+			mat4 *= glm::inverse(glm::toMat4(rotation));
+			mat4 = glm::scale(mat4, scale);
+			changed = true;
 		}
 		ImGui::PopID();
 	}
@@ -289,17 +298,17 @@ void ComponentEngine::Transformation::Display()
 			{
 				if (glm::degrees(euler[i]) != change[i])
 				{
-					m_local_mat4 = glm::mat4(1.0f);
-					m_local_mat4 = glm::translate(m_local_mat4, translation);
+					mat4 = glm::mat4(1.0f);
+					mat4 = glm::translate(mat4, translation);
 
 					glm::vec3 rotAxis(0, 0, 0);
 					rotAxis[i] = 1.0f;
 
 					glm::quat appliedRot = glm::angleAxis(glm::radians(change[i] - euler[i]), rotAxis);
 
-					m_local_mat4 *= glm::inverse(glm::toMat4(rotation*appliedRot));
-					m_local_mat4 = glm::scale(m_local_mat4, scale);
-					PushToPositionArray();
+					mat4 *= glm::inverse(glm::toMat4(rotation*appliedRot));
+					mat4 = glm::scale(mat4, scale);
+					changed = true;
 				}
 			}
 		}
@@ -311,15 +320,17 @@ void ComponentEngine::Transformation::Display()
 		glm::vec3 change = scale;
 		if (ImGui::InputFloat3("", (float*)&change, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue))
 		{
-			m_local_mat4 = glm::mat4(1.0f);
-			m_local_mat4 = glm::translate(m_local_mat4, translation);
-			m_local_mat4 *= glm::inverse(glm::toMat4(rotation));
-			m_local_mat4 = glm::scale(m_local_mat4, change);
-			PushToPositionArray();
+			mat4 = glm::mat4(1.0f);
+			mat4 = glm::translate(mat4, translation);
+			mat4 *= glm::inverse(glm::toMat4(rotation));
+			mat4 = glm::scale(mat4, change);
+			changed = true;
 		}
 		ImGui::PushItemWidth(-(ImGui::GetWindowContentRegionWidth() - ImGui::CalcItemWidth()));
 		ImGui::PopID();
 	}
+
+	return changed;
 }
 
 void ComponentEngine::Transformation::Load(std::ifstream & in)

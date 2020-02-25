@@ -20,8 +20,12 @@ namespace ComponentEngine
 	struct CameraDollySnapshot
 	{
 		float transitionTime;
+		float pauseTime;
 
+		glm::mat4 transformation;
 		float fov;
+		float aperture;
+		float focusDistance;
 	};
 
 	class CameraDolly : public Logic, public UI, public IO
@@ -32,7 +36,9 @@ namespace ComponentEngine
 
 		float deltaTime;
 		int currentIndex;
+		bool running = false;
 
+		void GenerateSnapshot(CameraDollySnapshot& snapshot);
 	public:
 		CameraDolly(enteez::Entity* entity);
 

@@ -218,9 +218,9 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
     vec3 shadowRayOrigin = origin;
     vec3 shadowRayDirection = normalize(l);
     float shadowRayDistance = distance;
-    uint maxRecursion = 50;
+    uint maxRecursion = camera.recursionCount;
 
-    rayPayload.recursion = camera.recursionCount;
+    rayPayload.recursion = camera.gpuRecursionCount;
     
 
     if(inRayPayload.depth < 20.0f) // Should we use accurate shadows?

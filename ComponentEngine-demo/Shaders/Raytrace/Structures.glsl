@@ -4,18 +4,20 @@ struct Camera
     mat4 proj;
     mat4 viewInverse;
     mat4 projInverse;
+
     vec3 maxRecursionDepthColor;
-    
+    uint gpuRecursionCount;
     uint recursionCount;
-    uint dofRecursionCount;
     float globalIlluminationBrightness;
     float globalIlluminationReflectionMissBrightness;
+
     // Camera Settings
     uint samplesPerFrame;
     float aperture;
     float focusDistance;
     float movementTolerance;
-    uint totalSampleCount;
+    uint dofSampleCount;
+    uint mode;
 };
 
 struct RayPayload
@@ -25,6 +27,7 @@ struct RayPayload
   1: Shadow Test
   2: Hit Full Transparent
   3: Transparent Color
+  4: Depth Test
   */
   /* Shadow
   0: Not Shadow
@@ -33,8 +36,6 @@ struct RayPayload
   uint responce;
   uint recursion;
   vec4 colour;
-  uint randomSeed;
-  bool depthTest;
   float depth;
   float power;
 

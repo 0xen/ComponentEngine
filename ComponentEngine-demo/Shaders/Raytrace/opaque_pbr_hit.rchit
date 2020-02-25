@@ -17,6 +17,11 @@ void main()
 		inRayPayload.responce = 1; // Hit a solid object
 		return;
 	}
+	else if(inRayPayload.responce == 4) // Are we doing a depth test
+	{
+		inRayPayload.depth = rayDepth;
+		return;
+	}
 
 	inRayPayload.depth += rayDepth;
 

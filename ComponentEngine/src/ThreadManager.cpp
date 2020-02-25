@@ -31,7 +31,11 @@ bool ThreadManager::GetTask(WorkerTask*& task)
 	WorkerTask* poolTask = nullptr;
 	{
 		std::unique_lock<std::mutex> acquire(m_task_pool_lock);
-		if (m_task_pool.size() == 0) return false;
+		if (m_task_pool.size() == 0)
+		{
+			task = nullptr;
+			return false;
+		}
 
 		poolTask = m_task_pool[0];
 		m_task_pool.erase(m_task_pool.begin());
@@ -79,9 +83,9 @@ void ThreadManager::Update(bool useRTC)
 		// Calculate how much preformance this thread is using
 		m_seccond_delta += RTDelta;
 
-		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
 
 		bool seccondElapsed = m_seccond_delta > 1.0f;
+		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
 
 		// Loop through all tasks
 		for (int i = 0; i < m_schedualed_tasks.size(); ++i)
@@ -130,12 +134,12 @@ void ThreadManager::Update(bool useRTC)
 		if(!m_haveWork[i])
 		{
 			WorkerTask* task = nullptr;
-			if (GetTask(task) && task != nullptr)
+			if (GetTask(task))
 			{
 				m_workerTask[i] = task;
 				m_haveWork[i] = true;
+				m_workReady[i].notify_one(); // Tell worker
 			}
-			m_workReady[i].notify_one(); // Tell worker
 		}
 	}
 
@@ -185,27 +189,27 @@ void ThreadManager::Worker(unsigned int id)
 			};
 		}
 
-		if (m_workerTask[id] != nullptr)
+		//if (m_workerTask[id] != nullptr)
 		{
 			m_workerTask[id]->task(m_workerTask[id]->lastDelta);
+			m_workerTask[id]->task.reset();
+		}
+
+		{
 
 
+			m_workerTask[id]->queued = false;
+			if (m_workerTask[id]->type == TaskType::Single)
 			{
-				std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);
-				m_haveWork[id] = false;
-
-
-				m_workerTask[id]->queued = false;
-				m_workerTask[id]->task.reset();
-				if (m_workerTask[id]->type == TaskType::Single)
-				{
-					delete m_workerTask[id];
-				}
-				m_workerTask[id] = nullptr;
+				delete m_workerTask[id];
 			}
+			m_workerTask[id] = nullptr;
+
+			std::unique_lock<std::mutex> lock(m_workerlockGuard[id]);
+			m_haveWork[id] = false;
+			m_workReady[id].notify_one(); // Tell main thread
 		}
 			
-		m_workReady[id].notify_one(); // Tell main thread
 
 	}
 }

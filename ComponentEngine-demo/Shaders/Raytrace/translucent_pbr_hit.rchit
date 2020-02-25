@@ -58,6 +58,11 @@ void main()
 		}
 		return;
 	}
+	else if(inRayPayload.responce == 4) // Are we doing a depth test
+	{
+		inRayPayload.depth = rayDepth;
+		return;
+	}
 
 	inRayPayload.depth += rayDepth;
 	
