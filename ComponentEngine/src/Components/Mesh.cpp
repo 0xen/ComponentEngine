@@ -549,13 +549,8 @@ bool ComponentEngine::Mesh::DynamiclySized()
 	return true;
 }
 
-glm::mat4 rotation2(1.0f);
 void ComponentEngine::Mesh::Update(float frame_time)
 {
-	glm::mat4 rotation(1.0f);
-	//rotation = glm::rotate(rotation, 180.0f, glm::vec3(0, 1, 0));
-	//rotation = glm::rotate(rotation, 90.0f, glm::vec3(0, 0, 1));
-	rotation2 = glm::rotate(rotation2, 0.1f, glm::vec3(1, 0, 0));
 	if (m_loaded)
 	{
 		glm::mat4 mat = m_entity->GetComponent<Transformation>().GetMat4();
@@ -571,16 +566,7 @@ void ComponentEngine::Mesh::Update(float frame_time)
 
 void ComponentEngine::Mesh::EditorUpdate(float frame_time)
 {
-	if (m_loaded)
-	{
-		glm::mat4 mat = m_entity->GetComponent<Transformation>().GetMat4();
-
-		m_model->SetData(0, mat);
-
-		m_model->SetData(1, glm::inverseTranspose(mat));
-
-		m_model->SetData(2, m_materials_offsets);
-	}
+	Update(frame_time);
 }
 
 void ComponentEngine::Mesh::LoadModel()

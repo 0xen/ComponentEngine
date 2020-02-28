@@ -24,7 +24,7 @@ namespace enteez
 
 namespace ComponentEngine
 {
-	class Transformation : public UI, public IO, public MsgRecive<TransformationPtrRedirect>
+	class Transformation : public UI, public IO
 	{
 
 		glm::mat4 m_local_mat4;
@@ -36,19 +36,10 @@ namespace ComponentEngine
 			m_entity = entity;
 			m_local_mat4 = glm::mat4(1.0f);
 			m_mat4 = new glm::mat4(1.0f);
-			m_origional = true;
 			Send(m_entity, m_entity, OnComponentEnter<Transformation>(this));
 		}
-		Transformation(enteez::Entity* entity, glm::mat4* mat4)
-		{
-			m_local_mat4 = glm::mat4(1.0f);
-			m_entity = entity;
-			m_mat4 = mat4;
-			m_origional = false;
-			//Send(m_entity, OnComponentEnter<Transformation>());
-		}
+
 		~Transformation();
-		virtual void ReciveMessage(enteez::Entity* sender, TransformationPtrRedirect& message);
 		virtual void Display();
 		static bool DisplayTransform(glm::mat4& mat4);
 
@@ -95,8 +86,6 @@ namespace ComponentEngine
 		void Rotate(glm::vec3 axis, float angle);
 		void Rotate(glm::vec3 angles);
 		void SetParent(enteez::Entity* parent);
-		// We are not responsible for the new memory. Needs 3rd part memory managment
-		void MemoryPointTo(glm::mat4** new_mat4, int index, bool transfer_old_data = false);
 		glm::mat4& Get();
 		enteez::Entity* GetParent();
 		std::vector<Transformation*> GetChildren();
@@ -114,12 +103,8 @@ namespace ComponentEngine
 		void PushToPositionArray(bool updatePhysics = true);
 		enteez::Entity* m_entity;
 		int m_index;
-		union {
-			glm::mat4** m_global_position_array;
-			glm::mat4* m_mat4;
-		};
+		glm::mat4* m_mat4;
 		enteez::Entity* m_parent = nullptr;
 		std::vector<Transformation*> m_children;
-		bool m_origional;
 	};
 }

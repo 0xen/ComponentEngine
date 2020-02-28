@@ -50,13 +50,6 @@ namespace ComponentEngine
 		bool should_renderer;
 	};
 
-	struct TransformationPtrRedirect
-	{
-		TransformationPtrRedirect(glm::mat4** mat_ptr, int offset) : mat_ptr(mat_ptr) ,offset(offset) {}
-		glm::mat4** mat_ptr;
-		int offset;
-	};
-
 	template<class T>
 	class OnComponentExit : public TemplateType<T>
 	{

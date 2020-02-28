@@ -7,35 +7,9 @@
 
 using namespace ComponentEngine;
 
-void ComponentEngine::Transformation::MemoryPointTo(glm::mat4** new_mat4, int index, bool transfer_old_data)
-{
-	m_index = index;
-	if (transfer_old_data)
-		memcpy(&((*new_mat4)[index]), m_mat4, sizeof(glm::mat4));
-	if (m_origional)
-	{
-		m_origional = false;
-		// Cleanup as this memory was reserved by us
-		delete m_mat4;
-		m_mat4 = nullptr;
-	}
-	m_global_position_array = new_mat4;
-	PushToPositionArray();
-}
-
 glm::mat4 & Transformation::Get()
 {
-	glm::mat4* matrix = nullptr;
-
-	if (m_origional)
-	{
-		matrix = m_mat4;
-	}
-	else
-	{
-		matrix = &((*m_global_position_array)[m_index]);
-	}
-	return *matrix;
+	return *m_mat4;
 }
 
 void Transformation::Translate(glm::vec3 translation)
@@ -126,26 +100,16 @@ void ComponentEngine::Transformation::SetLocalMat4(glm::mat4 mat4, bool updatePh
 
 void ComponentEngine::Transformation::SetWorldMat4(glm::mat4 mat4, bool updatePhysics)
 {
-	glm::mat4* matrix = nullptr;
-
-	if (m_origional)
-	{
-		matrix = m_mat4;
-	}
-	else
-	{
-		matrix = &((*m_global_position_array)[m_index]);
-	}
 
 	m_local_mat4 = mat4 / GetParentWorldMat4();
 
-	*matrix = mat4;
+	*m_mat4 = mat4;
 	for (int i = 0; i < m_children.size(); i++)
 	{
 		m_children[i]->PushToPositionArray();
 	}
 	if (updatePhysics)
-		Send(m_entity, m_entity, TransformationChange{ *matrix });
+		Send(m_entity, m_entity, TransformationChange{ *m_mat4 });
 
 }
 
@@ -156,17 +120,7 @@ glm::mat4& ComponentEngine::Transformation::GetLocalMat4()
 
 glm::mat4 & ComponentEngine::Transformation::GetMat4()
 {
-	glm::mat4* matrix = nullptr;
-
-	if (m_origional)
-	{
-		matrix = m_mat4;
-	}
-	else
-	{
-		matrix = &((*m_global_position_array)[m_index]);
-	}
-	return *matrix;
+	return *m_mat4;
 }
 
 glm::mat4 ComponentEngine::Transformation::GetParentWorldMat4()
@@ -199,17 +153,7 @@ glm::vec3 ComponentEngine::Transformation::GetLocalPosition()
 
 glm::vec3 ComponentEngine::Transformation::GetWorldPosition()
 {
-	glm::mat4* matrix = nullptr;
-
-	if (m_origional)
-	{
-		matrix = m_mat4;
-	}
-	else
-	{
-		matrix = &((*m_global_position_array)[m_index]);
-	}
-	return (*matrix)[3];
+	return (*m_mat4)[3];
 }
 
 void Transformation::Scale(glm::vec3 scale)
@@ -244,12 +188,7 @@ ComponentEngine::Transformation::~Transformation()
 {
 	Send(m_entity, m_entity, OnComponentExit<Transformation>(this));
 	if (m_parent != nullptr && Engine::Singlton()->GetEntityManager().ValidEntity(m_parent)) m_parent->GetComponent<Transformation>().RemoveChild(this);
-	if (m_origional)delete m_mat4;
-}
-
-void ComponentEngine::Transformation::ReciveMessage(enteez::Entity * sender, TransformationPtrRedirect & message)
-{
-	MemoryPointTo(message.mat_ptr, message.offset, true);
+	delete m_mat4;
 }
 
 void ComponentEngine::Transformation::Display()
@@ -430,16 +369,7 @@ void ComponentEngine::Transformation::RemoveChild(Transformation * trans)
 
 void ComponentEngine::Transformation::PushToPositionArray(bool updatePhysics)
 {
-	glm::mat4* matrix = nullptr;
-
-	if (m_origional)
-	{
-		matrix = m_mat4;
-	}
-	else
-	{
-		matrix = &((*m_global_position_array)[m_index]);
-	}
+	glm::mat4* matrix = m_mat4;
 
 	*matrix = m_local_mat4;
 	if (m_parent != nullptr && m_parent->HasComponent<Transformation>())

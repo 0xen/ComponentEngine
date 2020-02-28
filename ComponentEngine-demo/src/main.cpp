@@ -45,7 +45,7 @@ void AddUIWindows()
 {
 
 
-	engine->GetUIManager()->AddElement(new UITemplate("Status", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
+	/*engine->GetUIManager()->AddElement(new UITemplate("Status", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
 	{
 		ImGuiStyle& style = ImGui::GetStyle();
 		int titlebarHeight = ImGui::GetFontSize() + (style.FramePadding.y * 2);
@@ -67,9 +67,9 @@ void AddUIWindows()
 
 			ImGui::PopID();
 		}
-	}));
-	engine->GetUIManager()->AddElement(new UITemplate("Configuration", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
-	{},[&](){	engine->GetMainCamera()->Display();		}));
+	}));*/
+	//engine->GetUIManager()->AddElement(new UITemplate("Configuration", ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking, PlayState::Play, [&]()
+	//{},[&](){	engine->GetMainCamera()->Display();		}));
 
 
 }
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 			engine->LoadScene("../Head.bin");
 		});
 	}
-	engine->GetUIManager()->AddMenuElement(new MenuElement("Spawn",
+	/*engine->GetUIManager()->AddMenuElement(new MenuElement("Spawn",
 		{
 			new MenuElement("Large Tree",[&]
 			{
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 			})
 		}
 	));
-
+	*/
 	while (engine->Running())
 	{
 		engine->Update();

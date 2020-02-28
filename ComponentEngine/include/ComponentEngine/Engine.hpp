@@ -433,6 +433,7 @@ namespace ComponentEngine
 
 			//ThreadHandler* thread_instance = nullptr;
 		};
+		ordered_lock m_offset_allocation_lock;
 
 		ordered_lock m_renderer_thread;
 		ordered_lock m_ui_lock;

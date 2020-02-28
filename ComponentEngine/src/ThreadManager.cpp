@@ -78,27 +78,29 @@ void ThreadManager::Update(bool useRTC)
 	float RTDelta = GetDeltaTime();
 	float delta = useRTC ? RTDelta : (1.0f / 60.0f);
 
+	std::cout << "a" << std::endl;
 	{ // Schedualed task
 
 		// Calculate how much preformance this thread is using
 		m_seccond_delta += RTDelta;
 
-
 		bool seccondElapsed = m_seccond_delta > 1.0f;
 		std::unique_lock<std::mutex> acquire(m_schedualed_task_lock);
+
+		std::cout << "b" << std::endl;
 
 		// Loop through all tasks
 		for (int i = 0; i < m_schedualed_tasks.size(); ++i)
 		{
 			WorkerTask*& task = m_schedualed_tasks[i];
 			task->deltaTime += delta;
+			task->acumalitiveTime += delta;
 			if (task->deltaTime > (1.0f / task->ups) && !task->queued)
 			{
 				task->queued = true;
 				task->lastDelta = task->deltaTime;
 				task->deltaTime = 0;
 				task->totalCount++;
-				task->acumalitiveTime += task->lastDelta;
 				{
 					std::unique_lock<std::mutex> acquire(m_task_pool_lock);
 					m_task_pool.push_back(task);
@@ -114,6 +116,7 @@ void ThreadManager::Update(bool useRTC)
 				task->taskActivity[19] = averageUPS;
 			}
 		}
+		std::cout << "c" << std::endl;
 
 		if (seccondElapsed)
 		{
@@ -122,6 +125,7 @@ void ThreadManager::Update(bool useRTC)
 			m_active_time = 0;
 			m_seccond_delta = 0;
 		}
+		std::cout << "d" << std::endl;
 	}
 
 
@@ -143,6 +147,7 @@ void ThreadManager::Update(bool useRTC)
 		}
 	}
 
+	std::cout << "e" << std::endl;
 	
 	// Wait for Workers
 	for (int i = 0; i < m_workerCount; ++i)
@@ -154,7 +159,8 @@ void ThreadManager::Update(bool useRTC)
 			m_workReady[i].wait(lock);
 		}
 	}
-	
+
+	std::cout << "f" << std::endl;
 
 	
 

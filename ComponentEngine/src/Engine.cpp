@@ -133,11 +133,13 @@ void ComponentEngine::Engine::Start()
 				for (auto e : em.GetEntitys())
 				{
 					m_logic_lock.lock();
+					m_offset_allocation_lock.lock();
 					// Loop through all components attached to the entity that inherits the Logic component
 					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 					{
 						logic.Update(frameTime);
 					});
+					m_offset_allocation_lock.unlock();
 					m_logic_lock.unlock();
 				}
 			}
@@ -147,11 +149,13 @@ void ComponentEngine::Engine::Start()
 				for (auto e : em.GetEntitys())
 				{
 					m_logic_lock.lock();
+					m_offset_allocation_lock.lock();
 					// Loop through all components attached to the entity that inherits the Logic component
 					e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
 					{
 						logic.EditorUpdate(frameTime);
 					});
+					m_offset_allocation_lock.unlock();
 					m_logic_lock.unlock();
 				}
 			}
@@ -163,7 +167,7 @@ void ComponentEngine::Engine::Start()
 		}, 30, "Scene Update");
 
 		// Update physics world
-		m_threadManager->AddTask([&](float frameTime) {
+		/*m_threadManager->AddTask([&](float frameTime) {
 
 			m_logic_lock.lock();
 			bool playing = m_play_state == PlayState::Play;
@@ -172,36 +176,15 @@ void ComponentEngine::Engine::Start()
 			{
 				m_physicsWorld->Update(frameTime);
 			}
-		}, 60, "PhysicsWorld");
+		}, 60, "PhysicsWorld");*/
 	}
 	else
 	{
-		/*m_play_state = PlayState::Play;
-		// Add Update Scene task. Update all components attached to each entity that supports it
-		m_threadManager->AddTask([&, this](float frameTime) {
-			EntityManager& em = GetEntityManager();
-			// Loop through all entities in the scene
-			for (auto e : em.GetEntitys())
-			{
-				m_logic_lock.lock();
-				// Loop through all components attached to the entity that inherits the Logic component
-				e->ForEach<Logic>([&](enteez::Entity * entity, Logic & logic)
-				{
-					logic.Update(frameTime);
-				});
-				m_logic_lock.unlock();
-			}
-			UpdateSceneBuffers();
-		}, 60, "Scene Update");
-
-		// Update physics world
-		m_threadManager->AddTask([&](float frameTime) {
-			m_physicsWorld->Update(frameTime);
-		}, 60, "PhysicsWorld");*/
+		// Needs updated
 	}
 
 
-	// Add Render task
+	// Add UI Render task
 	m_threadManager->AddTask([&](float frameTime)
 	{
 		UpdateUI(frameTime);
@@ -1139,6 +1122,7 @@ unsigned int & ComponentEngine::Engine::GetUsedMaterials()
 // Rebuild the offset array that defined where models information is defined
 void ComponentEngine::Engine::RebuildOffsetAllocation()
 {
+	m_offset_allocation_lock.lock();
 	unsigned int index = 0;
 	// Loop through all model pools
 	for (auto& mp : m_top_level_acceleration->GetModelPools())
@@ -1159,6 +1143,7 @@ void ComponentEngine::Engine::RebuildOffsetAllocation()
 	}
 	// Push the data to the GPU
 	m_offset_allocation_array_buffer->SetData(BufferSlot::Primary);
+	m_offset_allocation_lock.unlock();
 }
 
 // Update all buffers and offsets that are needed for RTX
@@ -1302,6 +1287,7 @@ void ComponentEngine::Engine::UpdateWindow()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	SDL_Event event;
+	GetRendererMutex().lock();
 	// Loop through each window update
 	while (SDL_PollEvent(&event) > 0)
 	{
@@ -1312,7 +1298,6 @@ void ComponentEngine::Engine::UpdateWindow()
 			if (Running())
 			{
 				RequestStop();
-				return;
 			}
 			break;
 		// Was a window event called
@@ -1394,6 +1379,7 @@ void ComponentEngine::Engine::UpdateWindow()
 
 		}
 	}
+	GetRendererMutex().unlock();
 }
 
 // Destroy the SDL window instance
@@ -1408,7 +1394,7 @@ void ComponentEngine::Engine::DeInitWindow()
 void ComponentEngine::Engine::InitEnteeZ()
 {
 	// Define what base classes each one of these components have
-	RegisterBase<Transformation, MsgRecive<TransformationPtrRedirect>, UI, IO>();
+	RegisterBase<Transformation, UI, IO>();
 	RegisterBase<RendererComponent, UI, MsgRecive<OnComponentEnter<Mesh>>>();
 	RegisterBase<Mesh, MsgRecive<RenderStatus>, UI, IO, Logic, MsgRecive<OnComponentEnter<Transformation>>, MsgRecive<OnComponentExit<Transformation>>>();
 	RegisterBase<Camera, Logic, UI, TransferBuffers, IO>();
