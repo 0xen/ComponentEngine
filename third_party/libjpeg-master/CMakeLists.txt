@@ -8,9 +8,9 @@ project ( libjpeg C )
 cmake_minimum_required ( VERSION 2.8 )
 include ( cmake/dist.cmake )
 
-OPTION(BUILD_STATIC OFF)
-OPTION(BUILD_EXECUTABLES ON)
-OPTION(BUILD_TESTS ON)
+OPTION(BUILD_STATIC ON)
+OPTION(BUILD_EXECUTABLES OFF)
+OPTION(BUILD_TESTS OFF)
 
 include ( CheckIncludeFile )
 check_include_file ( stddef.h HAVE_STDDEF_H )
@@ -35,11 +35,12 @@ set ( SRC jmemnobs.c jaricom.c jcapimin.c jcapistd.c jcarith.c jccoefct.c jccolo
   jidctflt.c jidctfst.c jidctint.c jquant1.c jquant2.c jutils.c jmemmgr.c cderror.h 
   cdjpeg.h jdct.h jinclude.h jmemsys.h jpegint.h jversion.h transupp.h )
 
-if ( BUILD_STATIC )
   add_library ( jpeg STATIC ${SRC} ${HEADERS} )
-else ()
-  add_library ( jpeg ${SRC} ${HEADERS} )
-endif()
+#if ( BUILD_STATIC )
+#  add_library ( jpeg STATIC ${SRC} ${HEADERS} )
+#else ()
+#  add_library ( jpeg ${SRC} ${HEADERS} )
+#endif()
 
 if ( BUILD_EXECUTABLES )
   add_executable ( cjpeg cdjpeg.c cjpeg.c rdbmp.c rdgif.c rdppm.c rdrle.c rdtarga.c 

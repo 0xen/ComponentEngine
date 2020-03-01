@@ -93,9 +93,253 @@ ComponentEngine::Engine::~Engine()
 	delete m_threadManager;
 }
 
+
+
+#include <en265.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <image.h>
+#include <configparam.h>
+#include <image-io.h>
+#include <encoder/encoder-core.h>
+#include <util.h>
+
+
+struct inout_params
+{
+	inout_params();
+
+	// input
+
+	option_int first_frame;
+	option_int max_number_of_frames;
+
+	option_string input_yuv;
+	option_int input_width;
+	option_int input_height;
+
+	option_bool input_is_rgb;
+
+	// output
+
+	option_string output_filename;
+
+	// debug
+
+	option_string reconstruction_yuv;
+
+
+	void register_params(config_parameters& config);
+};
+
+
+inout_params::inout_params()
+{
+	input_yuv.set_ID("input"); input_yuv.set_short_option('i');
+	input_yuv.set_default("paris_cif.yuv");
+
+	output_filename.set_ID("output"); output_filename.set_short_option('o');
+	output_filename.set_default("out.bin");
+
+	reconstruction_yuv.set_ID("input");
+	reconstruction_yuv.set_default("recon.yuv");
+
+	first_frame.set_ID("first-frame");
+	first_frame.set_default(0);
+	first_frame.set_minimum(0);
+
+	max_number_of_frames.set_ID("frames");
+	max_number_of_frames.set_short_option('f');
+	max_number_of_frames.set_minimum(1);
+	//max_number_of_frames.set_default(INT_MAX);
+
+	input_width.set_ID("width"); input_width.set_short_option('w');
+	input_width.set_minimum(1);  input_width.set_default(352);
+
+	input_height.set_ID("height"); input_height.set_short_option('h');
+	input_height.set_minimum(1); input_height.set_default(288);
+
+	input_is_rgb.set_ID("rgb");
+	input_is_rgb.set_default(false);
+	input_is_rgb.set_description("input is sequence of RGB PNG images");
+}
+
+
+void inout_params::register_params(config_parameters& config)
+{
+	config.add_option(&input_yuv);
+	config.add_option(&output_filename);
+	config.add_option(&first_frame);
+	config.add_option(&max_number_of_frames);
+	config.add_option(&input_width);
+	config.add_option(&input_height);
+#if HAVE_VIDEOGFX
+	if (videogfx::PNG_Supported())
+	{
+		config.add_option(&input_is_rgb);
+	}
+#endif
+}
+
+class Vulkan265Image : public ImageSource
+{
+	int width, height;
+public:
+	Vulkan265Image(int _width, int _height) : width(_width), height(_height)
+	{
+
+	}
+	virtual ~Vulkan265Image()
+	{
+
+	}
+
+	virtual de265_image* get_image(bool block)
+	{
+
+		de265_image* img = new de265_image;
+		/*img->alloc_image(width, height, de265_chroma_444, NULL, false,
+			NULL, 0, NULL, false);
+		assert(img); // TODO: error handling
+
+		uint8_t* p;
+		int stride;
+
+		for (int c = 0; c<3; c++)
+		{
+			int h265channel;
+			switch (c)
+			{
+				case 0: h265channel = 2; break; // R
+				case 1: h265channel = 0; break; // G
+				case 2: h265channel = 1; break; // B
+			}
+
+			p = img->get_image_plane(h265channel);
+			stride = img->get_image_stride(h265channel);
+
+			for (int y = 0; y<height; y++)
+			{
+				//memcpy(p, input.AskFrame((BitmapChannel(c)))[y], mWidth);
+				for (int x = 0; x < width; x++)
+				{
+					p[x] = 255;
+				}
+				p += stride;
+			}
+		}*/
+
+		return nullptr;
+	}
+	virtual void skip_frames(int n)
+	{
+
+	}
+
+	virtual int get_width() const { return width; };
+	virtual int get_height() const { return height; };
+};
+
 // Start the engine and run all services
 void ComponentEngine::Engine::Start()
 {
+
+	de265_init();
+
+
+	en265_encoder_context* ectx = en265_new_encoder();
+	
+	ImageSource* image_source;
+	ImageSource_YUV image_source_yuv;
+	Vulkan265Image image_source_vk(10, 10);
+
+	struct inout_params inout_params;
+	config_parameters inout_param_config;
+	inout_params.register_params(inout_param_config);
+
+
+
+
+
+
+	image_source = &image_source_vk;
+
+
+	PacketSink_File packet_sink;
+	packet_sink.set_filename("../test.hevc");
+
+
+	// --- run encoder ---
+
+	image_source->skip_frames(0);
+
+
+	en265_start_encoder(ectx, 0);
+
+
+
+
+	int maxPoc = INT_MAX;
+
+
+
+
+
+
+	for (int poc = 0; poc < maxPoc; poc++)
+	{
+
+		de265_image* input_image = image_source->get_image();
+		if (input_image == NULL)
+		{
+			en265_push_eof(ectx);
+		}
+		else
+		{
+			en265_push_image(ectx, input_image);
+		}
+
+
+		en265_encode(ectx);
+
+
+
+		// write all pending packets
+
+		for (;;)
+		{
+			en265_packet* pck = en265_get_packet(ectx, 0);
+			if (pck == NULL)
+				break;
+
+			packet_sink.send_packet(pck->data, pck->length);
+
+			en265_free_packet(ectx, pck);
+		}
+
+	}
+
+
+
+
+
+
+
+
+	en265_print_logging((encoder_context*)ectx, "tb-split", NULL);
+
+	en265_free_encoder(ectx);
+
+	de265_free();
+
+	
+
+
+
+
+
 	// Provide a default name and window size
 	m_title = "Component Engine";
 	m_width = 1080;

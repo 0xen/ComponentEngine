@@ -211,6 +211,8 @@ target_link_libraries(${project_name} BulletCollision)
 target_link_libraries(${project_name} LinearMath)
 target_link_libraries(${project_name} jpeg)
 
+target_link_libraries(${project_name} libde265)
+
 #target_link_libraries(${project_name} glslang SPIRV)
 
 find_package(Vulkan)
