@@ -69,4 +69,4 @@ endif()
 
 
 target_include_directories(${project_name} PRIVATE ../third_party/x264/)
-target_link_libraries(${project_name} ../../third_party/x264/libx264)
+target_link_libraries(${project_name} ../../third_party/x264/libx264.dll)

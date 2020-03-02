@@ -96,11 +96,7 @@ ComponentEngine::Engine::~Engine()
 
 //#include <libavcodec/avcodec.h>
 
-#include "stdint.h"
-extern "C" {
-#include "x264.h"
-}
-//#include <x264_capture.h>
+#include <x264_capture.h>
 
 //#include <x264.h>
 
@@ -108,33 +104,41 @@ extern "C" {
 // Start the engine and run all services
 void ComponentEngine::Engine::Start()
 {
-	const char* X264Preset = "slow";
-	const char* X264Tune = 0;
-	x264_param_t   m_x264Param;
+	int width = 1080;
+	int height = 720;
+	gal::system::CX264* x264 = new gal::system::CX264("../test.h264", width, height, 60, 60);
 
-	// Default settings for a given preset
-	x264_param_default_preset(&m_x264Param, X264Preset, X264Tune);
-	/*gal::system::CX264* x264 = new gal::system::CX264("../test.some", 10, 10, 60, 60);
-	
-	uint8_t data[3 * 10 * 10];
+	uint8_t* Frame1 = new uint8_t[4 * width * height];
+	uint8_t* Frame2 = new uint8_t[4 * width * height];
 
-	for (int x = 0; x < 10; x++)
+	for (int x = 0; x < width; x++)
 	{
-		for (int y = 0; y < 10; y++)
+		for (int y = 0; y < height; y++)
 		{
-			int index = x + (10 * y);
-			data[(index * 3) + 0] = 255;
-			data[(index * 3) + 1] = 255;
-			data[(index * 3) + 2] = 255;
+			int index = x + (width * y);
+			Frame1[(index * 4) + 0] = 255;
+			Frame1[(index * 4) + 1] = 0;
+			Frame1[(index * 4) + 2] = 0;
+			Frame1[(index * 4) + 3] = 0;
+
+			Frame2[(index * 4) + 0] = 0;
+			Frame2[(index * 4) + 1] = 255;
+			Frame2[(index * 4) + 2] = 0;
+			Frame2[(index * 4) + 3] = 0;
 		}
 	}
-
-	x264->CopyFrame(data, 0);
-
-	x264->EncodeAndWriteFrame();
+	for (int i = 0; i < 100; i++)
+	{
+		x264->CopyFrame(Frame1, 0);
+		x264->EncodeAndWriteFrame();
+		x264->CopyFrame(Frame2, 0);
+		x264->EncodeAndWriteFrame();
+	}
 
 	delete x264;
-	*/
+	delete Frame1;
+	delete Frame2;
+	
 
 	// Provide a default name and window size
 	m_title = "Component Engine";
