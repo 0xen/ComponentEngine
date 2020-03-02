@@ -1,0 +1,51 @@
+EXPORTS
+    x264_10_frame_pop @1
+    x264_10_frame_push @2
+    x264_10_frame_shift @3
+    x264_10_frame_unshift @4
+    x264_10_threadpool_delete @5
+    x264_10_threadpool_init @6
+    x264_10_threadpool_run @7
+    x264_10_threadpool_wait @8
+    x264_8_frame_pop @9
+    x264_8_frame_push @10
+    x264_8_frame_shift @11
+    x264_8_frame_unshift @12
+    x264_8_threadpool_delete @13
+    x264_8_threadpool_init @14
+    x264_8_threadpool_run @15
+    x264_8_threadpool_wait @16
+    x264_chroma_format @17 DATA
+    x264_cpu_detect @18
+    x264_cpu_names @19 DATA
+    x264_cpu_num_processors @20
+    x264_encoder_close @21
+    x264_encoder_delayed_frames @22
+    x264_encoder_encode @23
+    x264_encoder_headers @24
+    x264_encoder_intra_refresh @25
+    x264_encoder_invalidate_reference @26
+    x264_encoder_maximum_delayed_frames @27
+    x264_encoder_open_159 @28
+    x264_encoder_parameters @29
+    x264_encoder_reconfig @30
+    x264_free @31
+    x264_levels @32 DATA
+    x264_log_default @33
+    x264_log_internal @34
+    x264_malloc @35
+    x264_mdate @36
+    x264_nal_encode @37
+    x264_param2string @38
+    x264_param_apply_fastfirstpass @39
+    x264_param_apply_profile @40
+    x264_param_default @41
+    x264_param_default_preset @42
+    x264_param_parse @43
+    x264_picture_alloc @44
+    x264_picture_clean @45
+    x264_picture_init @46
+    x264_reduce_fraction @47
+    x264_reduce_fraction64 @48
+    x264_slurp_file @49
+    x264_threading_init @50

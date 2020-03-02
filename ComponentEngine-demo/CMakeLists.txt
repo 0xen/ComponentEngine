@@ -55,8 +55,6 @@ target_link_libraries(${project_name} BulletDynamics)
 target_link_libraries(${project_name} BulletCollision)
 target_link_libraries(${project_name} LinearMath)
 
-target_link_libraries(${project_name} libde265)
-
 #target_link_libraries(${project_name} glslang SPIRV)
 
 
@@ -69,3 +67,6 @@ if(Vulkan_FOUND)
 	target_link_libraries(${project_name} Vulkan::Vulkan)
 endif()
 
+
+target_include_directories(${project_name} PRIVATE ../third_party/x264/)
+target_link_libraries(${project_name} ../../third_party/x264/libx264)

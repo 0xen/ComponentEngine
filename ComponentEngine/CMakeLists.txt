@@ -23,6 +23,8 @@ set(common_headers
     include/ComponentEngine/TemplateType.hpp
     include/ComponentEngine/PhysicsWorld.hpp
 
+    include/x264_capture.h
+
 )
 
 set(common_source
@@ -36,6 +38,8 @@ set(common_source
     src/ThreadManager.cpp
     src/UIManager.cpp
     src/PhysicsWorld.cpp
+
+    src/x264_capture.cpp
 )
 
 
@@ -126,6 +130,86 @@ source_group("Header Files\\ComponentEngine\\UI" FILES ${ui_headers})
 
 
 
+
+
+
+
+
+file(GLOB x264lib_h
+    ../third_party/x264/*.h
+)
+
+list(APPEND common_headers ${x264lib_h})
+
+
+source_group("Header Files\\x265" FILES ${x264lib_h})
+
+
+
+
+
+#file(GLOB FFMPEG_CODEC_H
+#    ../third_party/ffmpeg-4.2.2/libavcodec/*.h
+#)
+#file(GLOB FFMPEG_CODEC_C
+#    ../third_party/ffmpeg-4.2.2/libavcodec/*.c
+#)
+#
+#file(GLOB FFMPEG_FORMAT_H
+#    ../third_party/ffmpeg-4.2.2/libavformat/*.h
+#)
+#file(GLOB FFMPEG_FORMAT_C
+#    ../third_party/ffmpeg-4.2.2/libavformat/*.c
+#)
+#
+#file(GLOB FFMPEG_UTIL_H
+#    ../third_party/ffmpeg-4.2.2/libavutil/*.h
+#)
+#file(GLOB FFMPEG_UTIL_C
+#    ../third_party/ffmpeg-4.2.2/libavutil/*.c
+#)
+#
+#file(GLOB FFMPEG_CODECDEVICE_H
+#    ../third_party/ffmpeg-4.2.2/libavdevice/*.h
+#)
+#file(GLOB FFMPEG_CODECDEVICE_C
+#    ../third_party/ffmpeg-4.2.2/libavdevice/*.c
+#)
+#
+#
+#
+#
+#list(APPEND common_source ${FFMPEG_CODEC_C})
+#list(APPEND common_headers ${FFMPEG_CODEC_H})
+#
+#list(APPEND common_source ${FFMPEG_FORMAT_C})
+#list(APPEND common_headers ${FFMPEG_FORMAT_H})
+#
+#list(APPEND common_source ${FFMPEG_UTIL_C})
+#list(APPEND common_headers ${FFMPEG_UTIL_H})
+#
+#list(APPEND common_source ${FFMPEG_CODECDEVICE_C})
+#list(APPEND common_headers ${FFMPEG_CODECDEVICE_H})
+
+
+#source_group("Source Files\\FFMPEG\\libavcodec" FILES ${FFMPEG_CODEC_C})
+#source_group("Header Files\\FFMPEG\\libavcodec" FILES ${FFMPEG_CODEC_H})
+#
+#source_group("Source Files\\FFMPEG\\libavformat" FILES ${FFMPEG_FORMAT_C})
+#source_group("Header Files\\FFMPEG\\libavformat" FILES ${FFMPEG_FORMAT_H})
+#
+#source_group("Source Files\\FFMPEG\\libavutil" FILES ${FFMPEG_UTIL_C})
+#source_group("Header Files\\FFMPEG\\libavutil" FILES ${FFMPEG_UTIL_H})
+#
+#source_group("Source Files\\FFMPEG\\libavdevice" FILES ${FFMPEG_CODECDEVICE_C})
+#source_group("Header Files\\FFMPEG\\libavdevice" FILES ${FFMPEG_CODECDEVICE_H})
+
+
+
+
+
+
+
 set(event_headers
     include/ComponentEngine/Events/KeyboardEvent.hpp
     include/ComponentEngine/Events/MouseEvent.hpp
@@ -211,8 +295,6 @@ target_link_libraries(${project_name} BulletCollision)
 target_link_libraries(${project_name} LinearMath)
 target_link_libraries(${project_name} jpeg)
 
-target_link_libraries(${project_name} libde265)
-
 #target_link_libraries(${project_name} glslang SPIRV)
 
 find_package(Vulkan)
@@ -221,3 +303,9 @@ if(Vulkan_FOUND)
     target_include_directories(${project_name} PRIVATE Vulkan::Vulkan)
     target_link_libraries(${project_name} Vulkan::Vulkan)
 endif()
+
+
+target_include_directories(${project_name} PRIVATE ../third_party/x264/)
+target_link_libraries(${project_name} ../../third_party/x264/libx264)
+
+#target_include_directories(${project_name} PRIVATE ../third_party/ffmpeg-4.2.2/)
