@@ -1,0 +1,180 @@
+checking whether _MSC_VER > 1800 || (_MSC_VER == 1800 && _MSC_FULL_VER >= 180030324) is true... yes
+checking whether defined(_M_AMD64) || defined(_M_X64) is true... yes
+checking for -lshell32... yes
+checking whether rc.exe works... yes
+checking whether !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) is true... no
+--------------------------------------------------
+conftest.c
+conftest.c(3): fatal error C1189: #error:   
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <winapifamily.h>
+#if !(!WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)) 
+#error  
+#endif 
+--------------------------------------------------
+x264 configure script
+Command line options: "--disable-cli" "--enable-shared" "--extra-ldflags=-Wl,--output-def=libx264-120.def"
+
+checking whether cl works... yes
+checking whether cl supports __attribute__((force_align_arg_pointer))... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+conftest.c(1): error C2143: syntax error: missing ')' before '('
+conftest.c(1): error C2059: syntax error: ')'
+conftest.c(2): error C2143: syntax error: missing ')' before 'type'
+conftest.c(2): error C2091: function returns function
+conftest.c(2): error C2085: 'main': not in formal parameter list
+conftest.c(2): error C2143: syntax error: missing ';' before '{'
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+__attribute__((force_align_arg_pointer))
+int main (void) {  return 0; }
+--------------------------------------------------
+checking whether nasm supports vmovdqa32 [eax]{k1}{z}, zmm0... yes
+checking whether cl supports __asm__("pabsw %xmm0, %xmm0");... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+LINK : warning LNK4044: unrecognized option '/Wl,--output-def=libx264-120.def'; ignored
+conftest.obj : error LNK2019: unresolved external symbol __asm__ referenced in function main
+conftest.exe : fatal error LNK1120: 1 unresolved externals
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+int main (void) { __asm__("pabsw %xmm0, %xmm0"); return 0; }
+--------------------------------------------------
+checking for volatile float x = 2; return log2f(x); in math.h... yes
+checking for strtok_r(0, 0, 0); in string.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+LINK : warning LNK4044: unrecognized option '/Wl,--output-def=libx264-120.def'; ignored
+conftest.obj : error LNK2019: unresolved external symbol strtok_r referenced in function main
+conftest.exe : fatal error LNK1120: 1 unresolved externals
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <string.h>
+int main (void) { strtok_r(0, 0, 0); return 0; }
+--------------------------------------------------
+checking for clock_gettime(CLOCK_MONOTONIC, 0); in time.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+conftest.c(2): error C2065: 'CLOCK_MONOTONIC': undeclared identifier
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <time.h>
+int main (void) { clock_gettime(CLOCK_MONOTONIC, 0); return 0; }
+--------------------------------------------------
+checking for clock_gettime(CLOCK_MONOTONIC, 0); in time.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link rt.lib shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+conftest.c(2): error C2065: 'CLOCK_MONOTONIC': undeclared identifier
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <time.h>
+int main (void) { clock_gettime(CLOCK_MONOTONIC, 0); return 0; }
+--------------------------------------------------
+checking for uint32_t test_vec __attribute__ ((vector_size (16))) = {0,1,2,3}; in stdint.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+conftest.c(2): error C2146: syntax error: missing ';' before identifier '__attribute__'
+conftest.c(2): error C2059: syntax error: '{'
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <stdint.h>
+int main (void) { uint32_t test_vec __attribute__ ((vector_size (16))) = {0,1,2,3}; return 0; }
+--------------------------------------------------
+checking for stdio.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras -shared -Wl,-Bsymbolic  -link -shared shell32.lib -Wl,--output-def=libx264-120.def 
+cl : Command line error D8021 : invalid numeric argument '/Wl,-Bsymbolic'
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <stdio.h>
+int main (void) {  return 0; }
+--------------------------------------------------
+checking for -fno-tree-vectorize... yes
+checking for fseeko(stdin,0,0); in stdio.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -O2 -fp:fast -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+LINK : warning LNK4044: unrecognized option '/Wl,--output-def=libx264-120.def'; ignored
+conftest.obj : error LNK2019: unresolved external symbol fseeko referenced in function main
+conftest.exe : fatal error LNK1120: 1 unresolved externals
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <stdio.h>
+int main (void) { fseeko(stdin,0,0); return 0; }
+--------------------------------------------------
+checking for fseeko64(stdin,0,0); in stdio.h... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -O2 -fp:fast -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras  -link shell32.lib -Wl,--output-def=libx264-120.def 
+conftest.c
+LINK : warning LNK4044: unrecognized option '/Wl,--output-def=libx264-120.def'; ignored
+conftest.obj : error LNK2019: unresolved external symbol fseeko64 referenced in function main
+conftest.exe : fatal error LNK1120: 1 unresolved externals
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+#include <stdio.h>
+int main (void) { fseeko64(stdin,0,0); return 0; }
+--------------------------------------------------
+checking for _fseeki64(stdin,0,0); in stdio.h... yes
+checking for -Wshadow... yes
+checking for -Wmaybe-uninitialized... no
+Failed commandline was:
+--------------------------------------------------
+cl conftest.c -O2 -fp:fast -I. -I$(SRCPATH) -nologo -GS- -DHAVE_STRING_H -I$(SRCPATH)/extras -Wmaybe-uninitialized  -link shell32.lib -Wl,--output-def=libx264-120.def 
+cl : Command line error D8021 : invalid numeric argument '/Wmaybe-uninitialized'
+--------------------------------------------------
+Failed program was:
+--------------------------------------------------
+int main (void) {  return 0; }
+--------------------------------------------------
+
+platform:      X86_64
+byte order:    little-endian
+system:        WINDOWS
+cli:           no
+libx264:       internal
+shared:        yes
+static:        no
+asm:           yes
+interlaced:    yes
+avs:           no
+lavf:          no
+ffms:          no
+mp4:           no
+gpl:           yes
+thread:        win32
+opencl:        yes
+filters:       crop select_every
+lto:           no
+debug:         no
+gprof:         no
+strip:         no
+PIC:           yes
+bit depth:     all
+chroma format: all
