@@ -94,52 +94,11 @@ ComponentEngine::Engine::~Engine()
 }
 
 
-//#include <libavcodec/avcodec.h>
-
-#include <x264_capture.h>
-
-//#include <x264.h>
 
 
 // Start the engine and run all services
 void ComponentEngine::Engine::Start()
 {
-	int width = 1080;
-	int height = 720;
-	gal::system::CX264* x264 = new gal::system::CX264("../test.h264", width, height, 60, 60);
-
-	uint8_t* Frame1 = new uint8_t[4 * width * height];
-	uint8_t* Frame2 = new uint8_t[4 * width * height];
-
-	for (int x = 0; x < width; x++)
-	{
-		for (int y = 0; y < height; y++)
-		{
-			int index = x + (width * y);
-			Frame1[(index * 4) + 0] = 255;
-			Frame1[(index * 4) + 1] = 0;
-			Frame1[(index * 4) + 2] = 0;
-			Frame1[(index * 4) + 3] = 0;
-
-			Frame2[(index * 4) + 0] = 0;
-			Frame2[(index * 4) + 1] = 255;
-			Frame2[(index * 4) + 2] = 0;
-			Frame2[(index * 4) + 3] = 0;
-		}
-	}
-	for (int i = 0; i < 100; i++)
-	{
-		x264->CopyFrame(Frame1, 0);
-		x264->EncodeAndWriteFrame();
-		x264->CopyFrame(Frame2, 0);
-		x264->EncodeAndWriteFrame();
-	}
-
-	delete x264;
-	delete Frame1;
-	delete Frame2;
-	
-
 	// Provide a default name and window size
 	m_title = "Component Engine";
 	m_width = 1080;
@@ -208,6 +167,9 @@ void ComponentEngine::Engine::Start()
 			m_renderer_logic_transfer.lock();
 			m_logic_transfer_ready = true;
 			m_renderer_logic_transfer.unlock();
+
+			UpdateUI(frameTime);
+			RenderFrame();
 		}, 30, "Scene Update");
 
 		// Update physics world
@@ -229,7 +191,7 @@ void ComponentEngine::Engine::Start()
 
 
 	// Add UI Render task
-	m_threadManager->AddTask([&](float frameTime)
+	/*m_threadManager->AddTask([&](float frameTime)
 	{
 		UpdateUI(frameTime);
 	}, 30, "UI Render");
@@ -238,7 +200,7 @@ void ComponentEngine::Engine::Start()
 	m_threadManager->AddTask([&](float frameTime)
 	{
 		RenderFrame();
-	}, 60, "Render");
+	}, 60, "Render");*/
 
 	Log("Starting Engine", Info);
 }
@@ -398,6 +360,29 @@ void ComponentEngine::Engine::RenderFrame()
 	GetModelLoadMutex().unlock();
 	// Call the main engines render pass
 	m_raytrace_renderpass->Render();
+
+
+
+
+	/*m_swapchain->GetRayTraceStorageTexture()->GetData(BufferSlot::Primary);
+	char* data = m_swapchain->GetRaytraceStorageTextureData();
+	char r = data[0];
+	char g = data[1];
+	char b = data[2];
+	char a = data[3];
+	x264->CopyFrame((uint8_t*) data, 0);
+	x264->EncodeAndWriteFrame();*/
+
+
+
+
+
+
+
+
+
+
+
 	GetRendererMutex().unlock();
 }
 
@@ -1210,7 +1195,6 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 	Engine::Singlton()->GetModelLoadMutex().lock();
 	m_top_level_acceleration->Build();
 	Engine::Singlton()->GetModelLoadMutex().unlock();
-
 	{
 		m_standardRTConfigSet->AttachBuffer(0, { m_top_level_acceleration->GetDescriptorAcceleration() });
 		m_standardRTConfigSet->AttachBuffer(1, { m_renderer->GetSwapchain()->GetRayTraceStagingBuffer() });
@@ -1220,7 +1204,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_standardRTConfigSet->AttachBuffer(5, m_main_camera->GetCameraBuffer());
 		m_standardRTConfigSet->UpdateSet();
 	}
-
+	
 	{
 		m_RTModelPoolSet->AttachBuffer(0, m_vertexBuffer);
 		m_RTModelPoolSet->AttachBuffer(1, m_indexBuffer);
@@ -1231,6 +1215,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_RTModelPoolSet->UpdateSet();
 	}
 
+	
 	{
 		if (m_texture_descriptors.size() > 0)
 		{
@@ -1245,7 +1230,7 @@ void ComponentEngine::Engine::UpdateAccelerationDependancys()
 		m_RTModelInstanceSet->AttachBuffer(2, m_offset_allocation_array_buffer);
 		m_RTModelInstanceSet->UpdateSet();
 	}
-
+	
 
 	//m_raytrace_renderpass->RebuildCommandBuffers();
 
@@ -1547,6 +1532,10 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 // Create the renderer instance and all required components
 void ComponentEngine::Engine::InitRenderer()
 {
+
+	x264 = new gal::system::CX264("../test.h264", m_width, m_height, 60, 60);
+
+
 	// Create a instance of the renderer
 	m_renderer = new VulkanRenderer();
 	m_renderer->Start(m_window_handle, VulkanFlags::Raytrace);
@@ -1808,6 +1797,8 @@ void ComponentEngine::Engine::InitRenderer()
 // Destroy the current renderer instance
 void ComponentEngine::Engine::DeInitRenderer()
 {
+	delete x264;
+
 	// Destroy ui instance
 	DeInitImGUI();
 	// delete all textures

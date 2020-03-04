@@ -29,6 +29,9 @@
 #include <SDL_syswm.h>
 #include <imgui.h>
 
+#include <x264_capture.h>
+
+
 using namespace enteez;
 using namespace Renderer;
 using namespace Renderer::Vulkan;
@@ -576,7 +579,7 @@ namespace ComponentEngine
 		VulkanDescriptorSet* m_sample_texture_set = nullptr; 
 		VulkanComputeProgram* m_sample_texture_rebuild_program = nullptr;
 
-
+		gal::system::CX264* x264;
 	};
 	
 }
