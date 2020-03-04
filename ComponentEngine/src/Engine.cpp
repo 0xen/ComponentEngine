@@ -363,15 +363,14 @@ void ComponentEngine::Engine::RenderFrame()
 
 
 
-
-	/*m_swapchain->GetRayTraceStorageTexture()->GetData(BufferSlot::Primary);
+	m_swapchain->GetRayTraceStorageTexture()->GetData(BufferSlot::Primary);
 	char* data = m_swapchain->GetRaytraceStorageTextureData();
 	char r = data[0];
 	char g = data[1];
 	char b = data[2];
 	char a = data[3];
-	x264->CopyFrame((uint8_t*) data, 0);
-	x264->EncodeAndWriteFrame();*/
+	x264->CopyFrame((uint8_t*) data, m_width * 4);
+	x264->EncodeAndWriteFrame();
 
 
 
@@ -1532,8 +1531,76 @@ void ComponentEngine::Engine::RebuildRaytracePipeline()
 // Create the renderer instance and all required components
 void ComponentEngine::Engine::InitRenderer()
 {
-
 	x264 = new gal::system::CX264("../test.h264", m_width, m_height, 60, 60);
+
+	/*x264 = new gal::system::CX264("../test.h264", 2, 2, 60, 60);
+
+	char* data = new char[16];
+	for (int i = 0; i < 16; i ++)
+	{
+		data[i] = 0;
+	}
+	for (int i = 3; i < 16; i += 4)
+	{
+		data[i] = 255; // alpha
+	}
+	for (int i = 0; i < 16; i += 4)
+	{
+		data[i] = 255;
+	}*/
+	//data[0] = 255;
+	//data[5] = 255;
+	//data[10] = 255;
+
+	/*char* data = new char[4 * m_width * m_height];
+	char* data2 = new char[4 * m_width * m_height];
+
+	for (int y = 0; y < m_height; y++)
+	{
+		for (int x = 0; x < m_width; x++)
+		{
+			int index = (x + (m_width * y)) * 4;
+			data2[index] = 0;
+			data2[index + 1] = 255;
+			data2[index + 2] = 0;
+			data2[index + 3] = 255;
+
+			data2[index] =  255;
+			data2[index + 1] = 0;
+			data2[index + 2] = 0;
+			data2[index + 3] = 255;
+		}
+	}*/
+
+	/*char* data = new char[4 * 100 * 100];
+	char* data2 = new char[4 * 100 * 100];
+
+	for (int y = 0; y < 100; y++)
+	{
+		for (int x = 0; x < 100; x++)
+		{
+			int index = (x + (100 * y)) * 4;
+			data[index] = x % 2 == 0 ? 255 : 0;
+			data[index + 1] = 0;
+			data[index + 2] = x % 2 == 0 ? 0 : 255;
+			data[index + 3] = 255;
+
+			data2[index] = x % 2 == 0 ? 0 : 255;
+			data2[index + 1] = 0;
+			data2[index + 2] = x % 2 == 0 ? 255 : 0;
+			data2[index + 3] = 255;
+		}
+	}*/
+
+
+	/*for (int i = 0; i < 10; i++)
+	{
+		x264->CopyFrame((uint8_t*)data, 2 * 4);
+		x264->EncodeAndWriteFrame();
+	}
+
+	delete x264;*/
+
 
 
 	// Create a instance of the renderer

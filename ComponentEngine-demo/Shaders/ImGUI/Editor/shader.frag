@@ -22,6 +22,6 @@ void main()
 	}
 	else
 	{
-		outColor = vec4(texture(sceneColor, inUV).bgr,1);
+		outColor = vec4(texture(sceneColor, inUV).rgb,1);
 	}
 }
