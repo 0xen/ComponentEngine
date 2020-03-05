@@ -168,9 +168,6 @@ void ComponentEngine::Engine::Start()
 			m_renderer_logic_transfer.lock();
 			m_logic_transfer_ready = true;
 			m_renderer_logic_transfer.unlock();
-
-			UpdateUI(frameTime);
-			RenderFrame();
 		}, 30, "Scene Update");
 
 		// Update physics world
@@ -192,7 +189,7 @@ void ComponentEngine::Engine::Start()
 
 
 	// Add UI Render task
-	/*m_threadManager->AddTask([&](float frameTime)
+	m_threadManager->AddTask([&](float frameTime)
 	{
 		UpdateUI(frameTime);
 	}, 30, "UI Render");
@@ -201,7 +198,7 @@ void ComponentEngine::Engine::Start()
 	m_threadManager->AddTask([&](float frameTime)
 	{
 		RenderFrame();
-	}, 60, "Render");*/
+	}, 60, "Render");
 
 	Log("Starting Engine", Info);
 }
@@ -370,14 +367,6 @@ void ComponentEngine::Engine::RenderFrame()
 		x264->CopyFrame((uint8_t*)data, m_width * 4);
 		x264->EncodeAndWriteFrame();
 	}
-
-
-
-
-
-
-
-
 
 
 	GetRendererMutex().unlock();

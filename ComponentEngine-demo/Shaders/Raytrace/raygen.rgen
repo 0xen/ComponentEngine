@@ -99,7 +99,7 @@ void main()
 	else if(camera.mode==1)
     {
 		// Generate Initial Probing ray
-		vec4 direction = camera.viewInverse * vec4(normalize(target.xyz * camera.focusDistance), 0);
+		vec4 direction = camera.viewInverse * vec4(normalize(target.xyz), 0);
 
 		ray.recursion = 1;
 		ray.depth = 0.0f;
@@ -143,7 +143,7 @@ void main()
 		uint toSample = maxSamples - overalSampleCount > samplesPerFrame ? samplesPerFrame : maxSamples - overalSampleCount;
 		
 		// Should we keep accumilating
-		const bool accumulate = toSample < maxSamples;
+		const bool accumulate = toSample <= maxSamples;
 
 
 
@@ -172,8 +172,6 @@ void main()
 
 		colour = accumulatedColor / (overalSampleCount + toSample);
 
-	    imageStore(image, ivec2(gl_LaunchIDNV.xy), vec4(colour,1.0f));
-
 
 	    if(accumulate)
 		{
@@ -185,9 +183,6 @@ void main()
 
 
 	} 
-
-
-
 
 
 

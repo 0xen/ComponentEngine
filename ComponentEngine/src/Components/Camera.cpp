@@ -245,7 +245,7 @@ void ComponentEngine::Camera::Save(std::ofstream & out)
 
 unsigned int ComponentEngine::Camera::PayloadSize()
 {
-	return SizeOfOffsetRange(Camera, m_camera_data.recursionCount, m_camera_data.focusDistance);
+	return SizeOfOffsetRange(Camera, m_camera_data.recursionCount, m_camera_data.mode);
 }
 
 bool ComponentEngine::Camera::DynamiclySized()
