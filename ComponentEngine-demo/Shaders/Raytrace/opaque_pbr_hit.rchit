@@ -8,6 +8,7 @@
 
 void main()
 {
+	
 	float rayDepth = length(gl_WorldRayDirectionNV * gl_HitTNV);
 		
 
@@ -109,7 +110,6 @@ void main()
 	// Respond saying we are done
 	inRayPayload.responce = 0;
 	inRayPayload.colour.rgb = colour;
-	//inRayPayload.colour.rgb = normal;*/
 }
 
 

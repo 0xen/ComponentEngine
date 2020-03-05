@@ -90,6 +90,8 @@ void main()
 		// Generate Initial Probing ray
 	  	vec4 direction = camera.viewInverse * vec4(normalize(target.xyz), 0);
 
+		ray.responce = 0;
+		
 		SpawnRay(colour, origin, target, direction);
 		// Store the newly generated depth
 		imageStore(rayDepthImage, ivec2(gl_LaunchIDNV.xy), vec4(ray.depth));
