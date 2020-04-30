@@ -44,6 +44,7 @@ add_subdirectory_with_folder("Third Party/bullet3" third_party/bullet3)
 
 
 
+include_directories(third_party/lodepng)
 include_directories(third_party/libjpeg-master)
 include_directories(third_party/cimg)
 include_directories(third_party/SDL2/include)
