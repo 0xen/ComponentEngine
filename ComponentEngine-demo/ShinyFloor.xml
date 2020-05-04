@@ -1,0 +1,631 @@
+<?xml version="1.0"?>
+<Scene>
+	<Entity Name="Camera">
+		<Component Name="Transformation">
+			<r0 c0="0.902887344" c1="-0" c2="0.42987752" c3="-0" />
+			<r1 c0="0.041982457" c1="0.995219767" c2="-0.0881772712" c3="0" />
+			<r2 c0="-0.42782256" c1="0.0976614431" c2="0.898571193" c3="-0" />
+			<r3 c0="-0.572550774" c1="0.131611362" c2="0.928940058" c3="1" />
+		</Component>
+		<Component Name="Camera">
+			<Projection NearClip="0.100000001" FarClip="200" FOV="45" />
+			<Raytracing GPURecursionCount="30" RecursionCount="50" GlobalIlluminationBrightness="0.800000012" GlobalIlluminationReflectionMissBrightness="0.75" SamplesPerFrame="2" Aperture="0.00499999989" FocusDistance="0.286000013" MovmentTollarance="9.99999975e-05" DofSampleCount="250" Mode="1">
+				<MaxRecursionDepthColor R="0.699999988" G="0.699999988" B="0.699999988" />
+			</Raytracing>
+		</Component>
+		<Component Name="Keyboard Movement" Speed="1" IgnoreAxisX="false" IgnoreAxisY="false" IgnoreAxisZ="false" LocalMovment="true" InEditor="false">
+			<Key0 Value="26" />
+			<Key1 Value="22" />
+			<Key2 Value="4" />
+			<Key3 Value="7" />
+			<Key4 Value="6" />
+			<Key5 Value="44" />
+		</Component>
+		<Component Name="Mouse Drag" RotationSpeed="0.00999999978" FlipX="true" FlipY="true" LockX="false" LockY="false">
+			<Offset X="0" Y="0" Z="0" />
+		</Component>
+	</Entity>
+	<Entity Name="Floor">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="0" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Surface/FloorUV10.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/Metal/Metal06_col.png" />
+				<Metalic Path="../Resources/Textures/Metal/Metal06_met.png" />
+				<Roughness Path="../Resources/Textures/Metal/Metal06_rgh.png" />
+				<Normal Path="../Resources/Textures/Metal/Metal06_nrm.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Sun">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="5" c1="5" c2="5" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="3" Path="../Resources/Models/Lights/SphereLight/sphere.obj">
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+		<Component Name="Light" Intensity="18" ShadowRangeStartOffset="0" ShadowRangeEndOffset="0" Type="0" Alive="1">
+			<Offset X="0" Y="0" Z="0" />
+			<Color R="0.972527444" G="0.812338173" B="0.502294421" />
+			<Direction X="1" Y="1" Z="1" />
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.0277470704" c1="0" c2="0.999614954" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="-0.999614954" c1="0" c2="0.0277470704" c3="0" />
+			<r3 c0="-0.917999983" c1="0" c2="-0.0659999847" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.87556076" c1="0" c2="-0.483107984" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.483107984" c1="0" c2="-0.87556076" c3="0" />
+			<r3 c0="0" c1="0" c2="-0.661999941" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.966765523" c1="0" c2="-0.255664617" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.255664617" c1="0" c2="0.966765523" c3="0" />
+			<r3 c0="-0.04399997" c1="0" c2="-0.283999979" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.940753937" c1="0" c2="0.33908993" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="-0.33908993" c1="0" c2="-0.940753937" c3="0" />
+			<r3 c0="-0.0719999671" c1="0" c2="0.410000086" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.980156481" c1="0" c2="-0.198225513" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.198225513" c1="0" c2="0.980156481" c3="0" />
+			<r3 c0="-0.437999964" c1="0" c2="0.654000044" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.905134916" c1="0" c2="0.425124466" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="-0.425124466" c1="0" c2="0.905134916" c3="0" />
+			<r3 c0="-0.0179999471" c1="0" c2="0.990000129" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.991405666" c1="0" c2="-0.130823746" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.130823746" c1="0" c2="0.991405666" c3="0" />
+			<r3 c0="0.654000044" c1="0" c2="-0.127999961" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.807085454" c1="0" c2="-0.59043467" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.59043467" c1="0" c2="-0.807085454" c3="0" />
+			<r3 c0="0.208000064" c1="0" c2="0.804000139" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.382982403" c1="0" c2="0.923755646" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="-0.923755646" c1="0" c2="-0.382982403" c3="0" />
+			<r3 c0="-0.415999949" c1="0" c2="-0.235999942" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.192581654" c1="0" c2="-0.981280923" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.981280923" c1="0" c2="0.192581654" c3="0" />
+			<r3 c0="0.432000041" c1="0" c2="0.436000109" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.681368053" c1="0" c2="-0.731940985" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.731940985" c1="0" c2="0.681368053" c3="0" />
+			<r3 c0="0" c1="0" c2="0.200000003" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.0850203708" c1="0" c2="-0.996379197" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.996379197" c1="0" c2="-0.0850203708" c3="0" />
+			<r3 c0="0.0760000944" c1="0" c2="0.738000035" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.939436495" c1="0" c2="-0.342722982" c3="0" />
+			<r1 c0="0" c1="0.99999994" c2="0" c3="0" />
+			<r2 c0="0.342722982" c1="0" c2="-0.939436495" c3="0" />
+			<r3 c0="0.334000111" c1="0" c2="-0.40199995" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.601806343" c1="0" c2="-0.798642039" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.798642039" c1="0" c2="-0.601806343" c3="0" />
+			<r3 c0="0.788000107" c1="0" c2="0.406000018" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.22783035" c1="0" c2="-0.973700821" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.973700821" c1="0" c2="-0.22783035" c3="0" />
+			<r3 c0="-0.355999947" c1="0" c2="-0.333999991" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.294504553" c1="0" c2="0.955650091" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="-0.955650091" c1="0" c2="0.294504553" c3="0" />
+			<r3 c0="0.328000069" c1="0" c2="-0.717999995" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.996670902" c1="-0" c2="-0.0815268308" c3="-0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.0815268308" c1="0" c2="-0.996670902" c3="0" />
+			<r3 c0="-0.600000024" c1="0" c2="0.300000012" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.57262522" c1="0" c2="-0.819817245" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.819817245" c1="0" c2="0.57262522" c3="0" />
+			<r3 c0="0.288000107" c1="0" c2="0.32400012" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="0.919738352" c1="0" c2="-0.392531961" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0.392531961" c1="0" c2="0.919738352" c3="0" />
+			<r3 c0="-0.925999999" c1="0" c2="0.718000054" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="PBR Boy">
+		<Component Name="Transformation">
+			<r0 c0="-0.730826318" c1="0" c2="0.682563365" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="-0.682563365" c1="0" c2="-0.730826318" c3="0" />
+			<r3 c0="0.400000006" c1="0" c2="0.0580000877" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/PBRBoys/PBRBoy.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/painted-concrete-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/painted-concrete-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/painted-concrete-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/painted-concrete-normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="../Resources/Textures/PBRLab/painted-concrete-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+</Scene>

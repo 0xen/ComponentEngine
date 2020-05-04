@@ -262,6 +262,8 @@ namespace ComponentEngine
 		// Rebuild the offset array that defined where models information is defined
 		void RebuildOffsetAllocation();
 		// Update all buffers and offsets that are needed for RTX
+		void RequestUpdateAccelerationDependancys();
+		// Update all buffers and offsets that are needed for RTX
 		void UpdateAccelerationDependancys();
 		// Get the uniform buffer that stores all position buffers
 		VulkanUniformBuffer* GetModelPositionBuffer();
@@ -437,6 +439,9 @@ namespace ComponentEngine
 			//ThreadHandler* thread_instance = nullptr;
 		};
 		ordered_lock m_offset_allocation_lock;
+
+		ordered_lock m_request_rebuild_acceleration_dependancys_lock;
+		bool m_request_rebuild_acceleration_dependancys;
 
 		ordered_lock m_renderer_thread;
 		ordered_lock m_ui_lock;

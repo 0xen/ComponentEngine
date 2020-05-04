@@ -54,24 +54,28 @@ void ComponentEngine::Rotate::Display()
 
 }
 
-void ComponentEngine::Rotate::Load(std::ifstream & in)
+void ComponentEngine::Rotate::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Rotate, m_rotateSpeed), PayloadSize());
+	m_rotateSpeed = node.attribute("Speed").as_float(m_rotateSpeed);
+	{
+		pugi::xml_node Axis = node.child("Axis");
+		m_axis_selection = Axis.attribute("AxisSelection").as_int(m_axis_selection);
+		m_axis.x = Axis.attribute("X").as_float(m_axis.x);
+		m_axis.y = Axis.attribute("Y").as_float(m_axis.y);
+		m_axis.z = Axis.attribute("Z").as_float(m_axis.z);
+	}
 }
 
-void ComponentEngine::Rotate::Save(std::ofstream & out)
+void ComponentEngine::Rotate::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Rotate, m_rotateSpeed), PayloadSize());
-}
-
-unsigned int ComponentEngine::Rotate::PayloadSize()
-{
-	return SizeOfOffsetRange(Rotate, m_rotateSpeed, m_axis);
-}
-
-bool ComponentEngine::Rotate::DynamiclySized()
-{
-	return false;
+	node.append_attribute("Speed").set_value(m_rotateSpeed);
+	{
+		pugi::xml_node Axis = node.append_child("Axis");
+		Axis.append_attribute("AxisSelection").set_value(m_axis_selection);
+		Axis.append_attribute("X").set_value(m_axis.x);
+		Axis.append_attribute("Y").set_value(m_axis.y);
+		Axis.append_attribute("Z").set_value(m_axis.z);
+	}
 }
 
 enteez::BaseComponentWrapper * ComponentEngine::Rotate::EntityHookDefault(enteez::Entity & entity)

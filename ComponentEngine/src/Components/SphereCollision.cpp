@@ -34,25 +34,14 @@ void ComponentEngine::SphereCollision::Display()
 
 }
 
-void ComponentEngine::SphereCollision::Load(std::ifstream & in)
+void ComponentEngine::SphereCollision::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(SphereCollision, m_rad), PayloadSize());
-	Rebuild();
+	m_rad = node.attribute("Radius").as_float(m_rad);
 }
 
-void ComponentEngine::SphereCollision::Save(std::ofstream & out)
+void ComponentEngine::SphereCollision::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(SphereCollision, m_rad), PayloadSize());
-}
-
-unsigned int ComponentEngine::SphereCollision::PayloadSize()
-{
-	return SizeOfOffsetRange(SphereCollision, m_rad, m_rad);
-}
-
-bool ComponentEngine::SphereCollision::DynamiclySized()
-{
-	return false;
+	node.append_attribute("Radius").set_value(m_rad);
 }
 
 enteez::BaseComponentWrapper* ComponentEngine::SphereCollision::EntityHookDefault(enteez::Entity & entity)

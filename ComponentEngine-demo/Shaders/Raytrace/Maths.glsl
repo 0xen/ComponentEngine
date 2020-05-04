@@ -33,6 +33,19 @@ float RandomFloat(inout uint seed)
 	return uintBitsToFloat(one | (msk & (RandomInt(seed) >> 9))) - 1;
 }
 
+float RandomFloatZeroOne(inout uint seed)
+{
+	return (sin(RandomFloat(seed)) + 1.0f) * 0.5f;
+}
+
+float RandomFloat(inout uint seed, float a, float b)
+{
+	float f = RandomFloatZeroOne(seed);
+    float diff = b - a;
+    float r = f * diff;
+    return a + r;
+}
+
 vec2 RandomInUnitDisk(inout uint seed)
 {
 	for (;;)

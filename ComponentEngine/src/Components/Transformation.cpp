@@ -12,6 +12,58 @@ glm::mat4 & Transformation::Get()
 	return *m_mat4;
 }
 
+void ComponentEngine::Transformation::Load(pugi::xml_node& node)
+{
+	// Loop through the 4 colums
+	for (int row = 0; row < 4; row++)
+	{
+		std::stringstream rs;
+		rs << "r" << row;
+		// Get the row node
+		pugi::xml_node r = node.child(rs.str().c_str());
+		// Loop through appending the colum data into the row
+		for (int colum = 0; colum < 4; colum++)
+		{
+			std::stringstream cs;
+			cs << "c" << colum;
+			pugi::xml_attribute rc1 = r.attribute(cs.str().c_str());
+			m_local_mat4[row][colum] = rc1.as_float(0.0f);
+		}
+	}
+}
+
+void ComponentEngine::Transformation::Save(pugi::xml_node& node)
+{
+	// Loop through the 4 colums
+	for(int row = 0 ; row < 4; row++)
+	{
+		std::stringstream rs;
+		rs << "r" << row;
+		// Create the row node
+		pugi::xml_node r = node.append_child(rs.str().c_str());
+		// Loop through appending the colum data into the row
+		for (int colum = 0; colum < 4; colum++)
+		{
+			std::stringstream cs;
+			cs << "c" << colum;
+			pugi::xml_attribute rc1 = r.append_attribute(cs.str().c_str());
+			rc1.set_value(m_local_mat4[row][colum]);
+		}
+	}
+}
+
+
+/*void ComponentEngine::Transformation::Load(std::ifstream& in)
+{
+	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), PayloadSize());
+	PushToPositionArray();
+}
+
+void ComponentEngine::Transformation::Save(std::ofstream& out)
+{
+	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), PayloadSize());
+}*/
+
 void Transformation::Translate(glm::vec3 translation)
 {
 	m_local_mat4 = glm::translate(m_local_mat4, translation);
@@ -270,27 +322,6 @@ bool ComponentEngine::Transformation::DisplayTransform(glm::mat4 & mat4)
 	}
 
 	return changed;
-}
-
-void ComponentEngine::Transformation::Load(std::ifstream & in)
-{
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), PayloadSize());
-	PushToPositionArray();
-}
-
-void ComponentEngine::Transformation::Save(std::ofstream & out)
-{
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Transformation, m_local_mat4), PayloadSize());
-}
-
-unsigned int ComponentEngine::Transformation::PayloadSize()
-{
-	return  SizeOfOffsetRange(Transformation, m_local_mat4, m_local_mat4);
-}
-
-bool ComponentEngine::Transformation::DynamiclySized()
-{
-	return false;
 }
 
 void ComponentEngine::Transformation::Rotate(glm::vec3 angles)

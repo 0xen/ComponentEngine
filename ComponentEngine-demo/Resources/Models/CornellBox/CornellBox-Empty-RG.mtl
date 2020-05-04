@@ -1,0 +1,69 @@
+# An empty Cornell Box with red and blue walls in OBJ format.
+# Note that the real box is not a perfect cube, so
+# the faces are imperfect in this data set.
+#
+# Created by Guedis Cardenas and Morgan McGuire at Williams College, 2011
+# Released into the Public Domain.
+#
+# http://graphics.cs.williams.edu/data
+# http://www.graphics.cornell.edu/online/box/data.html
+#
+
+
+newmtl leftWall
+  Ns 10.0000
+  Ni 1.5000
+  illum 2
+  Ka 1.00 0.00 0.00 # Red
+  Kd 1.00 0.00 0.00
+  Ks 0 0 0
+  Ke 0 0 0
+
+
+newmtl rightWall
+  Ns 10.0000
+  Ni 1.5000
+  illum 2
+  Ka 0.00 1.00 0.00 # Green
+  Kd 0.00 1.00 0.00
+  Ks 0 0 0
+  Ke 0 0 0
+
+  
+newmtl floor
+  Ns 10.0000
+  Ni 1.0000
+  illum 2
+  Ka 1.00 1.00 1.00 # White
+  Kd 1.00 1.00 1.00 
+  Ks 0 0 0
+  Ke 0 0 0
+
+
+newmtl ceiling
+  Ns 10.0000
+  Ni 1.0000
+  illum 2
+  Ka 1.00 1.00 1.00 # White
+  Kd 1.00 1.00 1.00 
+  Ks 0     0    0
+  Ke 0     0    0
+  
+
+newmtl backWall
+  Ns 10.0000
+  Ni 1.0000
+  illum 2
+  Ka 1.00 1.00 1.00 # White
+  Kd 1.00 1.00 1.00 
+  Ks 0 0 0
+  Ke 0 0 0
+
+newmtl light
+  Ns 10.0000
+  Ni 1.0000
+  illum 2
+  Ka 1.00 1.00 1.00 # White
+  Kd 1.00 1.00 1.00 
+  Ks 0 0 0
+  Ke 17 12 4

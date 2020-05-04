@@ -22,11 +22,8 @@ namespace ComponentEngine
 
 		virtual void Display();
 
-
-		virtual void Load(std::ifstream& in);
-		virtual void Save(std::ofstream& out);
-		virtual unsigned int PayloadSize();
-		virtual bool DynamiclySized();
+		virtual void Load(pugi::xml_node& node);
+		virtual void Save(pugi::xml_node& node);
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 

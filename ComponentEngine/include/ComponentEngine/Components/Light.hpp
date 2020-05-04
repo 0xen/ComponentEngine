@@ -40,14 +40,10 @@ namespace ComponentEngine
 		virtual void EditorUpdate(float frame_time);
 		// Called when we are in a ImGui UI draw state and the components info needs to be rendered
 		virtual void Display();
-		// Load the component from a file
-		virtual void Load(std::ifstream& in);
-		// Save the component to a file
-		virtual void Save(std::ofstream& out);
-		// How much data should we save to a file
-		virtual unsigned int PayloadSize();
-		// Is the size we save to a file dynamic?
-		virtual bool DynamiclySized();
+
+		virtual void Load(pugi::xml_node& node);
+		virtual void Save(pugi::xml_node& node);
+
 		// Define a static constructor for the component
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 	private:

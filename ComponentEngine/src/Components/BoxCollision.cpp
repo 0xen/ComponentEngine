@@ -34,25 +34,20 @@ void ComponentEngine::BoxCollision::Display()
 
 }
 
-void ComponentEngine::BoxCollision::Load(std::ifstream & in)
+void ComponentEngine::BoxCollision::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(BoxCollision, m_shape), PayloadSize());
-	Rebuild();
+	pugi::xml_node shape = node.child("Shape");
+	m_shape.x = shape.attribute("X").as_float(m_shape.x);
+	m_shape.y = shape.attribute("Y").as_float(m_shape.y);
+	m_shape.z = shape.attribute("Z").as_float(m_shape.z);
 }
 
-void ComponentEngine::BoxCollision::Save(std::ofstream & out)
+void ComponentEngine::BoxCollision::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(BoxCollision, m_shape), PayloadSize());
-}
-
-unsigned int ComponentEngine::BoxCollision::PayloadSize()
-{
-	return SizeOfOffsetRange(BoxCollision, m_shape, m_shape);
-}
-
-bool ComponentEngine::BoxCollision::DynamiclySized()
-{
-	return false;
+	pugi::xml_node shape = node.append_child("Shape");
+	shape.append_attribute("X").set_value(m_shape.x);
+	shape.append_attribute("Y").set_value(m_shape.y);
+	shape.append_attribute("Z").set_value(m_shape.z);
 }
 
 enteez::BaseComponentWrapper* ComponentEngine::BoxCollision::EntityHookDefault(enteez::Entity & entity)

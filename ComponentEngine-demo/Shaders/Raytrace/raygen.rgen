@@ -87,12 +87,28 @@ void main()
 
     if(camera.mode==0)
     {
+	    uint randomSeed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), 1);
+
+	    ray.seed = randomSeed;
+
 		// Generate Initial Probing ray
 	  	vec4 direction = camera.viewInverse * vec4(normalize(target.xyz), 0);
 
-		ray.responce = 0;
-		
-		SpawnRay(colour, origin, target, direction);
+
+		vec3 accumulatedColor = vec3(0,0,0);
+
+		for (uint s = 0; s < camera.samplesPerFrame; ++s)
+		{
+			colour = vec3(0,0,0);
+			ray.responce = 0;
+			SpawnRay(colour, origin, target, direction);
+
+			accumulatedColor += colour;
+		}
+
+		colour = accumulatedColor / camera.samplesPerFrame;
+
+
 		// Store the newly generated depth
 		imageStore(rayDepthImage, ivec2(gl_LaunchIDNV.xy), vec4(ray.depth));
 	}
@@ -145,11 +161,10 @@ void main()
 		// Should we keep accumilating
 		const bool accumulate = toSample <= maxSamples;
 
-
-
-
 		// Generate a random seem for the ray
 	    uint randomSeed = InitRandomSeed(InitRandomSeed(gl_LaunchIDNV.x, gl_LaunchIDNV.y), overalSampleCount);
+
+	    ray.seed = randomSeed;
 
 		// Loop through for the amount of samples we want to preform on the pixel.
 		// This is done for depth of field (Bokah) effect.

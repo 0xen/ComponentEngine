@@ -12,6 +12,9 @@ set(common_headers
     ../third_party/lodepng/lodepng.h
     ../third_party/cimg/CImg.h
 
+    ../third_party/pugixml/src/pugiconfig.hpp
+    ../third_party/pugixml/src/pugixml.hpp
+
 
     include/ComponentEngine/Engine.hpp
     include/ComponentEngine/Common.hpp
@@ -30,6 +33,8 @@ set(common_headers
 set(common_source
     # External
     ../third_party/lodepng/lodepng.cpp
+    
+    ../third_party/pugixml/src/pugixml.cpp
     
     src/obj_loader.cpp
     src/Engine.cpp

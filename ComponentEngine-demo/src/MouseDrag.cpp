@@ -88,24 +88,34 @@ void ComponentEngine::MouseDrag::Display()
 	ImGui::InputFloat3("##offset", (float*)&offset, "%.3f", ImGuiInputTextFlags_EnterReturnsTrue);
 }
 
-void ComponentEngine::MouseDrag::Load(std::ifstream & in)
+void ComponentEngine::MouseDrag::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(MouseDrag, m_rotateSpeed), PayloadSize());
+	m_rotateSpeed = node.attribute("RotationSpeed").as_float(m_rotateSpeed);
+	{
+		pugi::xml_node offsedNode = node.child("Offset");
+		offset.x = offsedNode.attribute("X").as_float(offset.x);
+		offset.y = offsedNode.attribute("Y").as_float(offset.y);
+		offset.z = offsedNode.attribute("Z").as_float(offset.z);
+	}
+	m_flip_x = node.attribute("FlipX").as_bool(m_flip_x);
+	m_flip_y = node.attribute("FlipY").as_bool(m_flip_y);
+	m_lock_x = node.attribute("LockX").as_bool(m_lock_x);
+	m_lock_y = node.attribute("LockY").as_bool(m_lock_y);
 }
 
-void ComponentEngine::MouseDrag::Save(std::ofstream & out)
+void ComponentEngine::MouseDrag::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(MouseDrag, m_rotateSpeed), PayloadSize());
-}
-
-unsigned int ComponentEngine::MouseDrag::PayloadSize()
-{
-	return SizeOfOffsetRange(MouseDrag, m_rotateSpeed, m_lock_y);
-}
-
-bool ComponentEngine::MouseDrag::DynamiclySized()
-{
-	return false;
+	node.append_attribute("RotationSpeed").set_value(m_rotateSpeed);
+	{
+		pugi::xml_node offsedNode = node.append_child("Offset");
+		offsedNode.append_attribute("X").set_value(offset.x);
+		offsedNode.append_attribute("Y").set_value(offset.y);
+		offsedNode.append_attribute("Z").set_value(offset.z);
+	}
+	node.append_attribute("FlipX").set_value(m_flip_x);
+	node.append_attribute("FlipY").set_value(m_flip_y);
+	node.append_attribute("LockX").set_value(m_lock_x);
+	node.append_attribute("LockY").set_value(m_lock_y);
 }
 
 enteez::BaseComponentWrapper * ComponentEngine::MouseDrag::EntityHookDefault(enteez::Entity & entity)

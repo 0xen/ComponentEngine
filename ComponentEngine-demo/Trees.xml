@@ -1,0 +1,680 @@
+<?xml version="1.0"?>
+<Scene>
+	<Entity Name="Camera">
+		<Component Name="Transformation">
+			<r0 c0="0.872263849" c1="-0" c2="-0.489035547" c3="-0" />
+			<r1 c0="-0.0231776647" c1="0.998876214" c2="-0.0413406305" c3="0" />
+			<r2 c0="0.488485962" c1="0.0473946407" c2="0.871283591" c3="-0" />
+			<r3 c0="0.895698786" c1="0.795576394" c2="2.90370941" c3="1" />
+		</Component>
+		<Component Name="Camera">
+			<Projection NearClip="0.100000001" FarClip="200" FOV="45" />
+			<Raytracing GPURecursionCount="30" RecursionCount="50" GlobalIlluminationBrightness="0.800000012" GlobalIlluminationReflectionMissBrightness="0.75" SamplesPerFrame="2" Aperture="0.00200000009" FocusDistance="0.5" MovmentTollarance="9.99999975e-05" DofSampleCount="10" Mode="0">
+				<MaxRecursionDepthColor R="0.699999988" G="0.699999988" B="0.699999988" />
+			</Raytracing>
+		</Component>
+		<Component Name="Keyboard Movement" Speed="1" IgnoreAxisX="false" IgnoreAxisY="false" IgnoreAxisZ="false" LocalMovment="true" InEditor="false">
+			<Key0 Value="26" />
+			<Key1 Value="22" />
+			<Key2 Value="4" />
+			<Key3 Value="7" />
+			<Key4 Value="6" />
+			<Key5 Value="44" />
+		</Component>
+		<Component Name="Mouse Drag" RotationSpeed="0.0140000004" FlipX="true" FlipY="true" LockX="false" LockY="false">
+			<Offset X="0" Y="0" Z="0" />
+		</Component>
+	</Entity>
+	<Entity Name="Floor">
+		<Component Name="Transformation">
+			<r0 c0="10" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="10" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="10" c3="0" />
+			<r3 c0="0" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Surface/FloorUV10.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/mossy-ground1-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/mossy-ground1-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/mossy-ground1-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/mossy-ground1-normal.png" />
+				<Cavity Path="" />
+				<AO Path="../Resources/Textures/PBRLab/mossy-ground1-ao.png" />
+				<Height Path="../Resources/Textures/PBRLab/mossy-ground1-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Sun">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="10" c1="10" c2="10" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="3" Path="../Resources/Models/Lights/SphereLight/sphere.obj">
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+		<Component Name="Light" Intensity="1" ShadowRangeStartOffset="0" ShadowRangeEndOffset="0" Type="1" Alive="1">
+			<Offset X="0" Y="0" Z="0" />
+			<Color R="1" G="0.985629737" B="0.813186824" />
+			<Direction X="1" Y="1" Z="1" />
+		</Component>
+	</Entity>
+	<Entity Name="Octopus">
+		<Component Name="Transformation">
+			<r0 c0="0.200000003" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="0.200000003" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="0.200000003" c3="0" />
+			<r3 c0="-0.300000012" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="2" Path="../Resources/Models/Octopus/Octopus.obj">
+			<Material>
+				<Diffuse Path="../Resources/Textures/PBRLab/scuffed-plastic-albedo.png" />
+				<Metalic Path="../Resources/Textures/PBRLab/scuffed-plastic-metalness.png" />
+				<Roughness Path="../Resources/Textures/PBRLab/scuffed-plastic-roughness.png" />
+				<Normal Path="../Resources/Textures/PBRLab/scuffed-plastic-normal.png" />
+				<Cavity Path="" />
+				<AO Path="../Resources/Textures/PBRLab/scuffed-plastic-ao.png" />
+				<Height Path="../Resources/Textures/PBRLab/scuffed-plastic-height.png" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Tree">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-2" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="1" Path="../Resources/Models/Trees/Red Maple Young/HighPoly/ReadMaple.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Tree">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-2" c1="0" c2="1" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="1" Path="../Resources/Models/Trees/Red Maple Young/HighPoly/ReadMaple.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Tree">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-1" c1="0" c2="-1" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="1" Path="../Resources/Models/Trees/Red Maple Young/HighPoly/ReadMaple.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Tree">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="1" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="1" Path="../Resources/Models/Trees/Red Maple Young/HighPoly/ReadMaple.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Bark_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_BaseColor.jpg" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cap_03_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Cards_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Red Maple Young/HighPoly/Textures\\T_Leaves_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-7.34399986" c1="0" c2="-0.527999878" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-2.65599966" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-5.29599953" c1="0" c2="3.58400059" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-0.35199976" c1="0" c2="-2.27199984" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="7.39200115" c1="0" c2="-0.575999737" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="1" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="3.28000069" c1="0" c2="-5.67999983" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="-3.50399971" c1="0" c2="5.23200035" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="7.3760004" c1="0" c2="-0.143999577" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="7.92000103" c1="0" c2="7.0720005" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Grass">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="5.23200035" c1="0" c2="-1.02399969" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Grass.obj">
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_2_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_BaseColor.png" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="../Resources/Models/Trees/Backyard Grass/HighPoly/Textures\\T_Grass_blades_3_Normal.png" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+</Scene>

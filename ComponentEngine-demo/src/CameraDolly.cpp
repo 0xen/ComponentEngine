@@ -174,7 +174,7 @@ void ComponentEngine::CameraDolly::Display()
 	}
 }
 
-void ComponentEngine::CameraDolly::Load(std::ifstream & in)
+/*void ComponentEngine::CameraDolly::Load(std::ifstream & in)
 {
 	//ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(CameraDolly, m_rotateSpeed), PayloadSize());
 	int size = 0;
@@ -195,16 +195,55 @@ void ComponentEngine::CameraDolly::Save(std::ofstream & out)
 	{
 		WriteBinary(out, &snapshot, sizeof(CameraDollySnapshot));
 	}
+}*/
+
+
+void ComponentEngine::CameraDolly::Load(pugi::xml_node& node)
+{
+	snapshots.clear();
+	for (pugi::xml_node snapshotNode : node.children("Snapshot"))
+	{
+		CameraDollySnapshot snapshot;
+		snapshot.transitionTime = snapshotNode.attribute("TransitionTime").as_float(snapshot.transitionTime);
+		snapshot.pauseTime = snapshotNode.attribute("PauseTime").as_float(snapshot.pauseTime);
+
+		pugi::xml_node Transformation = snapshotNode.child("Transformation");
+		for (int row = 0; row < 4; row++)
+		{
+			pugi::xml_node rowNode = Transformation.child("Row");
+			snapshot.transformation[row][0] = rowNode.attribute("C0").as_float(snapshot.transformation[row][0]);
+			snapshot.transformation[row][1] = rowNode.attribute("C1").as_float(snapshot.transformation[row][1]);
+			snapshot.transformation[row][2] = rowNode.attribute("C2").as_float(snapshot.transformation[row][2]);
+			snapshot.transformation[row][3] = rowNode.attribute("C3").as_float(snapshot.transformation[row][3]);
+		}
+		snapshot.fov = snapshotNode.attribute("Fov").as_float(snapshot.fov);
+		snapshot.aperture = snapshotNode.attribute("Aperture").as_float(snapshot.aperture);
+		snapshot.focusDistance = snapshotNode.attribute("FocusDistance").as_float(snapshot.focusDistance);
+		snapshots.push_back(snapshot);
+	}
 }
 
-unsigned int ComponentEngine::CameraDolly::PayloadSize()
+void ComponentEngine::CameraDolly::Save(pugi::xml_node& node)
 {
-	return sizeof(CameraDollySnapshot);//SizeOfOffsetRange(CameraDolly, m_rotateSpeed, m_lock_y);
-}
+	for (auto& snapshot : snapshots)
+	{
+		pugi::xml_node snapshotNode = node.append_child("Snapshot");
+		snapshotNode.append_attribute("TransitionTime").set_value(snapshot.transitionTime);
+		snapshotNode.append_attribute("PauseTime").set_value(snapshot.pauseTime);
 
-bool ComponentEngine::CameraDolly::DynamiclySized()
-{
-	return false;
+		pugi::xml_node Transformation = snapshotNode.append_child("Transformation");
+		for (int row = 0; row < 4; row++)
+		{
+			pugi::xml_node rowNode = Transformation.append_child("Row");
+			rowNode.append_attribute("C0").set_value(snapshot.transformation[row][0]);
+			rowNode.append_attribute("C1").set_value(snapshot.transformation[row][1]);
+			rowNode.append_attribute("C2").set_value(snapshot.transformation[row][2]);
+			rowNode.append_attribute("C3").set_value(snapshot.transformation[row][3]);
+		}
+		snapshotNode.append_attribute("Fov").set_value(snapshot.fov);
+		snapshotNode.append_attribute("Aperture").set_value(snapshot.aperture);
+		snapshotNode.append_attribute("FocusDistance").set_value(snapshot.focusDistance);
+	}
 }
 
 enteez::BaseComponentWrapper * ComponentEngine::CameraDolly::EntityHookDefault(enteez::Entity & entity)

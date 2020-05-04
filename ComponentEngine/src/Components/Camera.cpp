@@ -233,6 +233,70 @@ void ComponentEngine::Camera::DisplayRaytraceConfig()
 	Engine::Singlton()->GetLogicMutex().unlock();
 }
 
+void ComponentEngine::Camera::Load(pugi::xml_node& node)
+{
+	{
+		pugi::xml_node projection = node.child("Projection");
+		m_near_clip = projection.attribute("NearClip").as_float(m_near_clip);
+		m_far_clip = projection.attribute("FarClip").as_float(m_far_clip);
+		m_fov = projection.attribute("FOV").as_float(m_fov);
+	}
+	{
+		pugi::xml_node raytracing = node.child("Raytracing");
+		{
+			pugi::xml_node maxRecursionDepthColor = raytracing.child("MaxRecursionDepthColor");
+
+			m_camera_data.maxRecursionDepthColor.r = maxRecursionDepthColor.attribute("R").as_float(m_camera_data.maxRecursionDepthColor.r);
+			m_camera_data.maxRecursionDepthColor.g = maxRecursionDepthColor.attribute("G").as_float(m_camera_data.maxRecursionDepthColor.g);
+			m_camera_data.maxRecursionDepthColor.b = maxRecursionDepthColor.attribute("B").as_float(m_camera_data.maxRecursionDepthColor.b);
+		}
+
+		m_camera_data.gpuRecursionCount = raytracing.attribute("GPURecursionCount").as_uint(m_camera_data.gpuRecursionCount);
+		m_camera_data.recursionCount = raytracing.attribute("RecursionCount").as_uint(m_camera_data.recursionCount);
+		m_camera_data.globalIlluminationBrightness = raytracing.attribute("GlobalIlluminationBrightness").as_float(m_camera_data.globalIlluminationBrightness);
+		m_camera_data.globalIlluminationReflectionMissBrightness = raytracing.attribute("GlobalIlluminationReflectionMissBrightness").as_float(m_camera_data.globalIlluminationReflectionMissBrightness);
+		m_camera_data.samplesPerFrame = raytracing.attribute("SamplesPerFrame").as_uint(m_camera_data.samplesPerFrame);
+		m_camera_data.aperture = raytracing.attribute("Aperture").as_float(m_camera_data.aperture);
+		m_camera_data.focusDistance = raytracing.attribute("FocusDistance").as_float(m_camera_data.focusDistance);
+		m_camera_data.movmentTollarance = raytracing.attribute("MovmentTollarance").as_float(m_camera_data.movmentTollarance);
+		m_camera_data.dofSampleCount = raytracing.attribute("DofSampleCount").as_uint(m_camera_data.dofSampleCount);
+		m_camera_data.mode = raytracing.attribute("Mode").as_uint(m_camera_data.mode);
+	}
+}
+
+void ComponentEngine::Camera::Save(pugi::xml_node& node)
+{
+
+	{
+		pugi::xml_node projection = node.append_child("Projection");
+		projection.append_attribute("NearClip").set_value(m_near_clip);
+		projection.append_attribute("FarClip").set_value(m_far_clip);
+		projection.append_attribute("FOV").set_value(m_fov);
+	}
+	{
+		pugi::xml_node raytracing = node.append_child("Raytracing");
+		{
+			pugi::xml_node maxRecursionDepthColor = raytracing.append_child("MaxRecursionDepthColor");
+
+			maxRecursionDepthColor.append_attribute("R").set_value(m_camera_data.maxRecursionDepthColor.r);
+			maxRecursionDepthColor.append_attribute("G").set_value(m_camera_data.maxRecursionDepthColor.g);
+			maxRecursionDepthColor.append_attribute("B").set_value(m_camera_data.maxRecursionDepthColor.b);
+		}
+
+		raytracing.append_attribute("GPURecursionCount").set_value(m_camera_data.gpuRecursionCount);
+		raytracing.append_attribute("RecursionCount").set_value(m_camera_data.recursionCount);
+		raytracing.append_attribute("GlobalIlluminationBrightness").set_value(m_camera_data.globalIlluminationBrightness);
+		raytracing.append_attribute("GlobalIlluminationReflectionMissBrightness").set_value(m_camera_data.globalIlluminationReflectionMissBrightness);
+		raytracing.append_attribute("SamplesPerFrame").set_value(m_camera_data.samplesPerFrame);
+		raytracing.append_attribute("Aperture").set_value(m_camera_data.aperture);
+		raytracing.append_attribute("FocusDistance").set_value(m_camera_data.focusDistance);
+		raytracing.append_attribute("MovmentTollarance").set_value(m_camera_data.movmentTollarance);
+		raytracing.append_attribute("DofSampleCount").set_value(m_camera_data.dofSampleCount);
+		raytracing.append_attribute("Mode").set_value(m_camera_data.mode);
+	}
+
+}
+/*
 void ComponentEngine::Camera::Load(std::ifstream & in)
 {
 	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Camera, m_camera_data.recursionCount), PayloadSize());
@@ -241,17 +305,8 @@ void ComponentEngine::Camera::Load(std::ifstream & in)
 void ComponentEngine::Camera::Save(std::ofstream & out)
 {
 	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Camera, m_camera_data.recursionCount), PayloadSize());
-}
+}*/
 
-unsigned int ComponentEngine::Camera::PayloadSize()
-{
-	return SizeOfOffsetRange(Camera, m_camera_data.recursionCount, m_camera_data.mode);
-}
-
-bool ComponentEngine::Camera::DynamiclySized()
-{
-	return false;
-}
 
 enteez::BaseComponentWrapper* ComponentEngine::Camera::EntityHookDefault(enteez::Entity& entity)
 {

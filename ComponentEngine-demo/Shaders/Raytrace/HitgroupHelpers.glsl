@@ -1,4 +1,5 @@
 #include "Structures.glsl"
+#include "Maths.glsl"
 
 //////////////////////////////////
 // CROSS SHADER VARIABLE SHARING//
@@ -163,6 +164,20 @@ WaveFrontMaterial unpackMaterial(int matIndex)
  // Helper RTX Functions //
 //////////////////////////
 
+vec3 PointOnSphere(inout uint seed, vec3 center, float rad)
+{
+    vec3 res = vec3(
+    RandomFloat(seed,-1.0f,1.0f),
+    RandomFloat(seed,-1.0f,1.0f),
+    RandomFloat(seed,-1.0f,1.0f)
+    );
+
+    res = normalize(res);
+
+    res *= rad;
+
+    return center - res;
+}
 
 uint SpawnShadowRay(vec3 origin, vec3 direction, float length)
 {
@@ -187,45 +202,14 @@ uint SpawnShadowRay(vec3 origin, vec3 direction, float length, uint flags)
 }
 
 
-void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness,float cavity, 
-                    vec3 origin, vec3 normal, vec3 viewVector)
+void Shadow(inout uint responce, uint maxRecursion, vec3 origin, vec3 shadowRayDirection)
 {
-  for(uint i = 0; i < 100; i ++)
-  {
-    // Lighting Calc
-    Light light = unpackLight(i);
-
-    if(light.alive==0)
-    {
-        continue;
-    }
-
-
-
-
-    vec3 l = light.position - origin;
-
-    float distance =  length(l);
-
-    if(dot(normal,normalize(l))<0)
-      continue;
-
-
-    rayPayload.colour = vec4(light.color,0.0f);
-
-    uint responce = 0;
-
-    vec3 shadowRayOrigin = origin;
-    vec3 shadowRayDirection = normalize(l);
-    float shadowRayDistance = distance;
-    uint maxRecursion = camera.recursionCount;
-
-    rayPayload.recursion = camera.gpuRecursionCount;
-    
+    float shadowRayDistance = length(shadowRayDirection);
+    shadowRayDirection = normalize(shadowRayDirection);
 
     if(inRayPayload.depth < 20.0f) // Should we use accurate shadows?
     {
-       uint flags = gl_RayFlagsCullBackFacingTrianglesNV;
+      uint flags = gl_RayFlagsCullBackFacingTrianglesNV;
 
       if(inRayPayload.depth < 10.0f)
       {
@@ -234,11 +218,11 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
 
       while(true)
       {
-        responce = SpawnShadowRay(shadowRayOrigin,shadowRayDirection,shadowRayDistance,flags);
+        responce = SpawnShadowRay(origin,shadowRayDirection,shadowRayDistance,flags);
         if (responce == 2) // Transparent
         {
             maxRecursion--;
-            shadowRayOrigin = rayPayload.origin;
+            origin = rayPayload.origin;
             shadowRayDirection = rayPayload.direction;
             shadowRayDistance = rayPayload.depth;
         }
@@ -253,14 +237,131 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
     }
     else // Use single pass shadows
     {
-        responce = SpawnShadowRay(shadowRayOrigin,shadowRayDirection,shadowRayDistance);
+        responce = SpawnShadowRay(origin,shadowRayDirection,shadowRayDistance);
         // If it hit a transparent object, override and change to be a shadow
         if(responce==2)responce=1;
     }
+}
 
-   
 
-    if (responce == 0)
+
+void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness,float cavity, 
+                    vec3 origin, vec3 normal, vec3 viewVector)
+{
+  rayPayload.seed = inRayPayload.seed;
+  for(uint i = 0; i < 100; i ++)
+  {
+    // Lighting Calc
+    Light light = unpackLight(i);
+
+    if(light.alive==0)
+    {
+        continue;
+    }
+
+
+    vec3 l;
+
+    float distance;
+
+    if(light.type==0)
+    {
+      l = light.position - origin;
+      distance =  length(l);
+    }
+    else
+    {
+      l = light.dir;
+      distance = 1000.0f;
+    }
+
+    /*if(dot(normal,normalize(l))<0)
+      continue;*/
+
+
+    uint responce = 0;
+
+    rayPayload.colour = vec4(light.color,0.0f);
+    
+    uint maxRecursion = camera.recursionCount;
+
+    vec3 shadowRayOrigin = origin;
+
+    rayPayload.recursion = camera.gpuRecursionCount;
+
+    float shadowPower = 0.0f;
+    int litSamples = 0;
+
+    vec3 processedLightColor = vec3(0,0,0);
+
+    bool softShadows = true;
+
+
+    if(softShadows)
+    {
+
+      int sampleCount = 50;
+
+      vec3 shadowRayDirection = l;
+      for(int s = 0; s < sampleCount; s++)
+      {
+
+        // For next samples
+
+
+        if(light.type==0)
+        {
+          shadowRayDirection = PointOnSphere(inRayPayload.seed,light.position,1.0f);
+        }
+        else
+        {
+          shadowRayDirection = PointOnSphere(inRayPayload.seed,light.dir*distance,1.0f);
+        }
+
+        Shadow(responce, maxRecursion, shadowRayOrigin, shadowRayDirection);
+
+
+
+        if (responce == 0)
+        {
+          litSamples++;
+          processedLightColor += rayPayload.colour.rgb;
+        }
+      }
+
+
+      if(litSamples>0)
+      {
+        shadowPower = (1.0f/sampleCount) * litSamples;
+        processedLightColor /= litSamples;
+      }
+
+
+
+    }
+    else
+    {
+      vec3 shadowRayDirection = l;
+
+      Shadow(responce, maxRecursion, shadowRayOrigin, shadowRayDirection);
+
+
+      if (responce == 0)
+      {
+        shadowPower = 1.0f;
+        litSamples = 1;
+        processedLightColor = rayPayload.colour.rgb;
+      }
+    }
+
+    
+
+
+    
+
+
+
+    if (litSamples > 0)
     {
 
       float rdist = 1.0f / length(l);
@@ -270,9 +371,9 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
       l *= rdist;
 
       // Calculate light intensity
-        float li = light.intensity * rdist * rdist;
+      float li = light.intensity * rdist * rdist;
       // Lights color
-      vec3 lc = rayPayload.colour.rgb;
+      vec3 lc = processedLightColor;
 
       // Halfway vector (normal halfway between view and light vector)
       vec3 h = normalize(l + viewVector);
@@ -318,7 +419,7 @@ void ProcessLights(inout vec3 colour,vec3 albedo,float roughness,float metalness
 
 
 
-      colour += PI * f * ((li * cavity) * lc) * ndotl;
+      colour += PI * f * ((li * cavity) * lc) * ndotl * shadowPower;
 
 
 
@@ -350,11 +451,101 @@ vec3 GenerateNormal(vec3 modelNormal, vec3 tangent, vec3 cameraDir,
 
   // Extract normal from map and shift to -1 to 1 range
   vec3 textureNormal = normalize((2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f);
-  //textureNormal.y = -textureNormal.y;
+  textureNormal.y = -textureNormal.y;
 
   // Convert normal from tangent space to world space
-  //return normalize((textureNormal * invTangentMatrix) * modelMatrix).xyz;
   return normalize(modelMatrix * (invTangentMatrix * textureNormal)).xyz;
+
+
+
+
+  /*vec3 textureNormal = normalize((2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f);
+  textureNormal.y = -textureNormal.y;
+  return normalize(modelMatrix * normalize(modelNormal * textureNormal)).xyz;*/
+  
+}
+
+/*
+
+vec3 GenerateNormal(vec3 modelNormal,
+  mat3 modelMatrix, int normalTextureId, inout vec2 UV)
+{
+  vec3 textureNormal = normalize((2.0f * normalize(texture(textureSamplers[normalTextureId], UV).xyz)) - 1.0f);
+  textureNormal.y = -textureNormal.y;
+  return normalize(modelMatrix * normalize(modelNormal * textureNormal)).xyz;
+  
+}
+*/
+
+vec3 GenerateTangent(vec3 normal)
+{
+
+
+  vec3 tangent;
+
+  vec3 c1 = cross(normal, vec3(0.0, 0.0, 1.0));
+  vec3 c2 = cross(normal, vec3(0.0, 1.0, 0.0));
+
+  if( length(c1) > length(c2) )
+  {
+  tangent = c1;
+  }
+  else
+  {
+  tangent = c2;
+  }
+
+  return normalize(tangent);
+}
+
+
+vec3 HitBarycentrics(vec3 a, vec3 b, vec3 c, vec3 bary)
+{
+  //return a + bary.x * (b - a) + bary.y * (c - a);
+  return a * bary.x + b * bary.y + c * bary.z;
+}
+
+vec4 HitBarycentrics(vec4 a, vec4 b, vec4 c, vec3 bary)
+{
+  //return a + bary.x * (b - a) + bary.y * (c - a);
+  return a * bary.x + b * bary.y + c * bary.z;
+}
+
+vec4 GenerateTangent(vec3 p1,vec3 p2,vec3 p3,vec2 u1,vec2 u2,vec2 u3, vec3 n1, vec3 n2, vec3 n3, vec3 barycentrics)
+{
+
+  float x1 = p2.x - p1.x;
+  float x2 = p3.x - p1.x;
+  float y1 = p2.y - p1.y;
+  float y2 = p3.y - p1.y;
+  float z1 = p2.z - p1.z;
+  float z2 = p3.z - p1.z;
+
+
+  float s1 = u2.x - u1.x;
+  float s2 = u3.x - u1.x;
+  float t1 = u2.y - u1.y;
+  float t2 = u3.y - u1.y;
+
+  float r = 1.0f / (s1 * t2 - s2 * t1);
+  vec3 sdir = vec3((t2*x1-t1*x2)*r,(t2*y1-t1*y2)*r,(t2*z1-t1*z2)*r);
+  vec3 tdir = vec3((s1*x2-s2*x1)*r,(s1*y2-s2*y1)*r,(s1*z2-s2*z1)*r);
+
+  vec4 ta1 = vec4(
+    normalize(sdir - n2 * dot(n2,sdir)),
+    (dot(cross(n2,sdir),tdir)<0.0f?-1.0f:1.0f)
+    );
+  vec4 ta2 = vec4(
+    normalize(sdir - n2 * dot(n2,sdir)),
+    (dot(cross(n2,sdir),tdir)<0.0f?-1.0f:1.0f)
+    );
+  vec4 ta3 = vec4(
+    normalize(sdir - n3 * dot(n3,sdir)),
+    (dot(cross(n3,sdir),tdir)<0.0f?-1.0f:1.0f)
+    );
+
+
+  return HitBarycentrics(ta1, ta2, ta3, barycentrics);
 }
 
 vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
@@ -383,8 +574,3 @@ vec3 GenerateTangent(vec3 v1,vec3 v2,vec3 v3,vec2 u1,vec2 u2,vec2 u3)
   return tangent;
 }
 
-vec3 HitBarycentrics(vec3 a, vec3 b, vec3 c, vec3 bary)
-{
-  //return a + bary.x * (b - a) + bary.y * (c - a);
-  return a * bary.x + b * bary.y + c * bary.z;
-}

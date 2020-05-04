@@ -41,6 +41,7 @@ struct RayPayload
 
   vec3 origin;
   vec3 direction;
+  uint seed;
 
 	/*vec4 colour;
 	uint recursion;

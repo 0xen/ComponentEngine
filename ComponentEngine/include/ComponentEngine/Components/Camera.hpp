@@ -51,10 +51,8 @@ namespace ComponentEngine
 
 		void DisplayRaytraceConfig();
 
-		virtual void Load(std::ifstream& in);
-		virtual void Save(std::ofstream& out);
-		virtual unsigned int PayloadSize();
-		virtual bool DynamiclySized();
+		virtual void Load(pugi::xml_node& node);
+		virtual void Save(pugi::xml_node& node);
 
 		static enteez::BaseComponentWrapper* EntityHookDefault(enteez::Entity& entity);
 
@@ -83,7 +81,6 @@ namespace ComponentEngine
 		static std::vector<Camera*> m_global_cameras;
 
 		float m_near_clip;
-
 
 		float m_far_clip;
 		float m_fov;

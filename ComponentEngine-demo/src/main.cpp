@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 			engine->LoadScene("../Head.bin");
 		});
 	}
-	/*engine->GetUIManager()->AddMenuElement(new MenuElement("Spawn",
+	engine->GetUIManager()->AddMenuElement(new MenuElement("Spawn",
 		{
 			new MenuElement("Large Tree",[&]
 			{
@@ -140,10 +140,26 @@ int main(int argc, char **argv)
 					Mesh& mesh = tree->GetComponent<Mesh>();
 					mesh.ChangePath("../Resources/Models/Trees/Boston Fern/HighPoly/BostonFern.obj");
 				}
+			}),
+			new MenuElement("PBR Boy",[&]
+			{
+				for (int i = 0; i < 10; i++)
+				{
+					Entity* tree = engine->GetEntityManager().CreateEntity("PBR Boy");
+					Transformation::EntityHookDefault(*tree);
+					Transformation& transform = tree->GetComponent<Transformation>();
+					float x = ((rand() % 1000) * 0.002f) - 1.0f;
+					float y = ((rand() % 1000) * 0.002f) - 1.0f;
+					transform.Translate(glm::vec3(x, 0, y));
+					transform.RotateWorldY((rand() % 1000) * 2.234f);
+					Mesh::EntityHookDefault(*tree);
+					Mesh& mesh = tree->GetComponent<Mesh>();
+					mesh.ChangePath("../Resources/Models/PBRBoys/PBRBoy.obj");
+				}
 			})
 		}
 	));
-	*/
+	
 	while (engine->Running())
 	{
 		engine->Update();

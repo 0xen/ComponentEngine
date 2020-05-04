@@ -144,24 +144,40 @@ void ComponentEngine::KeyboardMovment::Display()
 	}
 }
 
-void ComponentEngine::KeyboardMovment::Load(std::ifstream & in)
+void ComponentEngine::KeyboardMovment::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(KeyboardMovment, m_speed), PayloadSize());
+	m_speed = node.attribute("Speed").as_float(m_speed);
+	m_ignore_axis_x = node.attribute("IgnoreAxisX").as_bool(m_ignore_axis_x);
+	m_ignore_axis_y = node.attribute("IgnoreAxisY").as_bool(m_ignore_axis_y);
+	m_ignore_axis_z = node.attribute("IgnoreAxisZ").as_bool(m_ignore_axis_z);
+	m_local_movment = node.attribute("LocalMovment").as_bool(m_local_movment);
+	m_inEditor = node.attribute("InEditor").as_bool(m_inEditor);
+
+
+	keys0.key = node.child("Key0").attribute("Value").as_uint(keys0.key);
+	keys1.key = node.child("Key1").attribute("Value").as_uint(keys1.key);
+	keys2.key = node.child("Key2").attribute("Value").as_uint(keys2.key);
+	keys3.key = node.child("Key3").attribute("Value").as_uint(keys3.key);
+	keys4.key = node.child("Key4").attribute("Value").as_uint(keys4.key);
+	keys5.key = node.child("Key5").attribute("Value").as_uint(keys5.key);
 }
 
-void ComponentEngine::KeyboardMovment::Save(std::ofstream & out)
+void ComponentEngine::KeyboardMovment::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(KeyboardMovment, m_speed), PayloadSize());
-}
+	node.append_attribute("Speed").set_value(m_speed);
+	node.append_attribute("IgnoreAxisX").set_value(m_ignore_axis_x);
+	node.append_attribute("IgnoreAxisY").set_value(m_ignore_axis_y);
+	node.append_attribute("IgnoreAxisZ").set_value(m_ignore_axis_z);
+	node.append_attribute("LocalMovment").set_value(m_local_movment);
+	node.append_attribute("InEditor").set_value(m_inEditor);
 
-unsigned int ComponentEngine::KeyboardMovment::PayloadSize()
-{
-	return SizeOfOffsetRange(KeyboardMovment, m_speed, m_inEditor);
-}
 
-bool ComponentEngine::KeyboardMovment::DynamiclySized()
-{
-	return false;
+	node.append_child("Key0").append_attribute("Value").set_value(keys0.key);
+	node.append_child("Key1").append_attribute("Value").set_value(keys1.key);
+	node.append_child("Key2").append_attribute("Value").set_value(keys2.key);
+	node.append_child("Key3").append_attribute("Value").set_value(keys3.key);
+	node.append_child("Key4").append_attribute("Value").set_value(keys4.key);
+	node.append_child("Key5").append_attribute("Value").set_value(keys5.key);
 }
 
 enteez::BaseComponentWrapper* ComponentEngine::KeyboardMovment::EntityHookDefault(enteez::Entity& entity)

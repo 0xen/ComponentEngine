@@ -49,6 +49,8 @@
 #include <assert.h>
 #include <sstream>
 
+#include <pugixml.hpp>
+
 using namespace ComponentEngine;
 using namespace enteez;
 using namespace Renderer;
@@ -334,8 +336,17 @@ void ComponentEngine::Engine::RenderFrame()
 {
 	// If we do not have a camera, break
 	if (m_main_camera == nullptr)return;
+
+	m_request_rebuild_acceleration_dependancys_lock.lock();
+	if (m_request_rebuild_acceleration_dependancys)
+	{
+		m_request_rebuild_acceleration_dependancys = false;
+		UpdateAccelerationDependancys();
+	}
+	m_request_rebuild_acceleration_dependancys_lock.unlock();
 	GetRendererMutex().lock();
 	TransferImGui();
+
 	// Rebuild the render pass for ImGui UI Data
 	m_raytrace_renderpass->RequestRebuildCommandBuffers();
 
@@ -424,7 +435,107 @@ void ComponentEngine::Engine::ResetMouseMovment()
 // Merge Scene stops the old scene from being deleted before the new scene is added so both scenes will be side by side.
 bool ComponentEngine::Engine::LoadScene(const char * path)
 {
-	// clear scene
+	{
+		m_logic_lock.lock();
+		GetRendererMutex().lock();
+
+		GetEntityManager().Clear();
+		ResetViewportBuffers();
+
+		GetRendererMutex().unlock();
+		m_logic_lock.unlock();
+	}
+
+	EntityManager& em = GetEntityManager();
+
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(path);
+
+	if (!result)
+		return false;
+
+	// Define where we have loaded from
+	SetScenePath(path);
+
+	pugi::xml_node SceneNode = doc.child("Scene");
+
+
+
+
+
+
+
+	// Define a in-function, function for creating new entities using I/O stream
+	std::function<void(Entity* parent, pugi::xml_node& EntityNode)> createEntity = [&](Entity* parent, pugi::xml_node& EntityNode)
+	{
+		m_logic_lock.lock();
+		GetRendererMutex().lock();
+		// File format for Entities
+
+		// Read in the name of the entity
+		std::string entityName = EntityNode.attribute("Name").as_string();
+		Entity* entity = em.CreateEntity(entityName);
+
+
+
+		for (pugi::xml_node& ComponentNode : EntityNode.children("Component"))
+		{
+			std::string componentName = ComponentNode.attribute("Name").as_string();
+
+
+			// Check to see if we have that component on record
+			auto it = m_component_register.find(componentName);
+
+			// If we have the component
+			if (it != m_component_register.end())
+			{
+
+				BaseComponentWrapper* wrapper = it->second(*entity);
+				IO* io = nullptr;
+				if (em.BaseClassInstance(*wrapper, io))
+				{
+					io->Load(ComponentNode);
+				}
+			}
+			else
+			{
+				// If we don't have the component log it
+				std::stringstream ss;
+				ss << "Unable to find component '" << componentName << "' for entity '" << entityName << "'";
+				Log(ss.str(), ComponentEngine::Warning);
+			}
+		}
+
+		// If we did not load a transformation, attach a default one
+		if (!entity->HasComponent<Transformation>())
+		{
+			Transformation::EntityHookDefault(*entity);
+		}
+
+		// Define the transformations parent
+		entity->GetComponent<Transformation>().SetParent(parent);
+
+
+		GetRendererMutex().unlock();
+		m_logic_lock.unlock();
+
+
+		for (pugi::xml_node& ChildNode : EntityNode.children("Entity"))
+		{
+			createEntity(entity, ChildNode);
+		}
+	};
+
+	for (pugi::xml_node& EntityNode : SceneNode.children("Entity"))
+	{
+		createEntity(nullptr, EntityNode);
+	}
+
+	ResetViewportBuffers();
+
+
+
+	/*// clear scene
 	{
 		m_logic_lock.lock();
 		GetRendererMutex().lock();
@@ -490,12 +601,6 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 		m_logic_lock.lock();
 		GetRendererMutex().lock();
 		// File format for Entities
-		/* - Entity Name
-		** - Component Count (0-*)
-		**     - Component Name
-		**     - Component Payload (How much data the file has after this integer that is for the component)
-		**     - Child count
-		*/
 
 		// Read in the name of the entity
 		std::string entityName = Common::ReadString(in);
@@ -589,13 +694,107 @@ bool ComponentEngine::Engine::LoadScene(const char * path)
 	{
 		createEntity(nullptr);
 	}
-	ResetViewportBuffers();
+	ResetViewportBuffers();*/
 	return true;
 }
+
+
+
+
 
 // Save to the current scene
 void ComponentEngine::Engine::SaveScene()
 {
+	GetRendererMutex().lock();
+	std::cout<<"Saving"<<std::endl;
+
+	EntityManager& em = GetEntityManager();
+
+
+	pugi::xml_document doc = pugi::xml_document();
+
+
+	pugi::xml_node SceneNode = doc.append_child("Scene");
+
+
+
+	// Create a in-function, function for saving each entity
+	std::function<void(Entity*, pugi::xml_node&)> saveEntity = [&](Entity* entity, pugi::xml_node& parentNode)
+	{
+		// Create new entity node
+		pugi::xml_node EntityNode = parentNode.append_child("Entity");
+
+		// Create the name attribute
+		pugi::xml_attribute EntityNameAttribute = EntityNode.append_attribute("Name");
+
+		// Set the name
+		EntityNameAttribute.set_value(entity->GetName().c_str());
+
+
+		entity->ForEach([&](BaseComponentWrapper& wrapper)
+		{
+			pugi::xml_node ComponentNode = EntityNode.append_child("Component");
+
+			pugi::xml_attribute ComponentNameAttribute = ComponentNode.append_attribute("Name");
+
+			ComponentNameAttribute.set_value(wrapper.GetName().c_str());
+
+
+
+
+			IO* io = nullptr;
+			if (em.BaseClassInstance(wrapper, io))
+			{
+				io->Save(ComponentNode);
+			}
+
+
+
+
+		});
+
+
+		if (entity->HasComponent<Transformation>())
+		{
+			Transformation& trans = entity->GetComponent<Transformation>();
+
+			// Save each child entity
+			for (Transformation* child : trans.GetChildren())
+			{
+				saveEntity(child->GetEntity(), EntityNode);
+			}
+		}
+	};
+
+
+
+	// Loop through all entities
+	std::vector<Entity*> topLevelEntities;
+	for (auto entity : em.GetEntitys())
+	{
+		// Check to see if we have a component and that it dose not have a parent, if so, save the top level parent
+		if (entity->HasComponent<Transformation>() && entity->GetComponent<Transformation>().GetParent() == nullptr)
+		{
+			topLevelEntities.push_back(entity);
+		}
+	}
+
+	// Loop through the entities and save them
+	for (auto entity : topLevelEntities)
+	{
+		saveEntity(entity,SceneNode);
+	}
+
+
+
+
+
+	std::cout << "Saving result: " << doc.save_file(m_currentScene.c_str()) << std::endl;
+
+	GetRendererMutex().unlock();
+	return;
+
+	/*
 	// Load the current scene file
 	std::ofstream out(m_currentScene);
 	EntityManager& em = GetEntityManager();
@@ -680,7 +879,7 @@ void ComponentEngine::Engine::SaveScene()
 	}
 	// Store into the file and close the stream
 	out.flush();
-	out.close();
+	out.close();*/
 }
 
 // Get the renderer instance
@@ -1161,6 +1360,13 @@ void ComponentEngine::Engine::RebuildOffsetAllocation()
 	m_offset_allocation_lock.unlock();
 }
 
+void ComponentEngine::Engine::RequestUpdateAccelerationDependancys()
+{
+	m_request_rebuild_acceleration_dependancys_lock.lock();
+	m_request_rebuild_acceleration_dependancys = true;
+	m_request_rebuild_acceleration_dependancys_lock.unlock();
+}
+
 // Update all buffers and offsets that are needed for RTX
 void ComponentEngine::Engine::UpdateAccelerationDependancys()
 {
@@ -1588,14 +1794,14 @@ void ComponentEngine::Engine::InitRenderer()
 	}
 	{
 		// Load a default normal texture
-		char imageData[4] = { 127,127,255,255 };
+		char imageData[4] = { 128,128,255,255 };
 		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
 		m_textures.push_back(texture);
 		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
 	}
 	{
 		// Load a default height texture
-		char imageData[4] = { 127,127,127,255 };
+		char imageData[4] = { 128,128,128,255 };
 		VulkanTextureBuffer* texture = LoadTexture(1, 1, imageData);
 		m_textures.push_back(texture);
 		m_texture_descriptors.push_back(texture->GetDescriptorImageInfo(BufferSlot::Primary));
@@ -1918,8 +2124,8 @@ void ComponentEngine::Engine::InitImGUI()
 
 
 		// Define the autofills
-		static std::string filenameAutofill = "Scene.bin";
-		static std::string defaultSavePath = "../Scene.bin";
+		static std::string filenameAutofill = "Scene.xml";
+		static std::string defaultSavePath = "../Scene.xml";
 		static unsigned int maxFileLength = 200;
 		static char* saveAsStream = new char[maxFileLength + 1];
 		// Define all default menu elements for the engine

@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<Scene>
+	<Entity Name="Box">
+		<Component Name="Transformation">
+			<r0 c0="1" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="1" c3="0" />
+			<r3 c0="0" c1="0" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/CornellBox/CornellBox-Empty-RG.obj">
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+	<Entity Name="Camera">
+		<Component Name="Transformation">
+			<r0 c0="0.999999523" c1="-3.63797794e-12" c2="-0.000933223986" c3="-0" />
+			<r1 c0="-4.43756544e-05" c1="0.998868704" c2="-0.047550898" c3="0" />
+			<r2 c0="0.000932168216" c1="0.0475509204" c2="0.998868287" c3="-0" />
+			<r3 c0="-0.0506893136" c1="0.980606735" c2="2.90834594" c3="1" />
+		</Component>
+		<Component Name="Camera">
+			<Projection NearClip="0.100000001" FarClip="200" FOV="45" />
+			<Raytracing GPURecursionCount="30" RecursionCount="50" GlobalIlluminationBrightness="0.800000012" GlobalIlluminationReflectionMissBrightness="0.75" SamplesPerFrame="2" Aperture="0.00200000009" FocusDistance="0.5" MovmentTollarance="9.99999975e-05" DofSampleCount="10" Mode="0">
+				<MaxRecursionDepthColor R="0.699999988" G="0.699999988" B="0.699999988" />
+			</Raytracing>
+		</Component>
+		<Component Name="Keyboard Movement" Speed="1" IgnoreAxisX="false" IgnoreAxisY="false" IgnoreAxisZ="false" LocalMovment="true" InEditor="false">
+			<Key0 Value="26" />
+			<Key1 Value="22" />
+			<Key2 Value="4" />
+			<Key3 Value="7" />
+			<Key4 Value="6" />
+			<Key5 Value="44" />
+		</Component>
+		<Component Name="Mouse Drag" RotationSpeed="0.00100000005" FlipX="true" FlipY="true" LockX="false" LockY="false">
+			<Offset X="0" Y="0" Z="0" />
+		</Component>
+	</Entity>
+	<Entity Name="New Entity">
+		<Component Name="Transformation">
+			<r0 c0="0.300000012" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="1.07288379e-07" c2="-0.300000012" c3="0" />
+			<r2 c0="0" c1="0.300000012" c2="1.07288379e-07" c3="0" />
+			<r3 c0="0" c1="1.76999998" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="3" Path="../Resources/Models/Lights/SphereLight/sphere.obj">
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+		<Component Name="Light" Intensity="0.5" ShadowRangeStartOffset="0" ShadowRangeEndOffset="0" Type="0" Alive="1">
+			<Offset X="0" Y="0" Z="0" />
+			<Color R="0.84523809" G="1" B="0" />
+			<Direction X="0.577350259" Y="0.577350259" Z="-0.577350259" />
+		</Component>
+	</Entity>
+	<Entity Name="New Entity">
+		<Component Name="Transformation">
+			<r0 c0="0.300000012" c1="0" c2="0" c3="0" />
+			<r1 c0="0" c1="0.300000012" c2="0" c3="0" />
+			<r2 c0="0" c1="0" c2="0.300000012" c3="0" />
+			<r3 c0="0" c1="0.300000012" c2="0" c3="1" />
+		</Component>
+		<Component Name="Mesh" HitGroup="0" Path="../Resources/Models/Balls/sphere.obj">
+			<Material>
+				<Diffuse Path="" />
+				<Metalic Path="" />
+				<Roughness Path="" />
+				<Normal Path="" />
+				<Cavity Path="" />
+				<AO Path="" />
+				<Height Path="" />
+			</Material>
+		</Component>
+	</Entity>
+</Scene>

@@ -38,7 +38,8 @@ std::string ComponentEngine::Common::ReadString(std::ifstream & in)
 	Read(in, &stringsize, sizeof(unsigned int));
 
 	char* data = new char[stringsize];
-	Read(in, data, sizeof(char) * stringsize);
+	Read(in, data, sizeof(char) * (stringsize - 1));
+	data[stringsize - 1] = '\0';
 	std::string str;
 	str.assign(data);
 	return str;
@@ -60,5 +61,5 @@ void ComponentEngine::Common::Write(std::ofstream & out, const std::string & str
 	// Strings size
 	Write(out, &size, sizeof(unsigned int));
 	// String data
-	Write(out, (void*)str.data(), sizeof(char) * size);
+	Write(out, (void*)str.data(), sizeof(char) * (size - 1));
 }

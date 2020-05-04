@@ -99,28 +99,58 @@ void ComponentEngine::Light::Display()
 	ImGui::PopID();
 }
 
-// Load the component from a file
-void ComponentEngine::Light::Load(std::ifstream & in)
+void ComponentEngine::Light::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Light, m_offset), PayloadSize());
+	{
+		pugi::xml_node offset = node.child("Offset");
+		m_offset.x = offset.attribute("X").as_float(m_offset.x);
+		m_offset.y = offset.attribute("Y").as_float(m_offset.y);
+		m_offset.z = offset.attribute("Z").as_float(m_offset.z);
+	}
+	m_intensity = node.attribute("Intensity").as_float(m_intensity);
+	shadowRangeStartOffset = node.attribute("ShadowRangeStartOffset").as_float(shadowRangeStartOffset);
+	shadowRangeEndOffset = node.attribute("ShadowRangeEndOffset").as_float(shadowRangeEndOffset);
+	{
+		pugi::xml_node color = node.child("Color");
+		m_color.x = color.attribute("R").as_float(m_color.x);
+		m_color.y = color.attribute("G").as_float(m_color.y);
+		m_color.z = color.attribute("B").as_float(m_color.z);
+	}
+	{
+		pugi::xml_node direction = node.child("Direction");
+		m_dir.x = direction.attribute("X").as_float(m_dir.x);
+		m_dir.y = direction.attribute("Y").as_float(m_dir.y);
+		m_dir.z = direction.attribute("Z").as_float(m_dir.z);
+	}
+	m_type = node.attribute("Type").as_int(m_type);
+	m_alive = node.attribute("Alive").as_int(m_alive);
 }
 
-// Save the component to a file
-void ComponentEngine::Light::Save(std::ofstream & out)
+void ComponentEngine::Light::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Light, m_offset), PayloadSize());
-}
-
-// How much data should we save to a file
-unsigned int ComponentEngine::Light::PayloadSize()
-{
-	return SizeOfOffsetRange(Light, m_offset, m_type);
-}
-
-// Is the size we save to a file dynamic?
-bool ComponentEngine::Light::DynamiclySized()
-{
-	return false;
+	{
+		pugi::xml_node offset = node.append_child("Offset");
+		offset.append_attribute("X").set_value(m_offset.x);
+		offset.append_attribute("Y").set_value(m_offset.y);
+		offset.append_attribute("Z").set_value(m_offset.z);
+	}
+	node.append_attribute("Intensity").set_value(m_intensity);
+	node.append_attribute("ShadowRangeStartOffset").set_value(shadowRangeStartOffset);
+	node.append_attribute("ShadowRangeEndOffset").set_value(shadowRangeEndOffset);
+	{
+		pugi::xml_node color = node.append_child("Color");
+		color.append_attribute("R").set_value(m_color.x);
+		color.append_attribute("G").set_value(m_color.y);
+		color.append_attribute("B").set_value(m_color.z);
+	}
+	{
+		pugi::xml_node direction = node.append_child("Direction");
+		direction.append_attribute("X").set_value(m_dir.x);
+		direction.append_attribute("Y").set_value(m_dir.y);
+		direction.append_attribute("Z").set_value(m_dir.z);
+	}
+	node.append_attribute("Type").set_value(m_type);
+	node.append_attribute("Alive").set_value(m_alive);
 }
 
 // Define a static constructor for the component

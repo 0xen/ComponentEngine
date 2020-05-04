@@ -59,14 +59,23 @@ void main()
 	vec3 viewVector = normalize(gl_WorldRayDirectionNV);
 
 
-	vec3 vertexTangent = GenerateTangent(v0.pos, v1.pos, v2.pos,
+
+	vec4 vertexTangent = GenerateTangent(
+		v0.pos, v1.pos, v2.pos,
+		v0.texCoord, v1.texCoord, v2.texCoord,
+		v0.nrm, v1.nrm, v2.nrm,
+		barycentrics
+		);
+
+vec3 fTangent = vertexTangent.xyz;
+	/*vec3 vertexTangent = GenerateTangent(v0.pos, v1.pos, v2.pos,
 		v0.texCoord, v1.texCoord, v2.texCoord);
 
 	vec3 v0t = normalize(vertexTangent - (dot(v0.nrm, vertexTangent)* v0.nrm));
 	vec3 v1t = normalize(vertexTangent - (dot(v1.nrm, vertexTangent)* v1.nrm));
 	vec3 v2t = normalize(vertexTangent - (dot(v2.nrm, vertexTangent)* v2.nrm));
 
-	vec3 fTangent = normalize(HitBarycentrics(v0t, v1t,v2t, barycentrics));
+	vec3 fTangent = normalize(HitBarycentrics(v0t, v1t,v2t, barycentrics));*/
 	
 
 
@@ -75,22 +84,31 @@ void main()
 	
 
 	//Calculate inverse tangent matrix
-	vec3 biTangent = cross(f_normal, fTangent);
+	vec3 biTangent = cross(f_normal, fTangent) * vertexTangent.w;
 	mat3 invTangentMatrix = mat3(fTangent, biTangent, f_normal);
 
 	vec3 normal = GenerateNormal(f_normal, fTangent, viewVector, 
 		modelMatrix,invTangentMatrix, mat.normalTextureId, mat.heightTextureId, texCoord, true);
 
 
+
+
+
+
+
+	/*vec3 normal = GenerateNormal(f_normal, 
+		modelMatrix, mat.normalTextureId, texCoord);
+*/
+
 	// Calculate the reflection angle
-	vec3 reflectVec = reflect(-viewVector, normal);
+	vec3 reflectVec = reflect(viewVector, normal);
 
   	// PBR lab sheet
 
 	// Texture maps      
 	vec3 albedo = albedoWithAlpha.xyz;
 	//vec3 albedo = texture(textureSamplers[mat.textureId], texCoord).xyz;
-	albedo *= mat.diffuse;
+	albedo += mat.diffuse;
 	albedo = pow(albedo, vec3(GAMMA,GAMMA,GAMMA));
 	float roughness = texture(textureSamplers[mat.roughnessTextureId], texCoord).r;
 	float metalness = texture(textureSamplers[mat.metalicTextureId], texCoord).r;
@@ -103,9 +121,35 @@ void main()
 
 	vec3 colour = (albedo * AmbientColour) * ao;
 
+	//vec3 colour = albedo * ao;
+
 	ProcessLights(colour,albedo,roughness,metalness,cavity,origin,normal,viewVector);
 
-	colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
+	//colour = pow(colour, vec3(1/GAMMA,1/GAMMA,1/GAMMA));
+
+
+
+
+	if(metalness>0.1f)
+	{
+		inRayPayload.colour.rgb = colour;
+		// Respond saying we are somewhat reflective
+		inRayPayload.responce = 3;
+		inRayPayload.origin = origin;
+		inRayPayload.direction = reflectVec;
+
+		// Report how much light the object gives out
+		inRayPayload.power = 1.0f-roughness;
+		return;
+	}
+	
+
+
+
+
+
+
+
 
 	// Respond saying we are done
 	inRayPayload.responce = 0;

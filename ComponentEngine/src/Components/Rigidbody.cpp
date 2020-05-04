@@ -174,25 +174,54 @@ enteez::BaseComponentWrapper* ComponentEngine::Rigidbody::EntityHookDefault(ente
 	return mesh;
 }
 
-void ComponentEngine::Rigidbody::Load(std::ifstream & in)
+void ComponentEngine::Rigidbody::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Rigidbody, m_friction), PayloadSize());
-	Rebuild();
+	node.attribute("Friction").as_float(m_friction);
+	node.attribute("RollingFriction").as_float(m_RollingFriction);
+	node.attribute("SpinningFriction").as_float(m_SpinningFriction);
+	{
+		pugi::xml_node AnistropicFriction = node.child("AnistropicFriction");
+		m_AnisotropicFriction = btVector3(
+			AnistropicFriction.attribute("X").as_float(),
+			AnistropicFriction.attribute("Y").as_float(),
+			AnistropicFriction.attribute("Z").as_float());
+	}
+	{
+		pugi::xml_node LocalInertia = node.child("LocalInertia");
+		m_localInertia = btVector3(
+			LocalInertia.attribute("X").as_float(),
+			LocalInertia.attribute("Y").as_float(),
+			LocalInertia.attribute("Z").as_float());
+	}
+	m_gravity = node.attribute("Gravity").as_float(m_gravity);
+	m_useGravity = node.attribute("UseGravity").as_bool(m_useGravity);
+	m_useCollision = node.attribute("UseCollision").as_bool(m_useCollision);
+	m_recordingCollisions = node.attribute("RecordingCollisions").as_bool(m_recordingCollisions);
+	m_mass = node.attribute("Mass").as_float(m_mass);
 }
 
-void ComponentEngine::Rigidbody::Save(std::ofstream & out)
+void ComponentEngine::Rigidbody::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Rigidbody, m_friction), PayloadSize());
-}
-
-unsigned int ComponentEngine::Rigidbody::PayloadSize()
-{
-	return SizeOfOffsetRange(Rigidbody, m_friction, m_mass);
-}
-
-bool ComponentEngine::Rigidbody::DynamiclySized()
-{
-	return false;
+	node.append_attribute("Friction").set_value(m_friction);
+	node.append_attribute("RollingFriction").set_value(m_RollingFriction);
+	node.append_attribute("SpinningFriction").set_value(m_SpinningFriction);
+	{
+		pugi::xml_node AnistropicFriction = node.append_child("AnistropicFriction");
+		AnistropicFriction.append_attribute("X").set_value(m_AnisotropicFriction.x());
+		AnistropicFriction.append_attribute("Y").set_value(m_AnisotropicFriction.y());
+		AnistropicFriction.append_attribute("Z").set_value(m_AnisotropicFriction.z());
+	}
+	{
+		pugi::xml_node LocalInertia = node.append_child("LocalInertia");
+		LocalInertia.append_attribute("X").set_value(m_localInertia.x());
+		LocalInertia.append_attribute("Y").set_value(m_localInertia.y());
+		LocalInertia.append_attribute("Z").set_value(m_localInertia.z());
+	}
+	node.append_attribute("Gravity").set_value(m_gravity);
+	node.append_attribute("UseGravity").set_value(m_useGravity);
+	node.append_attribute("UseCollision").set_value(m_useCollision);
+	node.append_attribute("RecordingCollisions").set_value(m_recordingCollisions);
+	node.append_attribute("Mass").set_value(m_mass);
 }
 
 void ComponentEngine::Rigidbody::ReciveMessage(enteez::Entity * sender, TransformationChange & message)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fstream>
+#include <pugixml.hpp>
 
 namespace ComponentEngine
 {
@@ -15,9 +15,7 @@ namespace ComponentEngine
 	class IO
 	{
 	public:
-		virtual void Load(std::ifstream& in) = 0;
-		virtual void Save(std::ofstream& out) = 0;
-		virtual unsigned int PayloadSize() = 0;
-		virtual bool DynamiclySized() = 0;
+		virtual void Load(pugi::xml_node& node) = 0;
+		virtual void Save(pugi::xml_node& node) = 0;
 	};
 }

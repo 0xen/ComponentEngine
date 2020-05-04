@@ -11,7 +11,7 @@ void main()
 	float rayDepth = length(gl_WorldRayDirectionNV * gl_HitTNV);
 	
 
-	const float opacity = 0.8f;
+	const float opacity = 0.5f;
 
 	const float PI = 3.14159265359f;
 	const float GAMMA = 2.2f;

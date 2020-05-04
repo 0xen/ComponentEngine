@@ -43,11 +43,8 @@ namespace ComponentEngine
 		virtual void Display();
 		static bool DisplayTransform(glm::mat4& mat4);
 
-		virtual void Load(std::ifstream& in);
-		virtual void Save(std::ofstream& out);
-		virtual unsigned int PayloadSize();
-		virtual bool DynamiclySized();
-
+		virtual void Load(pugi::xml_node& node);
+		virtual void Save(pugi::xml_node& node);
 
 		void Translate(glm::vec3 translation);
 		void SetWorldX(float x);

@@ -134,8 +134,12 @@ void ComponentEngine::Mesh::Display()
 				bool is_selected = (hitgroup_name == hitgroup.name);
 				if (ImGui::Selectable(hitgroup.name.c_str(), is_selected))
 				{
+					engine->GetRendererMutex().lock();
+
 					as->SetModelPoolHitGroupOffset(m_model_pool, i);
 					engine->GetRenderPass()->Rebuild();
+
+					engine->GetRendererMutex().unlock();
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();
@@ -460,7 +464,6 @@ void ComponentEngine::Mesh::Display()
 
 			ChangePath(tempFilePath.data.longForm);
 			//m_file_path = tempFilePath;
-			//std::cout << m_file_path.data.longForm << std::endl;
 			engine.GetRendererMutex().unlock();
 			engine.GetLogicMutex().unlock();
 		}
@@ -471,82 +474,63 @@ void ComponentEngine::Mesh::Display()
 
 }
 
-void ComponentEngine::Mesh::Load(std::ifstream & in)
+void ComponentEngine::Mesh::Load(pugi::xml_node& node)
 {
-	ReadBinary(in, reinterpret_cast<char*>(this) + offsetof(Mesh, m_hit_group), SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group));
-	std::string path = Common::ReadString(in);
 
-	// Material count
-	int materialCount = 0;
-	ComponentEngine::Common::Read(in, &materialCount, sizeof(int));
+	m_hit_group = node.attribute("HitGroup").as_uint(m_hit_group);
+	std::string path = node.attribute("Path").as_string("");
 
 	std::vector<MaterialDefintion> definitions;
-	definitions.resize(materialCount);
 
-	for (int i = 0; i < materialCount; i++)
+
+	for (pugi::xml_node material : node.children("Material"))
 	{
-		MaterialDefintion& definition = definitions[i];
+		MaterialDefintion definition;
 
-		definition.diffuse_texture = Common::ReadString(in);
-		definition.metalic_texture = Common::ReadString(in);
-		definition.roughness_texture = Common::ReadString(in);
-		definition.normal_texture = Common::ReadString(in);
-		definition.cavity_texture = Common::ReadString(in);
-		definition.ao_texture = Common::ReadString(in);
-		definition.height_texture = Common::ReadString(in);
+		definition.diffuse_texture = material.child("Diffuse").attribute("Path").as_string("");
+		definition.metalic_texture = material.child("Metalic").attribute("Path").as_string("");
+		definition.roughness_texture = material.child("Roughness").attribute("Path").as_string("");
+		definition.normal_texture = material.child("Normal").attribute("Path").as_string("");
+		definition.cavity_texture = material.child("Cavity").attribute("Path").as_string("");
+		definition.ao_texture = material.child("AO").attribute("Path").as_string("");
+		definition.height_texture = material.child("Height").attribute("Path").as_string("");
+		definitions.push_back(definition);
 	}
 
-	if (path.size()> 0)
+	if (path.size() > 0)
 	{
 		loading_definitions = definitions;
 		ChangePath(path);
-
-
-
 	}
 }
 
-void ComponentEngine::Mesh::Save(std::ofstream & out)
+void ComponentEngine::Mesh::Save(pugi::xml_node& node)
 {
-	WriteBinary(out, reinterpret_cast<char*>(this) + offsetof(Mesh, m_hit_group), SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group));
 
-	Common::Write(out, m_file_path.data.longForm);
+	node.append_attribute("HitGroup").set_value(m_hit_group);
+	node.append_attribute("Path").set_value(m_file_path.data.longForm.c_str());
 
 
 	if (m_file_path.data.longForm.size() > 0)
 	{
-
 		// Material count
 		int materialCount = m_mesh_instances[m_file_path.data.longForm].materialCount;
-		Common::Write(out, &materialCount, sizeof(int));
 
 		for (int i = 0; i < materialCount; i++)
 		{
+			pugi::xml_node materialNode = node.append_child("Material");
+
 			MaterialDefintion definition = Engine::Singlton()->GetMaterialDefinition(m_materials_offsets[i]);
 
-			Common::Write(out, definition.diffuse_texture);
-			Common::Write(out, definition.metalic_texture);
-			Common::Write(out, definition.roughness_texture);
-			Common::Write(out, definition.normal_texture);
-			Common::Write(out, definition.cavity_texture);
-			Common::Write(out, definition.ao_texture);
-			Common::Write(out, definition.height_texture);
+			materialNode.append_child("Diffuse").append_attribute("Path").set_value(definition.diffuse_texture.c_str());
+			materialNode.append_child("Metalic").append_attribute("Path").set_value(definition.metalic_texture.c_str());
+			materialNode.append_child("Roughness").append_attribute("Path").set_value(definition.roughness_texture.c_str());
+			materialNode.append_child("Normal").append_attribute("Path").set_value(definition.normal_texture.c_str());
+			materialNode.append_child("Cavity").append_attribute("Path").set_value(definition.cavity_texture.c_str());
+			materialNode.append_child("AO").append_attribute("Path").set_value(definition.ao_texture.c_str());
+			materialNode.append_child("Height").append_attribute("Path").set_value(definition.height_texture.c_str());
 		}
 	}
-
-
-
-
-}
-
-unsigned int ComponentEngine::Mesh::PayloadSize()
-{
-	return SizeOfOffsetRange(Mesh, m_hit_group, m_hit_group) + Common::StreamStringSize(m_file_path.data.longForm);
-}
-
-bool ComponentEngine::Mesh::DynamiclySized()
-{
-	return true;
 }
 
 void ComponentEngine::Mesh::Update(float frame_time)
@@ -588,9 +572,9 @@ void ComponentEngine::Mesh::LoadModel()
 
 		engine->GetModelLoadMutex().lock();
 
-		bool notLoaded = m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end();
+		bool modelNotLoaded = m_mesh_instances.find(m_file_path.data.longForm) == m_mesh_instances.end();
 		bool loading = false;
-		if (!notLoaded)
+		if (!modelNotLoaded)
 		{
 			loading = m_mesh_instances[m_file_path.data.longForm].loading;
 			if (loading)
@@ -616,7 +600,7 @@ void ComponentEngine::Mesh::LoadModel()
 
 		VulkanAcceleration* as = engine->GetTopLevelAS();
 		
-		if (notLoaded)
+		if (modelNotLoaded)
 		{
 
 			VulkanVertexBuffer* vertexBuffer = engine->GetGlobalVertexBufer();
@@ -629,7 +613,7 @@ void ComponentEngine::Mesh::LoadModel()
 			VulkanBufferPool* material_mapping_pool = engine->GetMaterialMappingPool();
 
 
-			{
+			/*{
 				// Make sure the file exists
 				std::ifstream file(m_file_path.data.longForm, std::ios::ate | std::ios::binary);
 				if (!file.is_open())
@@ -641,7 +625,7 @@ void ComponentEngine::Mesh::LoadModel()
 					return;
 				}
 				file.close();
-			}
+			}*/
 
 			// Load the model
 			ObjLoader<MeshVertex> loader;
@@ -749,13 +733,15 @@ void ComponentEngine::Mesh::LoadModel()
 
 				material.cavityTextureID = 0; // Set to default white texture
 				material.aoTextureID = 0; // Set to default white texture
-				material.heightTextureID = 3; // Set to default white texture
+				material.heightTextureID = 0; // Set to default white texture
+
 
 
 				engine->RegisterMaterial(materialDefinition, material);
 				materialDefintionMap[i] = engine->GetMaterialOffset(materialDefinition);
 			}
 
+			engine->GetModelLoadMutex().lock();
 			m_mesh_instances[m_file_path.data.longForm].mesh_instance = engine->GetRenderer()->CreateModelPool(vertexBuffer, vertexStart, m_nbVertices, indexBuffer, indexStart, m_nbIndices, ModelPoolUsage::SingleMesh);
 
 			// For normal position
@@ -767,12 +753,10 @@ void ComponentEngine::Mesh::LoadModel()
 			m_mesh_instances[m_file_path.data.longForm].mesh_instance->AttachBufferPool(2, material_mapping_pool);
 
 
-			engine->GetModelLoadMutex().lock();
+
 			as->AttachModelPool(m_mesh_instances[m_file_path.data.longForm].mesh_instance, m_hit_group);
-			engine->GetModelLoadMutex().unlock();
 
 			{ // Finish, clean up and setup pending models
-				engine->GetModelLoadMutex().lock();
 				m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap = materialDefintionMap;
 				m_mesh_instances[m_file_path.data.longForm].loading = false;
 				m_mesh_instances[m_file_path.data.longForm].materialCount = loader.m_materials.size();
@@ -783,9 +767,9 @@ void ComponentEngine::Mesh::LoadModel()
 				}
 
 				m_mesh_instances[m_file_path.data.longForm].pending_models.clear();
-				engine->GetModelLoadMutex().unlock();
 			}
 
+			engine->GetModelLoadMutex().unlock();
 		}
 
 		InstanciateModel(loading_definitions);
@@ -836,6 +820,7 @@ void ComponentEngine::Mesh::InstanciateModel(std::vector<MaterialDefintion> defi
 
 	m_materials_offsets = m_mesh_instances[m_file_path.data.longForm].defaultMaterialMap;
 
+
 	Engine::Singlton()->GetModelLoadMutex().unlock();
 
 	//ChangePath(fileForm.normal_texture, loader.m_textures[material.normalTextureID]);
@@ -847,8 +832,7 @@ void ComponentEngine::Mesh::InstanciateModel(std::vector<MaterialDefintion> defi
 
 	UpdateMaterials();
 
-	Engine::Singlton()->UpdateAccelerationDependancys();
-
+	Engine::Singlton()->RequestUpdateAccelerationDependancys();
 	m_loaded = true;
 }
 
